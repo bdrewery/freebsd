@@ -34,7 +34,7 @@ usage () {
 	echo 'Usage:'
 	echo "${0##*/} -e"
 	echo "${0##*/} -R"
-	echo "${0##*/} [-v] -l | -r"
+	echo "${0##*/} [-Fv] -l | -r"
 	echo "${0##*/} [-v] <rc.d script> start|stop|etc."
 	echo "${0##*/} -h"
 	echo ''
@@ -46,13 +46,23 @@ usage () {
 	echo ''
 }
 
-while getopts 'ehlrRv' COMMAND_LINE_ARGUMENT ; do
+show_service() {
+	local file=$1
+	if [ -z "$SHOWFILES" ]; then
+		echo ${file##*/}
+	else
+		echo $file
+	fi
+}
+
+while getopts 'eFhlrRv' COMMAND_LINE_ARGUMENT ; do
 	case "${COMMAND_LINE_ARGUMENT}" in
 	e)	ENABLED=eopt ;;
 	h)	usage ; exit 0 ;;
 	l)	LIST=lopt ;;
 	r)	RCORDER=ropt ;;
 	R)	RESTART=Ropt ;;
+	F)	SHOWFILES=eopt ;;
 	v)	VERBOSE=vopt ;;
 	*)	usage ; exit 1 ;;
 	esac
@@ -100,7 +110,7 @@ if [ -n "$ENABLED" ]; then
 		if grep -q ^rcvar $file; then
 			eval `grep ^name= $file`
 			eval `grep ^rcvar $file`
-			checkyesno $rcvar 2>/dev/null && echo $file
+			checkyesno $rcvar 2>/dev/null && show_service $file
 		fi
 	done
 	exit 0
@@ -109,14 +119,14 @@ fi
 if [ -n "$LIST" ]; then
 	for dir in /etc/rc.d $local_startup; do
 		[ -n "$VERBOSE" ] && echo "From ${dir}:"
-		cd $dir && for file in *; do echo $file; done
+		cd $dir && for file in *; do show_service $dir/$file; done
 	done
 	exit 0
 fi
 
 if [ -n "$RCORDER" ]; then
 	for file in $files; do
-		echo $file
+		show_service $file
 		if [ -n "$VERBOSE" ]; then
 			case "$file" in
 			*/${early_late_divider})

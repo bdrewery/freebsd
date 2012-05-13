@@ -36,7 +36,7 @@
 .Nm
 .Fl R
 .Nm
-.Op Fl v
+.Op Fl Fv
 .Fl l | r
 .Nm
 .Op Fl v
@@ -67,21 +67,23 @@ If present the script is checked to see if it is enabled.
 .It Fl R
 Restart all enabled local services.
 .It Fl l
-List all files in
+List all services in
 .Pa /etc/rc.d
 and the local startup directories.
 As described in
 .Xr rc.conf 5
 this is usually
 .Pa /usr/local/etc/rc.d .
-All files will be listed whether they are an actual
+All services will be listed whether they are an actual
 rc.d script or not.
 .It Fl r
 Generate the
 .Xr rcorder 8
 as in
 .Fl e
-above, but list all of the files, not just what is enabled.
+above, but list all of the services, not just what is enabled.
+.It Fl F
+List the matched service script files.
 .It Fl v
 Be slightly more verbose
 .El
