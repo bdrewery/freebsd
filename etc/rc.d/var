@@ -103,9 +103,11 @@ esac
 # Make sure we have /var/log/utx.lastlogin and /var/log/utx.log files
 if [ ! -f /var/log/utx.lastlogin ]; then
 	cp /dev/null /var/log/utx.lastlogin
-	chmod 644 /var/log/utx.lastlogin
+	chmod 660 /var/log/utx.lastlogin
+	chown root:utmp /var/log/utx.lastlogin
 fi
 if [ ! -f /var/log/utx.log ]; then
 	cp /dev/null /var/log/utx.log
-	chmod 644 /var/log/utx.log
+	chmod 660 /var/log/utx.log
+	chown root:utmp /var/log/utx.log
 fi

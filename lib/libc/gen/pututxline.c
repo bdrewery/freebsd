@@ -181,10 +181,13 @@ utx_active_init(const struct futx *fu)
 	int fd;
 
 	/* Initialize utx.active with a single BOOT_TIME record. */
-	fd = _open(_PATH_UTX_ACTIVE, O_CREAT|O_RDWR|O_TRUNC, 0644);
+	fd = _open(_PATH_UTX_ACTIVE, O_CREAT|O_RDWR|O_TRUNC, 0660);
 	if (fd < 0)
 		return;
-	_write(fd, fu, sizeof(*fu));
+	if (fchown(fd, 0, _UTMP_GID) < 0)
+		warnx("Unable to set root:utmp on " _PATH_UTX_ACTIVE);
+	else
+		_write(fd, fu, sizeof(*fu));
 	_close(fd);
 }
 
@@ -272,13 +275,18 @@ utx_log_add(const struct futx *fu)
 	vec[1].iov_len = l;
 	l = htobe16(l);
 
-	fd = _open(_PATH_UTX_LOG, O_CREAT|O_WRONLY|O_APPEND|O_CLOEXEC, 0644);
+	fd = _open(_PATH_UTX_LOG, O_CREAT|O_WRONLY|O_APPEND|O_CLOEXEC, 0660);
 	if (fd < 0)
 		return (-1);
-	if (_writev(fd, vec, 2) == -1)
+	if (fchown(fd, 0, _UTMP_GID) < 0) {
+		warnx("Unable to set root:utmp on " _PATH_UTX_LOG);
 		error = errno;
-	else
-		error = 0;
+	} else {
+		if (_writev(fd, vec, 2) == -1)
+			error = errno;
+		else
+			error = 0;
+	}
 	_close(fd);
 	if (error != 0)
 		errno = error;
