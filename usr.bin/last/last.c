@@ -229,7 +229,13 @@ wtmp(void)
 	while ((ut = getutxent()) != NULL) {
 		/* Skip this entry if the invoking user is not permitted
 		 * to see it */
-		if (restricted && strncmp(ut->ut_user, pw->pw_name, sizeof(ut->ut_user)))
+		if (restricted &&
+			!(ut->ut_type == BOOT_TIME ||
+				ut->ut_type == SHUTDOWN_TIME ||
+				ut->ut_type == OLD_TIME ||
+				ut->ut_type == NEW_TIME ||
+				ut->ut_type == INIT_PROCESS) &&
+			strncmp(ut->ut_user, pw->pw_name, sizeof(ut->ut_user)))
 			continue;
 
 		if (amount % 128 == 0) {
