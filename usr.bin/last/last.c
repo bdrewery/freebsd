@@ -57,6 +57,8 @@ __FBSDID("$FreeBSD$");
 #include <unistd.h>
 #include <utmpx.h>
 #include <sys/queue.h>
+#include <sys/types.h>
+#include <pwd.h>
 
 #define	NO	0				/* false/no */
 #define	YES	1				/* true/yes */
@@ -205,6 +207,8 @@ wtmp(void)
 	time_t t;
 	char ct[80];
 	struct tm *tm;
+	struct passwd *pw = NULL;
+	int restricted = 1; /* Whether this user can see all entries or not */
 
 	SLIST_INIT(&idlist);
 	(void)time(&t);
@@ -216,7 +220,18 @@ wtmp(void)
 	/* drop setgid now that the db is open */
 	setgid(getgid());
 
+	/* Lookup current user information */
+	pw = getpwuid(getuid());
+
+	if (geteuid() == 0)
+		restricted = 0;
+
 	while ((ut = getutxent()) != NULL) {
+		/* Skip this entry if the invoking user is not permitted
+		 * to see it */
+		if (restricted && strncmp(ut->ut_user, pw->pw_name, sizeof(ut->ut_user)))
+			continue;
+
 		if (amount % 128 == 0) {
 			buf = realloc(buf, (amount + 128) * sizeof *ut);
 			if (buf == NULL)
