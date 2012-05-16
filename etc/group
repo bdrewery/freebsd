@@ -18,6 +18,7 @@ smmsp:*:25:
 mailnull:*:26:
 _atf:*:27:
 guest:*:31:
+utmp:*:45:
 bind:*:53:
 unbound:*:59:
 proxy:*:62:

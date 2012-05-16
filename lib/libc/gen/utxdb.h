@@ -34,6 +34,7 @@
 #define	_PATH_UTX_ACTIVE	"/var/run/utx.active"
 #define	_PATH_UTX_LASTLOGIN	"/var/log/utx.lastlogin"
 #define	_PATH_UTX_LOG		"/var/log/utx.log"
+#define	_UTMP_GID		45
 
 /*
  * Entries in struct futx are ordered by how often they are used.  In
