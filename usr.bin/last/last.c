@@ -59,6 +59,7 @@ __FBSDID("$FreeBSD$");
 #include <sys/queue.h>
 #include <sys/types.h>
 #include <pwd.h>
+#include <grp.h>
 
 #define	NO	0				/* false/no */
 #define	YES	1				/* true/yes */
@@ -195,6 +196,42 @@ main(int argc, char *argv[])
 }
 
 /*
+ * Return whether or not the given user can see all entries or not
+ */
+static int
+is_user_restricted(struct passwd *pw)
+{
+	int restricted = 1; /* Default to restricted access */
+	gid_t *groups;
+	int ngroups, gid, cnt;
+	long ngroups_max;
+	struct group *group;
+
+	if (geteuid() == 0)
+		restricted = 0;
+	else {
+		/* Check if the user is in a privileged group */
+		ngroups_max = sysconf(_SC_NGROUPS_MAX) + 1;
+		if ((groups = malloc(sizeof(gid_t) * (ngroups_max))) == NULL)
+			err(1, "malloc");
+		ngroups = ngroups_max;
+		(void) getgrouplist(pw->pw_name, pw->pw_gid, groups, &ngroups);
+		for (cnt = 0; cnt < ngroups; ++cnt) {
+			gid = groups[cnt];
+			group = getgrgid(gid);
+			/* User is in utmp or wheel group, they can see all */
+			if (strncmp("utmp", group->gr_name, 4) == 0 || strncmp("wheel", group->gr_name, 5) == 0) {
+				restricted = 0;
+				break;
+			}
+		}
+		free(groups);
+	}
+
+	return (restricted);
+}
+
+/*
  * wtmp --
  *	read through the utx.log file
  */
@@ -208,7 +245,7 @@ wtmp(void)
 	char ct[80];
 	struct tm *tm;
 	struct passwd *pw = NULL;
-	int restricted = 1; /* Whether this user can see all entries or not */
+	int restricted;
 
 	SLIST_INIT(&idlist);
 	(void)time(&t);
@@ -223,8 +260,7 @@ wtmp(void)
 	/* Lookup current user information */
 	pw = getpwuid(getuid());
 
-	if (geteuid() == 0)
-		restricted = 0;
+	restricted = is_user_restricted(pw);
 
 	while ((ut = getutxent()) != NULL) {
 		/* Skip this entry if the invoking user is not permitted
