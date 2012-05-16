@@ -2,6 +2,8 @@
 # $FreeBSD$
 
 PROG=	last
+BINGRP= utmp
+BINMODE=2555
 
 NO_WFORMAT=
 

@@ -212,6 +212,10 @@ wtmp(void)
 	/* Load the last entries from the file. */
 	if (setutxdb(UTXDB_LOG, file) != 0)
 		err(1, "%s", file);
+
+	/* drop setgid now that the db is open */
+	setgid(getgid());
+
 	while ((ut = getutxent()) != NULL) {
 		if (amount % 128 == 0) {
 			buf = realloc(buf, (amount + 128) * sizeof *ut);
