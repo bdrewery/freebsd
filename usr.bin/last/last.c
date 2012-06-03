@@ -60,6 +60,7 @@ __FBSDID("$FreeBSD$");
 #include <sys/types.h>
 #include <pwd.h>
 #include <grp.h>
+#include <sys/sysctl.h>
 
 #define	NO	0				/* false/no */
 #define	YES	1				/* true/yes */
@@ -199,7 +200,7 @@ main(int argc, char *argv[])
  * Return whether or not the given user can see all entries or not
  */
 static int
-is_user_restricted(struct passwd *pw)
+is_user_restricted(struct passwd *pw, int see_other_uids)
 {
 	int restricted = 1; /* Default to restricted access */
 	gid_t *groups;
@@ -207,7 +208,7 @@ is_user_restricted(struct passwd *pw)
 	long ngroups_max;
 	struct group *group;
 
-	if (geteuid() == 0)
+	if (geteuid() == 0 || see_other_uids)
 		restricted = 0;
 	else {
 		/* Check if the user is in a privileged group */
@@ -245,7 +246,8 @@ wtmp(void)
 	char ct[80];
 	struct tm *tm;
 	struct passwd *pw = NULL;
-	int restricted;
+	int restricted, see_other_uids;
+	size_t len;
 
 	SLIST_INIT(&idlist);
 	(void)time(&t);
@@ -260,7 +262,10 @@ wtmp(void)
 	/* Lookup current user information */
 	pw = getpwuid(getuid());
 
-	restricted = is_user_restricted(pw);
+	len = sizeof(see_other_uids);
+	if (sysctlbyname("security.bsd.see_other_uids", &see_other_uids, &len, NULL, 0))
+		see_other_uids = 0;
+	restricted = is_user_restricted(pw, see_other_uids);
 
 	while ((ut = getutxent()) != NULL) {
 		/* Skip this entry if the invoking user is not permitted
