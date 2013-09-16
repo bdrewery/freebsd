@@ -264,7 +264,8 @@ inferior(register struct proc *p)
 {
 
 	sx_assert(&proctree_lock, SX_LOCKED);
-	for (; p != curproc; p = p->p_pptr)
+	/* Consider p_opptr for P_TRACED processes to avoid looping */
+	for (; p != curproc; p = (p->p_opptr ? p->p_opptr : p->p_pptr))
 		if (p->p_pid == 0)
 			return (0);
 	return (1);
