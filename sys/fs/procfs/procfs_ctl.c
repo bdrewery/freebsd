@@ -144,7 +144,7 @@ procfs_control(struct thread *td, struct proc *p, int op)
 		faultin(p);
 		p->p_xstat = 0;		/* XXX ? */
 		if (p->p_pptr != td->td_proc) {
-			p->p_oppid = p->p_pptr->p_pid;
+			p->p_opptr = p->p_pptr;
 			proc_reparent(p, td->td_proc);
 		}
 		kern_psignal(p, SIGSTOP);
@@ -223,10 +223,10 @@ out:
 
 		/* give process back to original parent */
 		sx_xlock(&proctree_lock);
-		if (p->p_oppid != p->p_pptr->p_pid) {
+		if (p->p_opptr != p->p_pptr) {
 			struct proc *pp;
 
-			pp = pfind(p->p_oppid);
+			pp = pfind(p->p->p_opptr->p_ppid);
 			PROC_LOCK(p);
 			if (pp) {
 				PROC_UNLOCK(pp);
@@ -234,7 +234,7 @@ out:
 			}
 		} else
 			PROC_LOCK(p);
-		p->p_oppid = 0;
+		p->p_opptr = NULL;
 		p->p_flag &= ~P_WAITED;	/* XXX ? */
 		sx_xunlock(&proctree_lock);
 

@@ -258,8 +258,8 @@ kvm_proclist(kvm_t *kd, int what, int arg, struct proc *p,
 			    &kp->ki_childtime);
 		}
 #endif
-		if (proc.p_oppid)
-			kp->ki_ppid = proc.p_oppid;
+		if (proc.p_opptr)
+			kp->ki_ppid = proc.p_opptr->p_ppid;
 		else if (proc.p_pptr) {
 			if (KREAD(kd, (u_long)proc.p_pptr, &pproc)) {
 				_kvm_err(kd, kd->program,

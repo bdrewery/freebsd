@@ -824,7 +824,7 @@ kern_ptrace(struct thread *td, int req, pid_t pid, void *addr, int data)
 		p->p_flag |= P_TRACED;
 		if (p->p_flag & P_PPWAIT)
 			p->p_flag |= P_PPTRACE;
-		p->p_oppid = p->p_pptr->p_pid;
+		p->p_opptr = p->p_pptr;
 		break;
 
 	case PT_ATTACH:
@@ -839,7 +839,7 @@ kern_ptrace(struct thread *td, int req, pid_t pid, void *addr, int data)
 		 * on a "detach".
 		 */
 		p->p_flag |= P_TRACED;
-		p->p_oppid = p->p_pptr->p_pid;
+		p->p_opptr = p->p_pptr;
 		if (p->p_pptr != td->td_proc) {
 			proc_reparent(p, td->td_proc);
 		}
@@ -914,7 +914,7 @@ kern_ptrace(struct thread *td, int req, pid_t pid, void *addr, int data)
 			break;
 		case PT_DETACH:
 			/* reset process parent */
-			if (p->p_oppid != p->p_pptr->p_pid) {
+			if (p->p_opptr != p->p_pptr) {
 				struct proc *pp;
 
 				PROC_LOCK(p->p_pptr);
@@ -922,7 +922,7 @@ kern_ptrace(struct thread *td, int req, pid_t pid, void *addr, int data)
 				PROC_UNLOCK(p->p_pptr);
 
 				PROC_UNLOCK(p);
-				pp = pfind(p->p_oppid);
+				pp = pfind(p->p_opptr->p_ppid);
 				if (pp == NULL)
 					pp = initproc;
 				else
@@ -932,7 +932,7 @@ kern_ptrace(struct thread *td, int req, pid_t pid, void *addr, int data)
 				if (pp == initproc)
 					p->p_sigparent = SIGCHLD;
 			}
-			p->p_oppid = 0;
+			p->p_opptr = NULL;
 			p->p_flag &= ~(P_TRACED | P_WAITED | P_FOLLOWFORK);
 
 			/* should we send SIGCHLD? */
