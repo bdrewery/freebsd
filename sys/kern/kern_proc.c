@@ -260,8 +260,7 @@ proc_fini(void *mem, int size)
  * Is p an inferior of the current process?
  */
 int
-inferior(p)
-	register struct proc *p;
+inferior(register struct proc *p)
 {
 
 	sx_assert(&proctree_lock, SX_LOCKED);
