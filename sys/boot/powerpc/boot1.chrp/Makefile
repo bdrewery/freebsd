@@ -1,6 +1,7 @@
 # $FreeBSD$
 
-WITHOUT_SSP=
+.include <bsd.own.mk>
+MK_SSP=		no
 
 PROG=           boot1.elf
 NEWVERSWHAT=    "Open Firmware boot block" ${MACHINE_ARCH}
