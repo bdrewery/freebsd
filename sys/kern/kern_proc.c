@@ -257,17 +257,50 @@ proc_fini(void *mem, int size)
 }
 
 /*
+ * Find real parent of given process
+ */
+static struct proc*
+pfind_orphaned_parent(pid_t pid)
+{
+	struct proc *p, *p_orphan;
+
+	/* Find the real parent for orphaned p */
+	FOREACH_PROC_IN_SYSTEM(p) {
+		/* Check if p is in the orphan list,
+		   which indicates p is the real parent */
+		LIST_FOREACH(p_orphan, &p->p_orphans, p_orphan) {
+			if (p_orphan->p_pid == pid)
+				return (p);
+		}
+	}
+
+	panic("unable to find parent for orphaned process %d", pid);
+}
+
+/*
  * Is p an inferior of the current process?
  */
 int
-inferior(p)
-	register struct proc *p;
+inferior(register struct proc *p)
 {
 
 	sx_assert(&proctree_lock, SX_LOCKED);
-	for (; p != curproc; p = p->p_pptr)
+	/* Is p a child of curproc? */
+	while (1) {
 		if (p->p_pid == 0)
 			return (0);
+
+		if (p == curproc)
+			break;
+
+		/* If the process is an orphan being traced, look for
+		   its real parent. */
+		if (p->p_flag & P_ORPHAN)
+			p = pfind_orphaned_parent(p->p_pid);
+		else
+			p = p->p_pptr;
+
+	}
 	return (1);
 }
 
