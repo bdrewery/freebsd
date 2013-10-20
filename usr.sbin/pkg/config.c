@@ -522,13 +522,43 @@ config_parse(yaml_document_t *doc, yaml_node_t *node)
 	sbuf_delete(buf);
 }
 
-int
-config_init(void)
+static int
+read_config_legacy(const char *confpath)
 {
 	FILE *fp;
 	yaml_parser_t parser;
 	yaml_document_t doc;
 	yaml_node_t *node;
+
+	if ((fp = fopen(confpath, "r")) == NULL) {
+		if (errno != ENOENT)
+			err(EXIT_FAILURE, "Unable to open configuration "
+			    "file %s", confpath);
+		/* no configuration present */
+		return (1);
+	}
+
+	yaml_parser_initialize(&parser);
+	yaml_parser_set_input_file(&parser, fp);
+	yaml_parser_load(&parser, &doc);
+
+	node = yaml_document_get_root_node(&doc);
+
+	if (node == NULL || node->type != YAML_MAPPING_NODE)
+		warnx("Invalid configuration format, ignoring the "
+		    "configuration file %s", confpath);
+	else
+		config_parse(&doc, node);
+
+	yaml_document_delete(&doc);
+	yaml_parser_delete(&parser);
+
+	return (0);
+}
+
+int
+config_init(void)
+{
 	const char *val;
 	int i;
 	const char *localbase;
@@ -546,28 +576,8 @@ config_init(void)
 	localbase = getenv("LOCALBASE") ? getenv("LOCALBASE") : _LOCALBASE;
 	snprintf(confpath, sizeof(confpath), "%s/etc/pkg.conf", localbase);
 
-	if ((fp = fopen(confpath, "r")) == NULL) {
-		if (errno != ENOENT)
-			err(EXIT_FAILURE, "Unable to open configuration "
-			    "file %s", confpath);
-		/* no configuration present */
+	if (access(confpath, F_OK) == 0 && read_config_legacy(confpath))
 		goto finalize;
-	}
-
-	yaml_parser_initialize(&parser);
-	yaml_parser_set_input_file(&parser, fp);
-	yaml_parser_load(&parser, &doc);
-
-	node = yaml_document_get_root_node(&doc);
-
-	if (node == NULL || node->type != YAML_MAPPING_NODE)
-		warnx("Invalid configuration format, ignoring the "
-		    "configuration file %s", confpath);
-	else
-		config_parse(&doc, node);
-
-	yaml_document_delete(&doc);
-	yaml_parser_delete(&parser);
 
 finalize:
 	if (c[ABI].val == NULL && c[ABI].value == NULL) {
