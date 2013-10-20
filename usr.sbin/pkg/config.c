@@ -560,16 +560,11 @@ config_init(void)
 
 	node = yaml_document_get_root_node(&doc);
 
-	if (node != NULL) {
-		if (node->type != YAML_MAPPING_NODE)
-			warnx("Invalid configuration format, ignoring the "
-			    "configuration file");
-		else
-			config_parse(&doc, node);
-	} else {
+	if (node == NULL || node->type != YAML_MAPPING_NODE)
 		warnx("Invalid configuration format, ignoring the "
-		    "configuration file");
-	}
+		    "configuration file %s", confpath);
+	else
+		config_parse(&doc, node);
 
 	yaml_document_delete(&doc);
 	yaml_parser_delete(&parser);
