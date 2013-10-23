@@ -30,8 +30,11 @@ __FBSDID("$FreeBSD$");
 
 #include <sys/param.h>
 #include <sys/queue.h>
+#include <sys/types.h>
+#include <sys/sbuf.h>
 #include <sys/wait.h>
 
+#define _WITH_GETLINE
 #include <archive.h>
 #include <archive_entry.h>
 #include <dirent.h>
@@ -545,34 +548,79 @@ cleanup:
 	return (ret);
 }
 
-static int
-read_dynamic(int fd, unsigned char **buf, int *buf_len)
-{
-	struct stat st;
+static struct sig_cert *
+parse_cert(int fd) {
+	int my_fd;
+	struct sig_cert *sc;
+	FILE *fp;
+	struct sbuf *buf, *sig, *cert;
+	char *line;
+	size_t linecap;
+	ssize_t linelen;
+
+	my_fd = -1;
+	sc = NULL;
+	line = NULL;
+	linecap = 0;
 
 	if (lseek(fd, 0, 0) == -1) {
 		warn("lseek");
-		return (-1);
-	}
-	if (fstat(fd, &st) == -1) {
-		warn("fstat");
-		return (-1);
-	}
-	if ((*buf = calloc(1, st.st_size)) == NULL) {
-		warn("malloc");
-		return (-1);
-	}
-	if ((*buf_len = read(fd, *buf, st.st_size)) == -1) {
-		free(*buf);
-		*buf = NULL;
-		return (-1);
+		return (NULL);
 	}
 
-	return (0);
+	/* Duplicate the fd so that fclose(3) does not close it. */
+	if ((my_fd = dup(fd)) == -1) {
+		warnx("dup");
+		return (NULL);
+	}
+
+	if ((fp = fdopen(my_fd, "rb")) == NULL) {
+		warn("fdopen");
+		close(my_fd);
+		return (NULL);
+	}
+
+	sig = sbuf_new_auto();
+	cert = sbuf_new_auto();
+
+	while ((linelen = getline(&line, &linecap, fp)) > 0) {
+		if (strcmp(line, "SIGNATURE\n") == 0) {
+			buf = sig;
+			continue;
+		} else if (strcmp(line, "CERT\n") == 0) {
+			buf = cert;
+			continue;
+		} else if (strcmp(line, "END\n") == 0) {
+			break;
+		}
+		if (buf != NULL)
+			sbuf_bcat(buf, line, linelen);
+	}
+
+	fclose(fp);
+
+	/* Trim out unrelated trailing newline */
+	sbuf_setpos(sig, sbuf_len(sig) - 1);
+
+	sbuf_finish(sig);
+	sbuf_finish(cert);
+
+	sc = calloc(1, sizeof(struct sig_cert));
+	sc->siglen = sbuf_len(sig);
+	sc->sig = calloc(1, sc->siglen);
+	memcpy(sc->sig, sbuf_data(sig), sc->siglen);
+
+	sc->certlen = sbuf_len(cert);
+	sc->cert = strdup(sbuf_data(cert));
+
+	sbuf_delete(sig);
+	sbuf_delete(cert);
+
+	return (sc);
 }
 
 static bool
-verify_signature(int fd_pkg, int fd_cert, int fd_sig)
+verify_signature(int fd_pkg, int fd_sig)
 {
 	struct fingerprint_list *trusted, *revoked;
 	struct fingerprint *fingerprint;
@@ -610,13 +658,14 @@ verify_signature(int fd_pkg, int fd_cert, int fd_sig)
 	}
 
 	/* Read certificate and signature in. */
-	sc = calloc(1, sizeof(struct sig_cert));
-
-	if ((read_dynamic(fd_cert, &sc->cert, &sc->certlen)) == -1) {
-		warnx("Error reading certificate");
+	if ((sc = parse_cert(fd_sig)) == NULL) {
+		warnx("Error parsing certificate");
 		goto cleanup;
 	}
+	/* Explicitly mark as non-trusted until proven otherwise. */
 	sc->trusted = false;
+
+	/* Parse signature and pubkey out of the certificate */
 	sha256_buf(sc->cert, sc->certlen, hash);
 
 	/* Check if this hash is revoked */
@@ -644,13 +693,8 @@ verify_signature(int fd_pkg, int fd_cert, int fd_sig)
 	}
 
 	/* Verify the signature. */
-	if ((read_dynamic(fd_sig, &sc->sig, &sc->siglen)) == -1) {
-		warnx("Error reading signature");
-		goto cleanup;
-	}
-
 	if (rsa_verify_cert(fd_pkg, sc->cert, sc->certlen, sc->sig,
-	    sc->siglen - 1) == false) {
+	    sc->siglen) == false) {
 		fprintf(stderr, "Signature is not valid\n");
 		goto cleanup;
 	}
@@ -683,19 +727,18 @@ static int
 bootstrap_pkg(void)
 {
 	FILE *config;
-	int fd_pkg, fd_sig, fd_cert;
+	int fd_pkg, fd_sig;
 	int ret;
 	char *site;
 	char url[MAXPATHLEN];
 	char conf[MAXPATHLEN];
-	char tmpcert[MAXPATHLEN];
 	char tmppkg[MAXPATHLEN];
 	char tmpsig[MAXPATHLEN];
 	const char *packagesite;
 	const char *signature_type;
 	char pkgstatic[MAXPATHLEN];
 
-	fd_cert = fd_sig = -1;
+	fd_sig = -1;
 	ret = -1;
 	config = NULL;
 
@@ -727,16 +770,6 @@ bootstrap_pkg(void)
 
 	if (signature_type != NULL &&
 	    strcasecmp(signature_type, "FINGERPRINTS") == 0) {
-		snprintf(tmpcert, MAXPATHLEN, "%s/pkg.txz.pub.XXXXXX",
-		    getenv("TMPDIR") ? getenv("TMPDIR") : _PATH_TMP);
-		snprintf(url, MAXPATHLEN, "%s/Latest/pkg.txz.pub",
-		    packagesite);
-
-		if ((fd_cert = fetch_to_fd(url, tmpcert)) == -1) {
-			fprintf(stderr, "Certificate for pkg not available.\n");
-			goto fetchfail;
-		}
-
 		snprintf(tmpsig, MAXPATHLEN, "%s/pkg.txz.sig.XXXXXX",
 		    getenv("TMPDIR") ? getenv("TMPDIR") : _PATH_TMP);
 		snprintf(url, MAXPATHLEN, "%s/Latest/pkg.txz.sig",
@@ -747,7 +780,7 @@ bootstrap_pkg(void)
 			goto fetchfail;
 		}
 
-		if (verify_signature(fd_pkg, fd_cert, fd_sig) == false)
+		if (verify_signature(fd_pkg, fd_sig) == false)
 			goto cleanup;
 	}
 
@@ -784,10 +817,6 @@ fetchfail:
 	    "ports: 'ports-mgmt/pkg'.\n");
 
 cleanup:
-	if (fd_cert != -1) {
-		close(fd_cert);
-		unlink(tmpcert);
-	}
 	if (fd_sig != -1) {
 		close(fd_sig);
 		unlink(tmpsig);
