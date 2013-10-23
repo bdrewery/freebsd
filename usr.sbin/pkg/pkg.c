@@ -237,19 +237,29 @@ static int
 bootstrap_pkg(void)
 {
 	FILE *config;
-	int fd, ret;
+	int fd_pkg, fd_sig, fd_cert;
+	int ret;
 	char *site;
 	char url[MAXPATHLEN];
 	char conf[MAXPATHLEN];
+	char tmpcert[MAXPATHLEN];
 	char tmppkg[MAXPATHLEN];
+	char tmpsig[MAXPATHLEN];
 	const char *packagesite;
+	const char *signature_type;
 	char pkgstatic[MAXPATHLEN];
 
+	fd_cert = fd_sig = -1;
 	ret = -1;
 	config = NULL;
 
 	if (config_string(PACKAGESITE, &packagesite) != 0) {
 		warnx("No PACKAGESITE defined");
+		return (-1);
+	}
+
+	if (config_string(SIGNATURE_TYPE, &signature_type) != 0) {
+		warnx("Error looking up SIGNATURE_TYPE");
 		return (-1);
 	}
 
@@ -266,10 +276,33 @@ bootstrap_pkg(void)
 	snprintf(tmppkg, MAXPATHLEN, "%s/pkg.txz.XXXXXX",
 	    getenv("TMPDIR") ? getenv("TMPDIR") : _PATH_TMP);
 
-	if ((fd = fetch_to_fd(url, tmppkg)) == -1)
+	if ((fd_pkg = fetch_to_fd(url, tmppkg)) == -1)
 		goto fetchfail;
 
-	if ((ret = extract_pkg_static(fd, pkgstatic, MAXPATHLEN)) == 0)
+	if (signature_type != NULL &&
+	    strcasecmp(signature_type, "FINGERPRINTS") == 0) {
+		snprintf(tmpcert, MAXPATHLEN, "%s/pkg.txz.pub.XXXXXX",
+		    getenv("TMPDIR") ? getenv("TMPDIR") : _PATH_TMP);
+		snprintf(url, MAXPATHLEN, "%s/Latest/pkg.txz.pub",
+		    packagesite);
+
+		if ((fd_cert = fetch_to_fd(url, tmpcert)) == -1) {
+			fprintf(stderr, "Certificate for pkg not available.\n");
+			goto fetchfail;
+		}
+
+		snprintf(tmpsig, MAXPATHLEN, "%s/pkg.txz.sig.XXXXXX",
+		    getenv("TMPDIR") ? getenv("TMPDIR") : _PATH_TMP);
+		snprintf(url, MAXPATHLEN, "%s/Latest/pkg.txz.sig",
+		    packagesite);
+
+		if ((fd_sig = fetch_to_fd(url, tmpsig)) == -1) {
+			fprintf(stderr, "Signature for pkg not available.\n");
+			goto fetchfail;
+		}
+	}
+
+	if ((ret = extract_pkg_static(fd_pkg, pkgstatic, MAXPATHLEN)) == 0)
 		ret = install_pkg_static(pkgstatic, tmppkg);
 
 	snprintf(conf, MAXPATHLEN, "%s/etc/pkg.conf",
@@ -302,7 +335,15 @@ fetchfail:
 	    "ports: 'ports-mgmt/pkg'.\n");
 
 cleanup:
-	close(fd);
+	if (fd_cert != -1) {
+		close(fd_cert);
+		unlink(tmpcert);
+	}
+	if (fd_sig != -1) {
+		close(fd_sig);
+		unlink(tmpsig);
+	}
+	close(fd_pkg);
 	unlink(tmppkg);
 
 	return (ret);

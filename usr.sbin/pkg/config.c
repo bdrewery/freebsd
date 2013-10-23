@@ -86,7 +86,14 @@ static struct config_entry c[] = {
 		"NO",
 		NULL,
 		false,
-	}
+	},
+	[SIGNATURE_TYPE] = {
+		PKG_CONFIG_STRING,
+		"SIGNATURE_TYPE",
+		NULL,
+		NULL,
+		false,
+	},
 };
 
 static const char *
@@ -509,6 +516,9 @@ config_parse(yaml_document_t *doc, yaml_node_t *node, pkg_conf_file_t conftype)
 			else if (strcasecmp(key->data.scalar.value,
 			    "mirror_type") == 0)
 				sbuf_cpy(buf, "MIRROR_TYPE");
+			else if (strcasecmp(key->data.scalar.value,
+			    "signature_type") == 0)
+				sbuf_cpy(buf, "SIGNATURE_TYPE");
 			else { /* Skip unknown entries for future use. */
 				++pair;
 				continue;

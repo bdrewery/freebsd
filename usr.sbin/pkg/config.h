@@ -37,6 +37,7 @@ typedef enum {
 	ABI,
 	MIRROR_TYPE,
 	ASSUME_ALWAYS_YES,
+	SIGNATURE_TYPE,
 	CONFIG_SIZE
 } pkg_config_key;
 
