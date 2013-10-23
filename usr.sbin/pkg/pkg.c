@@ -129,58 +129,34 @@ install_pkg_static(char *path, char *pkgpath)
 }
 
 static int
-bootstrap_pkg(void)
+fetch_to_fd(const char *url, char *path)
 {
 	struct url *u;
-	FILE *remote;
-	FILE *config;
-	char *site;
 	struct dns_srvinfo *mirrors, *current;
-	/* To store _https._tcp. + hostname + \0 */
-	char zone[MAXHOSTNAMELEN + 13];
-	char url[MAXPATHLEN];
-	char conf[MAXPATHLEN];
-	char tmppkg[MAXPATHLEN];
-	const char *packagesite, *mirror_type;
-	char buf[10240];
-	char pkgstatic[MAXPATHLEN];
-	int fd, retry, ret, max_retry;
 	struct url_stat st;
+	FILE *remote;
+	/* To store _https._tcp. + hostname + \0 */
+	int fd;
+	int retry, max_retry;
 	off_t done, r;
-	time_t now;
-	time_t last;
+	time_t now, last;
+	char buf[10240];
+	char zone[MAXHOSTNAMELEN + 13];
+	static const char *mirror_type = NULL;
 
 	done = 0;
 	last = 0;
 	max_retry = 3;
-	ret = -1;
-	remote = NULL;
-	config = NULL;
 	current = mirrors = NULL;
+	remote = NULL;
 
-	printf("Bootstrapping pkg, please wait...\n");
-
-	if (config_string(PACKAGESITE, &packagesite) != 0) {
-		warnx("No PACKAGESITE defined");
-		return (-1);
-	}
-	if (config_string(MIRROR_TYPE, &mirror_type) != 0) {
+	if (mirror_type == NULL && config_string(MIRROR_TYPE, &mirror_type)
+	    != 0) {
 		warnx("No MIRROR_TYPE defined");
 		return (-1);
 	}
 
-	/* Support pkg+http:// for PACKAGESITE which is the new format
-	   in 1.2 to avoid confusion on why http://pkg.FreeBSD.org has
-	   no A record. */
-	if (strncmp(URL_SCHEME_PREFIX, packagesite,
-	    strlen(URL_SCHEME_PREFIX)) == 0)
-		packagesite += strlen(URL_SCHEME_PREFIX);
-	snprintf(url, MAXPATHLEN, "%s/Latest/pkg.txz", packagesite);
-
-	snprintf(tmppkg, MAXPATHLEN, "%s/pkg.txz.XXXXXX",
-	    getenv("TMPDIR") ? getenv("TMPDIR") : _PATH_TMP);
-
-	if ((fd = mkstemp(tmppkg)) == -1) {
+	if ((fd = mkstemp(path)) == -1) {
 		warn("mkstemp()");
 		return (-1);
 	}
@@ -228,7 +204,7 @@ bootstrap_pkg(void)
 
 		if (write(fd, buf, r) != r) {
 			warn("write()");
-			goto cleanup;
+			goto fetchfail;
 		}
 
 		done += r;
@@ -238,6 +214,59 @@ bootstrap_pkg(void)
 	}
 
 	if (ferror(remote))
+		goto fetchfail;
+
+	goto cleanup;
+
+fetchfail:
+	if (fd != -1) {
+		close(fd);
+		fd = -1;
+		unlink(path);
+	}
+
+cleanup:
+	if (remote != NULL)
+		fclose(remote);
+
+	return fd;
+}
+
+
+static int
+bootstrap_pkg(void)
+{
+	FILE *config;
+	int fd, ret;
+	char *site;
+	char url[MAXPATHLEN];
+	char conf[MAXPATHLEN];
+	char tmppkg[MAXPATHLEN];
+	const char *packagesite;
+	char pkgstatic[MAXPATHLEN];
+
+	ret = -1;
+	config = NULL;
+
+	printf("Bootstrapping pkg, please wait...\n");
+
+	if (config_string(PACKAGESITE, &packagesite) != 0) {
+		warnx("No PACKAGESITE defined");
+		return (-1);
+	}
+
+	/* Support pkg+http:// for PACKAGESITE which is the new format
+	   in 1.2 to avoid confusion on why http://pkg.FreeBSD.org has
+	   no A record. */
+	if (strncmp(URL_SCHEME_PREFIX, packagesite,
+	    strlen(URL_SCHEME_PREFIX)) == 0)
+		packagesite += strlen(URL_SCHEME_PREFIX);
+	snprintf(url, MAXPATHLEN, "%s/Latest/pkg.txz", packagesite);
+
+	snprintf(tmppkg, MAXPATHLEN, "%s/pkg.txz.XXXXXX",
+	    getenv("TMPDIR") ? getenv("TMPDIR") : _PATH_TMP);
+
+	if ((fd = fetch_to_fd(url, tmppkg)) == -1)
 		goto fetchfail;
 
 	if ((ret = extract_pkg_static(fd, pkgstatic, MAXPATHLEN)) == 0)
@@ -273,8 +302,6 @@ fetchfail:
 	    "ports: 'ports-mgmt/pkg'.\n");
 
 cleanup:
-	if (remote != NULL)
-		fclose(remote);
 	close(fd);
 	unlink(tmppkg);
 
