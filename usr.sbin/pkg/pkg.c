@@ -48,8 +48,19 @@ __FBSDID("$FreeBSD$");
 #include <unistd.h>
 #include <yaml.h>
 
+#include <openssl/err.h>
+#include <openssl/ssl.h>
+
 #include "dns_utils.h"
 #include "config.h"
+
+struct sig_cert {
+	unsigned char *sig;
+	int siglen;
+	unsigned char *cert;
+	int certlen;
+	bool trusted;
+};
 
 typedef enum {
        HASH_UNKNOWN,
@@ -371,16 +382,206 @@ load_fingerprints(const char *path, int *count)
 	return (fingerprints);
 }
 
+static void
+sha256_hash(unsigned char hash[SHA256_DIGEST_LENGTH],
+    char out[SHA256_DIGEST_LENGTH * 2 + 1])
+{
+	int i;
+
+	for (i = 0; i < SHA256_DIGEST_LENGTH; i++)
+		sprintf(out + (i * 2), "%02x", hash[i]);
+
+	out[SHA256_DIGEST_LENGTH * 2] = '\0';
+}
+
+static void
+sha256_buf(char *buf, size_t len, char out[SHA256_DIGEST_LENGTH * 2 + 1])
+{
+	unsigned char hash[SHA256_DIGEST_LENGTH];
+	SHA256_CTX sha256;
+
+	out[0] = '\0';
+
+	SHA256_Init(&sha256);
+	SHA256_Update(&sha256, buf, len);
+	SHA256_Final(hash, &sha256);
+	sha256_hash(hash, out);
+}
+
+static int
+sha256_fd(int fd, char out[SHA256_DIGEST_LENGTH * 2 + 1])
+{
+	int my_fd;
+	FILE *fp;
+	char buffer[BUFSIZ];
+	unsigned char hash[SHA256_DIGEST_LENGTH];
+	size_t r;
+	int ret;
+	SHA256_CTX sha256;
+
+	my_fd = -1;
+	fp = NULL;
+	r = 0;
+	ret = 1;
+
+	out[0] = '\0';
+
+	/* Duplicate the fd so that fclose(3) does not close it. */
+	if ((my_fd = dup(fd)) == -1) {
+		warnx("dup");
+		goto cleanup;
+	}
+
+	if ((fp = fdopen(my_fd, "rb")) == NULL) {
+		warnx("fdopen");
+		goto cleanup;
+	}
+
+	SHA256_Init(&sha256);
+
+	while ((r = fread(buffer, 1, BUFSIZ, fp)) > 0)
+		SHA256_Update(&sha256, buffer, r);
+
+	if (ferror(fp) != 0) {
+		warnx("fread");
+		goto cleanup;
+	}
+
+	SHA256_Final(hash, &sha256);
+	sha256_hash(hash, out);
+	ret = 0;
+
+cleanup:
+	if (fp != NULL)
+		fclose(fp);
+	else if (my_fd != -1)
+		close(my_fd);
+	(void)lseek(fd, 0, SEEK_SET);
+
+	return (ret);
+}
+
+static EVP_PKEY *
+load_public_key_buf(const unsigned char *cert, int certlen)
+{
+	EVP_PKEY *pkey;
+	BIO *bp;
+	char errbuf[1024];
+
+	bp = BIO_new_mem_buf((void *)cert, certlen);
+
+	if ((pkey = PEM_read_bio_PUBKEY(bp, NULL, NULL, NULL)) == NULL)
+		warnx("%s", ERR_error_string(ERR_get_error(), errbuf));
+
+	BIO_free(bp);
+
+	return (pkey);
+}
+
+static bool
+rsa_verify_cert(int fd, const unsigned char *key, int keylen,
+    unsigned char *sig, int siglen)
+{
+	EVP_MD_CTX *mdctx;
+	EVP_PKEY *pkey;
+	char sha256[(SHA256_DIGEST_LENGTH * 2) + 2];
+	char errbuf[1024];
+	bool ret;
+
+	pkey = NULL;
+	mdctx = NULL;
+	ret = false;
+
+	/* Compute SHA256 of the package. */
+	if (lseek(fd, 0, 0) == -1) {
+		warn("lseek");
+		goto cleanup;
+	}
+	if ((sha256_fd(fd, sha256)) == -1) {
+		warnx("Error creating SHA256 hash for package");
+		goto cleanup;
+	}
+
+	if ((pkey = load_public_key_buf(key, keylen)) == NULL) {
+		warnx("Error reading public key");
+		goto cleanup;
+	}
+
+	/* Verify signature of the SHA256(pkg) is valid. */
+	printf("Verifying signature... ");
+	if ((mdctx = EVP_MD_CTX_create()) == NULL) {
+		warnx("%s", ERR_error_string(ERR_get_error(), errbuf));
+		goto error;
+	}
+
+	if (EVP_DigestVerifyInit(mdctx, NULL, EVP_sha256(), NULL, pkey) != 1) {
+		warnx("%s", ERR_error_string(ERR_get_error(), errbuf));
+		goto error;
+	}
+	if (EVP_DigestVerifyUpdate(mdctx, sha256, strlen(sha256)) != 1) {
+		warnx("%s", ERR_error_string(ERR_get_error(), errbuf));
+		goto error;
+	}
+
+	if (EVP_DigestVerifyFinal(mdctx, sig, siglen) != 1) {
+		warnx("%s", ERR_error_string(ERR_get_error(), errbuf));
+		goto error;
+	}
+
+	ret = true;
+	printf("done\n");
+	goto cleanup;
+
+error:
+	printf("failed\n");
+
+cleanup:
+	if (pkey)
+		EVP_PKEY_free(pkey);
+	if (mdctx)
+		EVP_MD_CTX_destroy(mdctx);
+	ERR_free_strings();
+
+	return (ret);
+}
+
+static int
+read_dynamic(int fd, unsigned char **buf, int *buf_len)
+{
+	struct stat st;
+
+	if (lseek(fd, 0, 0) == -1) {
+		warn("lseek");
+		return (-1);
+	}
+	if (fstat(fd, &st) == -1) {
+		warn("fstat");
+		return (-1);
+	}
+	if ((*buf = calloc(1, st.st_size)) == NULL) {
+		warn("malloc");
+		return (-1);
+	}
+	if ((*buf_len = read(fd, *buf, st.st_size)) == -1) {
+		free(*buf);
+		*buf = NULL;
+		return (-1);
+	}
+
+	return (0);
+}
 
 static bool
 verify_signature(int fd_pkg, int fd_cert, int fd_sig)
 {
 	struct fingerprint_list *trusted, *revoked;
 	struct fingerprint *fingerprint;
+	struct sig_cert *sc;
 	bool ret;
 	int trusted_count, revoked_count;
 	const char *fingerprints;
 	char path[MAXPATHLEN];
+	char hash[SHA256_DIGEST_LENGTH * 2 + 1];
 
 	trusted = revoked = NULL;
 	ret = false;
@@ -442,8 +643,15 @@ verify_signature(int fd_pkg, int fd_cert, int fd_sig)
 		goto cleanup;
 	}
 
+	/* Verify the signature. */
 	if ((read_dynamic(fd_sig, &sc->sig, &sc->siglen)) == -1) {
 		warnx("Error reading signature");
+		goto cleanup;
+	}
+
+	if (rsa_verify_cert(fd_pkg, sc->cert, sc->certlen, sc->sig,
+	    sc->siglen - 1) == false) {
+		fprintf(stderr, "Signature is not valid\n");
 		goto cleanup;
 	}
 
