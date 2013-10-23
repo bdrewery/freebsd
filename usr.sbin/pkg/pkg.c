@@ -1,5 +1,6 @@
 /*-
  * Copyright (c) 2012-2013 Baptiste Daroussin <bapt@FreeBSD.org>
+ * Copyright (c) 2013 Bryan Drewery <bdrewery@FreeBSD.org>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -28,10 +29,12 @@
 __FBSDID("$FreeBSD$");
 
 #include <sys/param.h>
+#include <sys/queue.h>
 #include <sys/wait.h>
 
 #include <archive.h>
 #include <archive_entry.h>
+#include <dirent.h>
 #include <err.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -43,9 +46,23 @@ __FBSDID("$FreeBSD$");
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
+#include <yaml.h>
 
 #include "dns_utils.h"
 #include "config.h"
+
+typedef enum {
+       HASH_UNKNOWN,
+       HASH_SHA256,
+} hash_t;
+
+struct fingerprint {
+       hash_t type;
+       char hash[BUFSIZ];
+       STAILQ_ENTRY(fingerprint) next;
+};
+
+STAILQ_HEAD(fingerprint_list, fingerprint);
 
 static int
 extract_pkg_static(int fd, char *p, int sz)
@@ -232,6 +249,227 @@ cleanup:
 	return fd;
 }
 
+static struct fingerprint *
+parse_fingerprint(yaml_document_t *doc, yaml_node_t *node)
+{
+	yaml_node_pair_t *pair;
+	yaml_char_t *function, *fp;
+	struct fingerprint *f;
+	hash_t fct = HASH_UNKNOWN;
+
+	function = fp = NULL;
+
+	pair = node->data.mapping.pairs.start;
+	while (pair < node->data.mapping.pairs.top) {
+		yaml_node_t *key = yaml_document_get_node(doc, pair->key);
+		yaml_node_t *val = yaml_document_get_node(doc, pair->value);
+
+		if (key->data.scalar.length <= 0) {
+			++pair;
+			continue;
+		}
+
+		if (val->type != YAML_SCALAR_NODE) {
+			++pair;
+			continue;
+		}
+
+		if (strcasecmp(key->data.scalar.value, "function") == 0)
+			function = val->data.scalar.value;
+		else if (strcasecmp(key->data.scalar.value, "fingerprint")
+		    == 0)
+			fp = val->data.scalar.value;
+
+		++pair;
+		continue;
+	}
+
+	if (fp == NULL || function == NULL)
+		return (NULL);
+
+	if (strcasecmp(function, "sha256") == 0)
+		fct = HASH_SHA256;
+
+	if (fct == HASH_UNKNOWN) {
+		fprintf(stderr, "Unsupported hashing function: %s\n", function);
+		return (NULL);
+	}
+
+	f = calloc(1, sizeof(struct fingerprint));
+	f->type = fct;
+	strlcpy(f->hash, fp, sizeof(f->hash));
+
+	return (f);
+}
+
+static struct fingerprint *
+load_fingerprint(const char *dir, const char *filename)
+{
+	yaml_parser_t parser;
+	yaml_document_t doc;
+	yaml_node_t *node;
+	FILE *fp;
+	struct fingerprint *f;
+	char path[MAXPATHLEN];
+
+	f = NULL;
+
+	snprintf(path, MAXPATHLEN, "%s/%s", dir, filename);
+
+	if ((fp = fopen(path, "r")) == NULL)
+		return (NULL);
+
+	yaml_parser_initialize(&parser);
+	yaml_parser_set_input_file(&parser, fp);
+	yaml_parser_load(&parser, &doc);
+
+	node = yaml_document_get_root_node(&doc);
+	if (node == NULL || node->type != YAML_MAPPING_NODE)
+		goto out;
+
+	f = parse_fingerprint(&doc, node);
+
+out:
+	yaml_document_delete(&doc);
+	yaml_parser_delete(&parser);
+	fclose(fp);
+
+	return (f);
+}
+
+static struct fingerprint_list *
+load_fingerprints(const char *path, int *count)
+{
+	DIR *d;
+	struct dirent *ent;
+	struct fingerprint *finger;
+	struct fingerprint_list *fingerprints;
+
+	*count = 0;
+
+	fingerprints = calloc(1, sizeof(struct fingerprint_list));
+	if (fingerprints == NULL)
+		return (NULL);
+	STAILQ_INIT(fingerprints);
+
+	if ((d = opendir(path)) == NULL)
+		return (NULL);
+
+	while ((ent = readdir(d))) {
+		if (strcmp(ent->d_name, ".") == 0 ||
+		    strcmp(ent->d_name, "..") == 0)
+			continue;
+		finger = load_fingerprint(path, ent->d_name);
+		if (finger != NULL) {
+			STAILQ_INSERT_TAIL(fingerprints, finger, next);
+			++(*count);
+		}
+	}
+
+	closedir(d);
+
+	return (fingerprints);
+}
+
+
+static bool
+verify_signature(int fd_pkg, int fd_cert, int fd_sig)
+{
+	struct fingerprint_list *trusted, *revoked;
+	struct fingerprint *fingerprint;
+	bool ret;
+	int trusted_count, revoked_count;
+	const char *fingerprints;
+	char path[MAXPATHLEN];
+
+	trusted = revoked = NULL;
+	ret = false;
+
+	/* Read and parse fingerprints. */
+	if (config_string(FINGERPRINTS, &fingerprints) != 0) {
+		warnx("No CONFIG_FINGERPRINTS defined");
+		goto cleanup;
+	}
+
+	snprintf(path, MAXPATHLEN, "%s/trusted", fingerprints);
+	if ((trusted = load_fingerprints(path, &trusted_count)) == NULL) {
+		warnx("Error loading trusted certificates");
+		goto cleanup;
+	}
+
+	if (trusted_count == 0 || trusted == NULL) {
+		fprintf(stderr, "No trusted certificates found.\n");
+		goto cleanup;
+	}
+
+	snprintf(path, MAXPATHLEN, "%s/revoked", fingerprints);
+	if ((revoked = load_fingerprints(path, &revoked_count)) == NULL) {
+		warnx("Error loading revoked certificates");
+		goto cleanup;
+	}
+
+	/* Read certificate and signature in. */
+	sc = calloc(1, sizeof(struct sig_cert));
+
+	if ((read_dynamic(fd_cert, &sc->cert, &sc->certlen)) == -1) {
+		warnx("Error reading certificate");
+		goto cleanup;
+	}
+	sc->trusted = false;
+	sha256_buf(sc->cert, sc->certlen, hash);
+
+	/* Check if this hash is revoked */
+	if (revoked != NULL) {
+		STAILQ_FOREACH(fingerprint, revoked, next) {
+			if (strcasecmp(fingerprint->hash, hash) == 0) {
+				fprintf(stderr, "The certificate has been "
+				    "revoked\n");
+				goto cleanup;
+			}
+		}
+	}
+
+	STAILQ_FOREACH(fingerprint, trusted, next) {
+		if (strcasecmp(fingerprint->hash, hash) == 0) {
+			sc->trusted = true;
+			break;
+		}
+	}
+
+	if (sc->trusted == false) {
+		fprintf(stderr, "No trusted certificate found matching "
+		    "package's certificate\n");
+		goto cleanup;
+	}
+
+	if ((read_dynamic(fd_sig, &sc->sig, &sc->siglen)) == -1) {
+		warnx("Error reading signature");
+		goto cleanup;
+	}
+
+	ret = true;
+
+cleanup:
+	if (trusted) {
+		STAILQ_FOREACH(fingerprint, trusted, next)
+		    free(fingerprint);
+		free(trusted);
+	}
+	if (revoked) {
+		STAILQ_FOREACH(fingerprint, revoked, next)
+		    free(fingerprint);
+		free(revoked);
+	}
+	if (sc) {
+		if (sc->cert)
+			free(sc->cert);
+		if (sc->sig)
+			free(sc->sig);
+		free(sc);
+	}
+
+	return (ret);
+}
 
 static int
 bootstrap_pkg(void)
@@ -300,6 +538,9 @@ bootstrap_pkg(void)
 			fprintf(stderr, "Signature for pkg not available.\n");
 			goto fetchfail;
 		}
+
+		if (verify_signature(fd_pkg, fd_cert, fd_sig) == false)
+			goto cleanup;
 	}
 
 	if ((ret = extract_pkg_static(fd_pkg, pkgstatic, MAXPATHLEN)) == 0)

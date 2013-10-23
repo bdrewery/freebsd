@@ -38,6 +38,7 @@ typedef enum {
 	MIRROR_TYPE,
 	ASSUME_ALWAYS_YES,
 	SIGNATURE_TYPE,
+	FINGERPRINTS,
 	CONFIG_SIZE
 } pkg_config_key;
 
