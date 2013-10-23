@@ -248,12 +248,12 @@ bootstrap_pkg(void)
 	ret = -1;
 	config = NULL;
 
-	printf("Bootstrapping pkg, please wait...\n");
-
 	if (config_string(PACKAGESITE, &packagesite) != 0) {
 		warnx("No PACKAGESITE defined");
 		return (-1);
 	}
+
+	printf("Bootstrapping pkg from %s, please wait...\n", packagesite);
 
 	/* Support pkg+http:// for PACKAGESITE which is the new format
 	   in 1.2 to avoid confusion on why http://pkg.FreeBSD.org has
