@@ -474,6 +474,23 @@ subst_packagesite(const char *abi)
 	c[PACKAGESITE].value = strdup(sbuf_data(newval));
 }
 
+static int
+boolstr_to_int(const char *str)
+{
+	if (strcasecmp(str, "off") == 0 ||
+	    strcasecmp(str, "no") == 0 ||
+	    strcasecmp(str, "false") == 0 ||
+	    str[0] == '0')
+		return (0);
+	return (1);
+}
+
+/*-
+ * Parse old style pkg.conf files in format:
+ * PACKAGESITE:
+ * MIRROR_TYPE:
+ * etc...
+ */
 static void
 config_parse(yaml_document_t *doc, yaml_node_t *node, pkg_conf_file_t conftype)
 {
@@ -522,6 +539,13 @@ config_parse(yaml_document_t *doc, yaml_node_t *node, pkg_conf_file_t conftype)
 			if (strcasecmp(key->data.scalar.value, "url") == 0)
 				sbuf_cpy(buf, "PACKAGESITE");
 			else if (strcasecmp(key->data.scalar.value,
+			    "enabled") == 0) {
+				/* Skip disabled repos. */
+				if (!boolstr_to_int(val->data.scalar.value)) {
+					++pair;
+					continue;
+				}
+			} else if (strcasecmp(key->data.scalar.value,
 			    "mirror_type") == 0)
 				sbuf_cpy(buf, "MIRROR_TYPE");
 			else if (strcasecmp(key->data.scalar.value,
@@ -601,6 +625,7 @@ read_conf_file(const char *confpath, pkg_conf_file_t conftype)
 	yaml_parser_t parser;
 	yaml_document_t doc;
 	yaml_node_t *node;
+	int err;
 
 	if ((fp = fopen(confpath, "r")) == NULL) {
 		if (errno != ENOENT)
@@ -616,20 +641,33 @@ read_conf_file(const char *confpath, pkg_conf_file_t conftype)
 
 	node = yaml_document_get_root_node(&doc);
 
+	err = 0;
+
 	if (node == NULL || node->type != YAML_MAPPING_NODE)
 		warnx("Invalid configuration format, ignoring the "
 		    "configuration file %s", confpath);
 	else {
-		if (conftype == CONFFILE_PKG)
-			config_parse(&doc, node, conftype);
-		else if (conftype == CONFFILE_REPO)
-			parse_repo_file(&doc, node);
+		if (conftype == CONFFILE_PKG) {
+			if (config_parse(&doc, node, conftype)) {
+				/* Repo is disabled. */
+				err = 1;
+				goto done;
+			}
+		} else if (conftype == CONFFILE_REPO) {
+			if (parse_repo_file(&doc, node)) {
+				/* Repo is disabled. */
+				err = 1;
+				goto done;
+			}
+		}
 	}
+
+done:
 
 	yaml_document_delete(&doc);
 	yaml_parser_delete(&parser);
 
-	return (0);
+	return (err);
 }
 
 int
@@ -649,13 +687,16 @@ config_init(void)
 		}
 	}
 
+	/* Read LOCALBASE/etc/pkg.conf first. */
 	localbase = getenv("LOCALBASE") ? getenv("LOCALBASE") : _LOCALBASE;
 	snprintf(confpath, sizeof(confpath), "%s/etc/pkg.conf",
 	    localbase);
 
-	if (access(confpath, F_OK) == 0 && read_conf_file(confpath,
-	    CONFFILE_PKG))
-		goto finalize;
+	if (access(confpath, F_OK) == 0)
+		if (read_conf_file(confpath, CONFFILE_PKG) == 0)
+			goto finalize;
+
+	/* If it is missing or unusable, fallback on /etc/pkg.conf. */
 
 	snprintf(confpath, sizeof(confpath), "/etc/pkg/FreeBSD.conf");
 	if (access(confpath, F_OK) == 0 && read_conf_file(confpath,
