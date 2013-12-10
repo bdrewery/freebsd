@@ -32,8 +32,10 @@ __FBSDID("$FreeBSD$");
 #include <sys/sbuf.h>
 #include <sys/elf_common.h>
 #include <sys/endian.h>
+#include <sys/types.h>
 
 #include <assert.h>
+#include <dirent.h>
 #include <yaml.h>
 #include <ctype.h>
 #include <err.h>
@@ -98,6 +100,13 @@ static struct config_entry c[] = {
 	[FINGERPRINTS] = {
 		PKG_CONFIG_STRING,
 		"FINGERPRINTS",
+		NULL,
+		NULL,
+		false,
+	},
+	[REPOS_DIR] = {
+		PKG_CONFIG_STRING,
+		"REPOS_DIR",
 		NULL,
 		NULL,
 		false,
@@ -632,6 +641,45 @@ read_conf_file(const char *confpath, pkg_conf_file_t conftype)
 	return (0);
 }
 
+static int
+load_repositories(const char *repodir)
+{
+	struct dirent *ent;
+	DIR *d;
+	char *p;
+	size_t n;
+	char path[MAXPATHLEN];
+	int ret;
+
+	ret = 0;
+
+	if ((d = opendir(repodir)) == NULL)
+		return (1);
+
+	while ((ent = readdir(d))) {
+		/* Trim out 'repos'. */
+		if ((n = strlen(ent->d_name)) <= 5)
+			continue;
+		p = &ent->d_name[n - 5];
+		if (strcmp(p, ".conf") == 0) {
+			snprintf(path, sizeof(path), "%s%s%s",
+			    repodir,
+			    repodir[strlen(repodir) - 1] == '/' ? "" : "/",
+			    ent->d_name);
+			if (access(path, F_OK) == 0 &&
+			    read_conf_file(path, CONFFILE_REPO)) {
+				ret = 1;
+				goto cleanup;
+			}
+		}
+	}
+
+cleanup:
+	closedir(d);
+
+	return (ret);
+}
+
 int
 config_init(void)
 {
@@ -639,7 +687,11 @@ config_init(void)
 	int i;
 	const char *localbase;
 	char confpath[MAXPATHLEN];
+	const char *repos_dir, *repo_dir;
+	char *repos_dir_dup;
 	char abi[BUFSIZ];
+
+	repos_dir_dup = NULL;
 
 	for (i = 0; i < CONFIG_SIZE; i++) {
 		val = getenv(c[i].key);
@@ -649,6 +701,7 @@ config_init(void)
 		}
 	}
 
+	/* Read LOCALBASE/etc/pkg.conf first. */
 	localbase = getenv("LOCALBASE") ? getenv("LOCALBASE") : _LOCALBASE;
 	snprintf(confpath, sizeof(confpath), "%s/etc/pkg.conf",
 	    localbase);
@@ -657,12 +710,23 @@ config_init(void)
 	    CONFFILE_PKG))
 		goto finalize;
 
-	snprintf(confpath, sizeof(confpath), "/etc/pkg/FreeBSD.conf");
-	if (access(confpath, F_OK) == 0 && read_conf_file(confpath,
-	    CONFFILE_REPO))
+	/* Then read in all repos from REPOS_DIR list of directories. */
+	if (c[REPOS_DIR].value == NULL && c[REPOS_DIR].val == NULL)
+		if (asprintf(&c[REPOS_DIR].value, "/etc/pkg,%s/etc/pkg/repos",
+		    localbase) < 0)
+			goto finalize;
+	if (config_string(REPOS_DIR, &repos_dir) != 0)
 		goto finalize;
 
+	repos_dir_dup = strdup(repos_dir);
+
+	for (repo_dir = strtok(repos_dir_dup, ","); repo_dir != NULL;
+	    repo_dir = strtok(NULL, ","))
+		if (load_repositories(repo_dir))
+			goto finalize;
+
 finalize:
+	free(repos_dir_dup);
 	if (c[ABI].val == NULL && c[ABI].value == NULL) {
 		if (pkg_get_myabi(abi, BUFSIZ) != 0)
 			errx(EXIT_FAILURE, "Failed to determine the system "

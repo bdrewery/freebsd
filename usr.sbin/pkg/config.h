@@ -39,6 +39,7 @@ typedef enum {
 	ASSUME_ALWAYS_YES,
 	SIGNATURE_TYPE,
 	FINGERPRINTS,
+	REPOS_DIR,
 	CONFIG_SIZE
 } pkg_config_key;
 
