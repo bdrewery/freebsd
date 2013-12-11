@@ -483,16 +483,31 @@ subst_packagesite(const char *abi)
 	c[PACKAGESITE].value = strdup(sbuf_data(newval));
 }
 
+static int
+boolstr_to_bool(const char *str)
+{
+	if (str != NULL && (strcasecmp(str, "true") == 0 ||
+	    strcasecmp(str, "yes") == 0 || strcasecmp(str, "on") == 0 ||
+	    str[0] == '1'))
+		return (true);
+
+	return (false);
+}
+
 static void
 config_parse(yaml_document_t *doc, yaml_node_t *node, pkg_conf_file_t conftype)
 {
 	yaml_node_pair_t *pair;
 	yaml_node_t *key, *val;
 	struct sbuf *buf = sbuf_new_auto();
+	struct config_entry *temp_config;
 	int i;
 	size_t j;
 
 	pair = node->data.mapping.pairs.start;
+
+	/* Temporary config for configs that may be disabled. */
+	temp_config = calloc(CONFIG_SIZE, sizeof(struct config_entry));
 
 	while (pair < node->data.mapping.pairs.top) {
 		key = yaml_document_get_node(doc, pair->key);
@@ -539,7 +554,12 @@ config_parse(yaml_document_t *doc, yaml_node_t *node, pkg_conf_file_t conftype)
 			else if (strcasecmp(key->data.scalar.value,
 			    "fingerprints") == 0)
 				sbuf_cpy(buf, "FINGERPRINTS");
-			else { /* Skip unknown entries for future use. */
+			else if (strcasecmp(key->data.scalar.value,
+			    "enabled") == 0) {
+				/* Skip disabled repos. */
+				if (!boolstr_to_bool(val->data.scalar.value))
+					goto cleanup;
+			} else { /* Skip unknown entries for future use. */
 				++pair;
 				continue;
 			}
@@ -563,10 +583,16 @@ config_parse(yaml_document_t *doc, yaml_node_t *node, pkg_conf_file_t conftype)
 			continue;
 		}
 
-		c[i].value = strdup(val->data.scalar.value);
+		temp_config[i].value = strdup(val->data.scalar.value);
 		++pair;
 	}
 
+	/* Repo is enabled, copy over all settings from temp_config. */
+	for (i = 0; i < CONFIG_SIZE; i++)
+		c[i].value = temp_config[i].value;
+
+cleanup:
+	free(temp_config);
 	sbuf_delete(buf);
 }
 
@@ -768,10 +794,7 @@ config_bool(pkg_config_key k, bool *val)
 	else
 		value = c[k].val;
 
-	if (strcasecmp(value, "true") == 0 ||
-	    strcasecmp(value, "yes") == 0 ||
-	    strcasecmp(value, "on") == 0 ||
-	    *value == '1')
+	if (boolstr_to_bool(value))
 		*val = true;
 
 	return (0);
