@@ -53,11 +53,17 @@ __FBSDID("$FreeBSD$");
 
 #define roundup2(x, y)	(((x)+((y)-1))&(~((y)-1))) /* if y is powers of two */
 
+struct config_value {
+       char *value;
+       STAILQ_ENTRY(config_value) next;
+};
+
 struct config_entry {
 	uint8_t type;
 	const char *key;
 	const char *val;
 	char *value;
+	STAILQ_HEAD(, config_value) *list;
 	bool envset;
 };
 
@@ -67,11 +73,13 @@ static struct config_entry c[] = {
 		"PACKAGESITE",
 		URL_SCHEME_PREFIX "http://pkg.FreeBSD.org/${ABI}/latest",
 		NULL,
+		NULL,
 		false,
 	},
 	[ABI] = {
 		PKG_CONFIG_STRING,
 		"ABI",
+		NULL,
 		NULL,
 		NULL,
 		false,
@@ -81,6 +89,7 @@ static struct config_entry c[] = {
 		"MIRROR_TYPE",
 		"SRV",
 		NULL,
+		NULL,
 		false,
 	},
 	[ASSUME_ALWAYS_YES] = {
@@ -88,11 +97,13 @@ static struct config_entry c[] = {
 		"ASSUME_ALWAYS_YES",
 		"NO",
 		NULL,
+		NULL,
 		false,
 	},
 	[SIGNATURE_TYPE] = {
 		PKG_CONFIG_STRING,
 		"SIGNATURE_TYPE",
+		NULL,
 		NULL,
 		NULL,
 		false,
@@ -102,11 +113,13 @@ static struct config_entry c[] = {
 		"FINGERPRINTS",
 		NULL,
 		NULL,
+		NULL,
 		false,
 	},
 	[REPOS_DIR] = {
-		PKG_CONFIG_STRING,
+		PKG_CONFIG_LIST,
 		"REPOS_DIR",
+		NULL,
 		NULL,
 		NULL,
 		false,
@@ -497,10 +510,12 @@ boolstr_to_bool(const char *str)
 static void
 config_parse(yaml_document_t *doc, yaml_node_t *node, pkg_conf_file_t conftype)
 {
+	yaml_node_item_t *item;
 	yaml_node_pair_t *pair;
-	yaml_node_t *key, *val;
+	yaml_node_t *key, *val, *item_val;
 	struct sbuf *buf = sbuf_new_auto();
 	struct config_entry *temp_config;
+	struct config_value *cv;
 	int i;
 	size_t j;
 
@@ -583,13 +598,48 @@ config_parse(yaml_document_t *doc, yaml_node_t *node, pkg_conf_file_t conftype)
 			continue;
 		}
 
-		temp_config[i].value = strdup(val->data.scalar.value);
+		/* Parse sequence value ["item1", "item2"] */
+		if (strcasecmp(key->data.scalar.value, "repos_dir") == 0) {
+			if (val->type != YAML_SEQUENCE_NODE) {
+				fprintf(stderr, "Skipping invalid REPOS_DIR "
+				    "value.\n");
+				++pair;
+				continue;
+			}
+			item = val->data.sequence.items.start;
+			temp_config[i].list =
+			    malloc(sizeof(*temp_config[i].list));
+			STAILQ_INIT(temp_config[i].list);
+
+			while (item < val->data.sequence.items.top) {
+				item_val = yaml_document_get_node(doc, *item);
+				if (item_val->type != YAML_SCALAR_NODE) {
+					++item;
+					continue;
+				}
+				cv = malloc(sizeof(struct config_value));
+				cv->value =
+				    strdup(item_val->data.scalar.value);
+				STAILQ_INSERT_TAIL(temp_config[i].list, cv,
+				    next);
+				++item;
+			}
+		} else /* Normal string value. */
+			temp_config[i].value = strdup(val->data.scalar.value);
 		++pair;
 	}
 
 	/* Repo is enabled, copy over all settings from temp_config. */
-	for (i = 0; i < CONFIG_SIZE; i++)
-		c[i].value = temp_config[i].value;
+	for (i = 0; i < CONFIG_SIZE; i++) {
+		switch (c[i].type) {
+		case PKG_CONFIG_LIST:
+			c[i].list = temp_config[i].list;
+			break;
+		default:
+			c[i].value = temp_config[i].value;
+			break;
+		}
+	}
 
 cleanup:
 	free(temp_config);
@@ -713,11 +763,8 @@ config_init(void)
 	int i;
 	const char *localbase;
 	char confpath[MAXPATHLEN];
-	const char *repos_dir, *repo_dir;
-	char *repos_dir_dup;
+	struct config_value *cv;
 	char abi[BUFSIZ];
-
-	repos_dir_dup = NULL;
 
 	for (i = 0; i < CONFIG_SIZE; i++) {
 		val = getenv(c[i].key);
@@ -737,22 +784,23 @@ config_init(void)
 		goto finalize;
 
 	/* Then read in all repos from REPOS_DIR list of directories. */
-	if (c[REPOS_DIR].value == NULL && c[REPOS_DIR].val == NULL)
-		if (asprintf(&c[REPOS_DIR].value, "/etc/pkg,%s/etc/pkg/repos",
-		    localbase) < 0)
+	if (c[REPOS_DIR].list == NULL) {
+		c[REPOS_DIR].list = malloc(sizeof(*c[REPOS_DIR].list));
+		STAILQ_INIT(c[REPOS_DIR].list);
+		cv = malloc(sizeof(struct config_value));
+		cv->value = strdup("/etc/pkg");
+		STAILQ_INSERT_TAIL(c[REPOS_DIR].list, cv, next);
+		cv = malloc(sizeof(struct config_value));
+		if (asprintf(&cv->value, "%s/etc/pkg/repos", localbase) < 0)
 			goto finalize;
-	if (config_string(REPOS_DIR, &repos_dir) != 0)
-		goto finalize;
+		STAILQ_INSERT_TAIL(c[REPOS_DIR].list, cv, next);
+	}
 
-	repos_dir_dup = strdup(repos_dir);
-
-	for (repo_dir = strtok(repos_dir_dup, ","); repo_dir != NULL;
-	    repo_dir = strtok(NULL, ","))
-		if (load_repositories(repo_dir))
+	STAILQ_FOREACH(cv, c[REPOS_DIR].list, next)
+		if (load_repositories(cv->value))
 			goto finalize;
 
 finalize:
-	free(repos_dir_dup);
 	if (c[ABI].val == NULL && c[ABI].value == NULL) {
 		if (pkg_get_myabi(abi, BUFSIZ) != 0)
 			errx(EXIT_FAILURE, "Failed to determine the system "
