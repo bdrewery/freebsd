@@ -631,6 +631,8 @@ config_parse(yaml_document_t *doc, yaml_node_t *node, pkg_conf_file_t conftype)
 
 	/* Repo is enabled, copy over all settings from temp_config. */
 	for (i = 0; i < CONFIG_SIZE; i++) {
+		if (c[i].envset)
+			continue;
 		switch (c[i].type) {
 		case PKG_CONFIG_LIST:
 			c[i].list = temp_config[i].list;
@@ -759,9 +761,10 @@ cleanup:
 int
 config_init(void)
 {
-	const char *val;
+	char *val;
 	int i;
 	const char *localbase;
+	char *env_list_item;
 	char confpath[MAXPATHLEN];
 	struct config_value *cv;
 	char abi[BUFSIZ];
@@ -769,8 +772,27 @@ config_init(void)
 	for (i = 0; i < CONFIG_SIZE; i++) {
 		val = getenv(c[i].key);
 		if (val != NULL) {
-			c[i].val = val;
 			c[i].envset = true;
+			switch (c[i].type) {
+			case PKG_CONFIG_LIST:
+				/* Split up comma-separated items from env. */
+				c[i].list = malloc(sizeof(*c[i].list));
+				STAILQ_INIT(c[i].list);
+				for (env_list_item = strtok(val, ",");
+				    env_list_item != NULL;
+				    env_list_item = strtok(NULL, ",")) {
+					cv =
+					    malloc(sizeof(struct config_value));
+					cv->value =
+					    strdup(env_list_item);
+					STAILQ_INSERT_TAIL(c[i].list, cv,
+					    next);
+				}
+				break;
+			default:
+				c[i].val = val;
+				break;
+			}
 		}
 	}
 
