@@ -599,10 +599,11 @@ config_parse(yaml_document_t *doc, yaml_node_t *node, pkg_conf_file_t conftype)
 		}
 
 		/* Parse sequence value ["item1", "item2"] */
-		if (strcasecmp(key->data.scalar.value, "repos_dir") == 0) {
+		switch (c[i].type) {
+		case PKG_CONFIG_LIST:
 			if (val->type != YAML_SEQUENCE_NODE) {
-				fprintf(stderr, "Skipping invalid REPOS_DIR "
-				    "value.\n");
+				fprintf(stderr, "Skipping invalid array "
+				    "value for %s.\n", c[i].key);
 				++pair;
 				continue;
 			}
@@ -624,8 +625,12 @@ config_parse(yaml_document_t *doc, yaml_node_t *node, pkg_conf_file_t conftype)
 				    next);
 				++item;
 			}
-		} else /* Normal string value. */
+			break;
+		default:
+			/* Normal string value. */
 			temp_config[i].value = strdup(val->data.scalar.value);
+			break;
+		}
 		++pair;
 	}
 
