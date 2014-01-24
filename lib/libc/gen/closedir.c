@@ -53,6 +53,11 @@ fdclosedir(DIR *dirp)
 {
 	int fd;
 
+	if (dirp == NULL) {
+		errno = EBADF;
+		return (-1);
+	}
+
 	if (__isthreaded)
 		_pthread_mutex_lock(&dirp->dd_lock);
 	fd = dirp->dd_fd;
@@ -71,6 +76,10 @@ fdclosedir(DIR *dirp)
 int
 closedir(DIR *dirp)
 {
+	int fd;
 
-	return (_close(fdclosedir(dirp)));
+	if ((fd = fdclosedir(dirp)) == -1)
+		return (-1);
+
+	return (_close(fd));
 }
