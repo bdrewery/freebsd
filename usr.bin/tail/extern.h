@@ -56,7 +56,7 @@ typedef struct file_info file_info_t;
 
 enum STYLE { NOTSET = 0, FBYTES, FLINES, RBYTES, RLINES, REVERSE };
 
-void follow(file_info_t *, enum STYLE, off_t);
+void follow(file_info_t *, enum STYLE, off_t, pid_t);
 void forward(FILE *, const char *, enum STYLE, off_t, struct stat *);
 void reverse(FILE *, const char *, enum STYLE, off_t, struct stat *);
 

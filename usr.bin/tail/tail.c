@@ -49,6 +49,7 @@ static const char sccsid[] = "@(#)tail.c	8.1 (Berkeley) 6/6/93";
 
 #include <err.h>
 #include <errno.h>
+#include <getopt.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -63,6 +64,17 @@ static file_info_t *files;
 static void obsolete(char **);
 static void usage(void);
 
+enum options
+{
+	OPTION_PID,
+};
+
+static struct option const longopts[] =
+{
+	{"pid",	required_argument,	NULL,	OPTION_PID},
+	{NULL,	0,			NULL,	0},
+};
+
 int
 main(int argc, char *argv[])
 {
@@ -73,6 +85,7 @@ main(int argc, char *argv[])
 	enum STYLE style;
 	int i, ch, first;
 	file_info_t *file;
+	pid_t pid;
 	char *p;
 
 	/*
@@ -111,7 +124,9 @@ main(int argc, char *argv[])
 	obsolete(argv);
 	style = NOTSET;
 	off = 0;
-	while ((ch = getopt(argc, argv, "Fb:c:fn:qr")) != -1)
+	pid = 0;
+	while ((ch = getopt_long(argc, argv, "Fb:c:fn:qr", longopts,
+	    NULL)) != -1)
 		switch(ch) {
 		case 'F':	/* -F is superset of (and implies) -f */
 			Fflag = fflag = 1;
@@ -134,6 +149,11 @@ main(int argc, char *argv[])
 		case 'r':
 			rflag = 1;
 			break;
+		case OPTION_PID:
+			pid = strtol(optarg, &p, 10);
+			if (*p || (pid == 0 && errno))
+				errx(1, "Invalid pid -- %s", optarg);
+			break;
 		case '?':
 		default:
 			usage();
@@ -142,6 +162,9 @@ main(int argc, char *argv[])
 	argv += optind;
 
 	no_files = argc ? argc : 1;
+
+	if (pid && !fflag)
+		errx(1, "--pid requires -f or -F");
 
 	/*
 	 * If displaying in reverse, don't permit follow option, and convert
@@ -190,7 +213,7 @@ main(int argc, char *argv[])
 					ierr(file->file_name);
 			}
 		}
-		follow(files, style, off);
+		follow(files, style, off, pid);
 		for (i = 0, file = files; i < no_files; i++, file++) {
 		    free(file->file_name);
 		}
@@ -330,7 +353,7 @@ static void
 usage(void)
 {
 	(void)fprintf(stderr,
-	    "usage: tail [-F | -f | -r] [-q] [-b # | -c # | -n #]"
+	    "usage: tail [-F | -f | -r] [-q] [-b # | -c # | -n #] [--pid PID]"
 	    " [file ...]\n");
 	exit(1);
 }

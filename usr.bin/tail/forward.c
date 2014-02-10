@@ -59,7 +59,7 @@ static const char sccsid[] = "@(#)forward.c	8.1 (Berkeley) 6/6/93";
 
 static void rlines(FILE *, const char *fn, off_t, struct stat *);
 static int show(file_info_t *);
-static void set_events(file_info_t *files);
+static void set_events(file_info_t *files, pid_t pid);
 
 /* defines for inner loop actions */
 #define USE_SLEEP	0
@@ -240,6 +240,7 @@ show(file_info_t *file)
 {
 	int ch;
 
+	printf("Reading %s\n", file->file_name);
 	while ((ch = getc(file->fp)) != EOF) {
 		if (last != file && no_files > 1) {
 			if (!qflag)
@@ -249,6 +250,7 @@ show(file_info_t *file)
 		if (putchar(ch) == EOF)
 			oerr();
 	}
+	printf("Flushing\n");
 	(void)fflush(stdout);
 	if (ferror(file->fp)) {
 		fclose(file->fp);
@@ -261,7 +263,7 @@ show(file_info_t *file)
 }
 
 static void
-set_events(file_info_t *files)
+set_events(file_info_t *files, pid_t pid)
 {
 	int i, n = 0;
 	file_info_t *file;
@@ -272,6 +274,11 @@ set_events(file_info_t *files)
 	ts.tv_nsec = 0;
 
 	action = USE_KQUEUE;
+	if (pid) {
+		EV_SET(&ev[n], pid, EVFILT_PROC,
+		    EV_ADD | EV_ENABLE | EV_ONESHOT, NOTE_EXIT, 0, NULL);
+		n++;
+	}
 	for (i = 0, file = files; i < no_files; i++, file++) {
 		if (! file->fp)
 			continue;
@@ -303,9 +310,9 @@ set_events(file_info_t *files)
  *
  */
 void
-follow(file_info_t *files, enum STYLE style, off_t off)
+follow(file_info_t *files, enum STYLE style, off_t off, pid_t pid)
 {
-	int active, ev_change, i, n = -1;
+	int active, ev_change, i, n, should_exit;
 	struct stat sb2;
 	file_info_t *file;
 	struct timespec ts;
@@ -315,6 +322,7 @@ follow(file_info_t *files, enum STYLE style, off_t off)
 	file = files;
 	active = 0;
 	n = 0;
+	should_exit = 0;
 	for (i = 0; i < no_files; i++, file++) {
 		if (file->fp) {
 			active = 1;
@@ -334,10 +342,12 @@ follow(file_info_t *files, enum STYLE style, off_t off)
 	kq = kqueue();
 	if (kq < 0)
 		err(1, "kqueue");
+	if (pid)
+		n++;
 	ev = malloc(n * sizeof(struct kevent));
-	if (! ev)
+	if (!ev)
 	    err(1, "Couldn't allocate memory for kevents.");
-	set_events(files);
+	set_events(files, pid);
 
 	for (;;) {
 		ev_change = 0;
@@ -390,7 +400,7 @@ follow(file_info_t *files, enum STYLE style, off_t off)
 				ev_change++;
 
 		if (ev_change)
-			set_events(files);
+			set_events(files, pid);
 
 		switch (action) {
 		case USE_KQUEUE:
@@ -400,11 +410,19 @@ follow(file_info_t *files, enum STYLE style, off_t off)
 			 * In the -F case we set a timeout to ensure that
 			 * we re-stat the file at least once every second.
 			 */
-			n = kevent(kq, NULL, 0, ev, 1, Fflag ? &ts : NULL);
+			n = kevent(kq, NULL, 0, ev, 1,
+			    (Fflag || should_exit) ? &ts : NULL);
 			if (n < 0)
 				err(1, "kevent");
 			if (n == 0) {
 				/* timeout */
+				break;
+			} else if (ev->filter == EVFILT_PROC) {
+				printf("Need to exit\n");
+				/* Read each file once more to avoid losing
+				 * last bit of data written. */
+				should_exit = 1;
+				Fflag = 0;
 				break;
 			} else if (ev->filter == EVFILT_READ && ev->data < 0) {
 				/* file shrank, reposition to end */
