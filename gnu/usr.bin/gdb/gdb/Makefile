@@ -13,6 +13,8 @@ LDFLAGS+= -Wl,-E
 
 DPADD=	${GDBLIBS} ${BULIBS} ${LIBM} ${LIBREADLINE} ${LIBTERMCAP} ${LIBGNUREGEX}
 LDADD=	${GDBLIBS} ${BULIBS} -lm -lreadline -ltermcap -lgnuregex
+USEPRIVATELIB=	readline
+
 
 .include <bsd.prog.mk>
 CFLAGS+=	-DDEBUGDIR=\"${DEBUGDIR}\"

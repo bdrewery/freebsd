@@ -1,10 +1,11 @@
 # $FreeBSD$
 
-SUBDIR= doc
+#SUBDIR= doc
 
 LIB=    readline
-MAN=    doc/readline.3
+NO_MAN=	yes
 SHLIBDIR?=	/lib
+PRIVATELIB=	true
 
 TILDESRC= tilde.c
 SRCS=     readline.c vi_mode.c funmap.c keymaps.c parens.c search.c \
@@ -12,16 +13,15 @@ SRCS=     readline.c vi_mode.c funmap.c keymaps.c parens.c search.c \
 	  util.c kill.c undo.c macro.c input.c callback.c terminal.c \
 	  text.c nls.c misc.c compat.c xmalloc.c $(HISTSRC) $(TILDESRC)
 
-INSTALLED_HEADERS= readline.h chardefs.h keymaps.h history.h tilde.h \
-		   rlstdc.h rlconf.h rltypedefs.h
-
 DPADD=	${LIBTERMCAP}
 LDADD=	-ltermcap
 
-INCSDIR=${INCLUDEDIR}/readline
+HEADERS= readline.h chardefs.h keymaps.h history.h tilde.h \
+	   rlstdc.h rlconf.h rltypedefs.h
+CLEANFILES+=	${HEADERS}
+beforedepend: ${HEADERS}
+${HEADERS}:
+	@echo ln -fs ${SRCDIR} ${.OBJDIR}/${.TARGET}
 
-.for hdr in ${INSTALLED_HEADERS}
-INCS+=	${SRCDIR}/${hdr}
-.endfor
 
 .include <bsd.lib.mk>

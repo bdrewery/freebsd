@@ -38,6 +38,27 @@
 #   xargs -n1 | sort | uniq -d;
 # done
 
+# 20140224: Move libreadline to private
+OLD_FILES+=lib/libreadline.so.8
+OLD_FILES+=usr/include/readline/
+OLD_FILES+=usr/include/readline/chardefs.h
+OLD_FILES+=usr/include/readline/history.h
+OLD_FILES+=usr/include/readline/keymaps.h
+OLD_FILES+=usr/include/readline/readline.h
+OLD_FILES+=usr/include/readline/rlconf.h
+OLD_FILES+=usr/include/readline/rlstdc.h
+OLD_FILES+=usr/include/readline/rltypedefs.h
+OLD_FILES+=usr/include/readline/tilde.h
+OLD_FILES+=usr/lib/libhistory.a
+OLD_FILES+=usr/lib/libhistory.so
+OLD_FILES+=usr/lib/libhistory.sp.8
+OLD_FILES+=usr/lib/libhistory_p.a
+OLD_FILES+=usr/lib/libreadline.a
+OLD_FILES+=usr/lib/libreadline.so
+OLD_FILES+=usr/lib/libreadline_p.a
+OLD_FILES+=usr/share/info/history.info.gz
+OLD_FILES+=usr/share/info/readline.info.gz
+OLD_FILES+=usr/share/info/rluserman.info.gz
 # 20140223: Remove libyaml
 OLD_FILES+=usr/lib/private/libyaml.a
 OLD_FILES+=usr/lib/private/libyaml.so

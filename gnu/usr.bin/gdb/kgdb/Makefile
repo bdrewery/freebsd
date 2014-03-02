@@ -12,6 +12,7 @@ DPADD=	${GDBLIBS} ${BULIBS} ${LIBKVM} ${LIBM} ${LIBREADLINE} ${LIBTERMCAP} \
 	${LIBGNUREGEX}
 LDADD=	${GDBLIBS} ${BULIBS} -lkvm${GDB_SUFFIX} -lm -lreadline -ltermcap \
 	-lgnuregex
+USEPRIVATELIB=	readline
 
 .if defined(GDB_CROSS_DEBUGGER)
 CFLAGS+= -Wl,-export-dynamic
