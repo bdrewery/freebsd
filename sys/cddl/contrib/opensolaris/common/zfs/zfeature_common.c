@@ -205,4 +205,9 @@ zpool_feature_init(void)
 	    "com.delphix:bookmarks", "bookmarks",
 	    "\"zfs bookmark\" command",
 	    B_TRUE, B_FALSE, B_FALSE, bookmarks_deps);
+
+	zfeature_register(SPA_FEATURE_TMPFS,
+	    "org.freebsd:tmpfs", "tmpfs",
+	    "Temp filesystem support",
+	    B_TRUE, B_FALSE, B_FALSE, NULL);
 }
