@@ -44,9 +44,11 @@
 __FBSDID("$FreeBSD$");
 
 #include <sys/param.h>
+#include <sys/fcntl.h>
 #include <sys/limits.h>
 #include <sys/lock.h>
 #include <sys/mutex.h>
+#include <sys/namei.h>
 #include <sys/proc.h>
 #include <sys/jail.h>
 #include <sys/kernel.h>
@@ -138,10 +140,13 @@ tmpfs_mount(struct mount *mp)
 {
 	const size_t nodes_per_page = howmany(PAGE_SIZE,
 	    sizeof(struct tmpfs_dirent) + sizeof(struct tmpfs_node));
-	struct tmpfs_mount *tmp;
+	struct mount *fmp;
+	struct tmpfs_mount *tmp, *ftmp;
 	struct tmpfs_node *root;
 	struct thread *td = curthread;
-	int error;
+	struct nameidata nd, *ndp;
+	char *fspec;
+	int error, len;
 	/* Size counters. */
 	u_quad_t pages;
 	off_t nodes_max, size_max, maxfilesize;
@@ -153,6 +158,9 @@ tmpfs_mount(struct mount *mp)
 
 	struct vattr va;
 
+	ndp = &nd;
+	fmp = NULL;
+
 	if (!prison_allow(td->td_ucred, PR_ALLOW_MOUNT_TMPFS))
 		return (EPERM);
 
@@ -163,9 +171,11 @@ tmpfs_mount(struct mount *mp)
 		/* Only support update mounts for certain options. */
 		if (vfs_filteropt(mp->mnt_optnew, tmpfs_updateopts) != 0)
 			return (EOPNOTSUPP);
-		if (vfs_flagopt(mp->mnt_optnew, "ro", NULL, 0) !=
-		    ((struct tmpfs_mount *)mp->mnt_data)->tm_ronly)
-			return (EOPNOTSUPP);
+		/* XXX: Need to check for open files and EBUSY */
+		/* XXX: Lock Needed? */
+		MNT_ILOCK(mp);
+		vfs_flagopt(mp->mnt_optnew, "ro", &mp->mnt_flag, MNT_RDONLY);
+		MNT_IUNLOCK(mp);
 		return (0);
 	}
 
@@ -217,6 +227,35 @@ tmpfs_mount(struct mount *mp)
 		nodes_max = INT_MAX;
 	MPASS(nodes_max >= 3);
 
+	error = vfs_getopt(mp->mnt_optnew, "from", (void **)&fspec, &len);
+	if (error || fspec[len - 1] != '\0') {
+		vfs_mount_error(mp, "Invalid from");
+		return (EINVAL);
+	}
+
+	if (fspec[0] != '\0' && strcmp(fspec, "tmpfs") != 0) {
+		/* Lookup mp for from. */
+		NDINIT(ndp, LOOKUP, FOLLOW | LOCKLEAF, UIO_SYSSPACE, fspec, td);
+		if ((error = namei(ndp))) {
+			vfs_mount_error(mp, "Invalid from: '%s'", fspec);
+			return (error);
+		}
+		NDFREE(ndp, NDF_ONLY_PNBUF);
+
+		if (ndp->ni_vp->v_type != VDIR ||
+		    (fmp = ndp->ni_vp->v_mount) == NULL ||
+		    /* XXX: This is not the best, use a type, breaks with double
+		     * clone */
+		    strcmp(fmp->mnt_stat.f_mntfromname, "tmpfs") != 0) {
+			vfs_mount_error(mp, "Invalid from, must be a tmpfs "
+			    "mount");
+			vput(ndp->ni_vp);
+			return (EINVAL);
+		}
+		vfs_busy(fmp, 0);
+		vput(ndp->ni_vp);
+	}
+
 	/* Allocate the tmpfs mount structure and fill it. */
 	tmp = (struct tmpfs_mount *)malloc(sizeof(struct tmpfs_mount),
 	    M_TMPFSMNT, M_WAITOK | M_ZERO);
@@ -239,7 +278,6 @@ tmpfs_mount(struct mount *mp)
 	    tmpfs_node_ctor, tmpfs_node_dtor,
 	    tmpfs_node_init, tmpfs_node_fini,
 	    UMA_ALIGN_PTR, 0);
-	tmp->tm_ronly = (mp->mnt_flag & MNT_RDONLY) != 0;
 
 	/* Allocate the root node. */
 	error = tmpfs_alloc_node(tmp, VDIR, root_uid,
@@ -251,11 +289,24 @@ tmpfs_mount(struct mount *mp)
 	    uma_zdestroy(tmp->tm_dirent_pool);
 	    delete_unrhdr(tmp->tm_ino_unr);
 	    free(tmp, M_TMPFSMNT);
+	    if (fmp)
+		    vfs_unbusy(fmp);
 	    return error;
 	}
 	KASSERT(root->tn_id == 2,
 	    ("tmpfs root with invalid ino: %ju", (uintmax_t)root->tn_id));
 	tmp->tm_root = root;
+
+	if (fmp != NULL) {
+		tmp->from = fmp;
+		ftmp = VFS_TO_TMPFS(fmp);
+		/* XXX: Version 1 just copies all data, version 2 should
+		 * make COW pages */
+		TMPFS_LOCK(ftmp);
+
+		TMPFS_UNLOCK(ftmp);
+	}
+
 
 	MNT_ILOCK(mp);
 	mp->mnt_flag |= MNT_LOCAL;
@@ -264,7 +315,13 @@ tmpfs_mount(struct mount *mp)
 	mp->mnt_data = tmp;
 	mp->mnt_stat.f_namemax = MAXNAMLEN;
 	vfs_getnewfsid(mp);
-	vfs_mountedfrom(mp, "tmpfs");
+
+	if (fmp == NULL)
+		vfs_mountedfrom(mp, "tmpfs");
+	else
+		snprintf(mp->mnt_stat.f_mntfromname,
+		    sizeof(mp->mnt_stat.f_mntfromname),
+		    "<clone>:%s", fspec);
 
 	return 0;
 }
@@ -315,6 +372,10 @@ tmpfs_unmount(struct mount *mp, int mntflags)
 	mtx_destroy(&tmp->allnode_lock);
 	MPASS(tmp->tm_pages_used == 0);
 	MPASS(tmp->tm_nodes_inuse == 0);
+
+	/* Unbusy our cloned parent. */
+	if (tmp->from != NULL)
+		vfs_unbusy(tmp->from);
 
 	/* Throw away the tmpfs_mount structure. */
 	free(mp->mnt_data, M_TMPFSMNT);

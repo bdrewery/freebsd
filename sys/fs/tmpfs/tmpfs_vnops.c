@@ -473,6 +473,9 @@ tmpfs_write(struct vop_write_args *v)
 	node = VP_TO_TMPFS_NODE(vp);
 	oldsize = node->tn_size;
 
+	if (vp->v_mount->mnt_flag & MNT_RDONLY)
+		return (EROFS);
+
 	if (uio->uio_offset < 0 || vp->v_type != VREG)
 		return (EINVAL);
 	if (uio->uio_resid == 0)
