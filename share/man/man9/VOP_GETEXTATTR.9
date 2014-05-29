@@ -25,7 +25,7 @@
 .\"
 .\" $FreeBSD$
 .\"
-.Dd December 23, 1999
+.Dd January 31, 2014
 .Dt VOP_GETEXTATTR 9
 .Os
 .Sh NAME
@@ -122,10 +122,11 @@ The file system does not support
 .Fn VOP_GETEXTATTR .
 .El
 .Sh SEE ALSO
-.Xr extattr 9 ,
-.Xr vnode 9 ,
+.Xr VOP 9 ,
 .Xr VOP_LISTEXTATTR 9 ,
-.Xr VOP_SETEXTATTR 9
+.Xr VOP_SETEXTATTR 9 ,
+.Xr extattr 9 ,
+.Xr vnode 9
 .Sh BUGS
 By passing in the empty string as the attribute name, some file systems
 will return a list of defined names on the target vnode for the

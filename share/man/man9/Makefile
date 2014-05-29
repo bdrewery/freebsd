@@ -343,6 +343,7 @@ MAN=	accept_filter.9 \
 	vn_fullpath.9 \
 	vn_isdisk.9 \
 	vnode.9 \
+	VOP.9 \
 	VOP_ACCESS.9 \
 	VOP_ACLCHECK.9 \
 	VOP_ADVISE.9 \

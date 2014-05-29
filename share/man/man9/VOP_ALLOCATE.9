@@ -27,7 +27,7 @@
 .\"
 .\" $FreeBSD$
 .\"
-.Dd October 3, 2013
+.Dd January 31, 2014
 .Dt VOP_ALLOCATE 9
 .Os
 .Sh NAME
@@ -79,6 +79,7 @@ An append-only flag is set on the file, but the caller is attempting to
 write before the current end of file.
 .El
 .Sh SEE ALSO
-.Xr vnode 9 ,
+.Xr VOP 9 ,
 .Xr VOP_READ 9 ,
-.Xr VOP_WRITE 9
+.Xr VOP_WRITE 9 ,
+.Xr vnode 9

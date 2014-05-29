@@ -1,6 +1,4 @@
-.\" -*- nroff -*-
-.\"
-.\" Copyright (c) 1996 Doug Rabson
+.\" Copyright (c) 2014 Bryan Drewery
 .\"
 .\" All rights reserved.
 .\"
@@ -29,37 +27,70 @@
 .\" $FreeBSD$
 .\"
 .Dd January 31, 2014
-.Dt VFS 9
+.Dt VOP 9
 .Os
 .Sh NAME
-.Nm VFS
-.Nd kernel interface to file systems
+.Nm VOP
+.Nd kernel interface for vnode operations
 .Sh DESCRIPTION
-The VFS interface is an abstraction layer around individual file system
-functions that are used to set or query settings or information.
+The VOP interface is an abstraction layer of functions that
+will call the underlying file system's function for the passed in vnode,
+while managing some locking requirements on the way in.
+.Pp
+File systems that do not implement a VOP operation should use the appropriate
+.Fa vfs_std
+function from
+.Pa src/sys/kern/vfs_default.c
+rather than implementing empty functions or casting to
+.Fa eopnotsupp .
 .Sh FILES
-.Bl -tag -width sys/sys/mount.h -compact
-.It Pa sys/sys/mount.h
-The source and definition for all VFS macros.
+.Bl -tag -width sys/tools/vnode_if.awk -compact
+.It Pa sys/kern/vnode_if.src
+The source and definition for all VOP functions.
+Locking requirements and parameters are also documented here for each
+VOP function.
+.It Pa sys/tools/vnode_if.awk
+Script for generating actual VOP header files.
 .El
 .Sh SEE ALSO
-.Xr VFS_CHECKEXP 9 ,
-.Xr VFS_FHTOVP 9 ,
-.Xr VFS_INIT 9 ,
-.Xr VFS_MOUNT 9 ,
-.Xr VFS_QUOTACTL 9 ,
-.Xr VFS_SET 9 ,
-.Xr VFS_STATFS 9 ,
-.Xr VFS_SYNC 9 ,
-.Xr VFS_UNMOUNT 9 ,
-.Xr VFS_VGET 9 ,
-.Xr VOP 9 ,
-.Xr vnode 9
+.Xr vnode 9 ,
+.Xr VOP_ACCESS 9 ,
+.Xr VOP_ACLCHECK 9 ,
+.Xr VOP_ADVISE 9 ,
+.Xr VOP_ADVLOCK 9 ,
+.Xr VOP_ALLOCATE 9 ,
+.Xr VOP_ATTRIB 9 ,
+.Xr VOP_BWRITE 9 ,
+.Xr VOP_CREATE 9 ,
+.Xr VOP_FSYNC 9 ,
+.Xr VOP_GETACL 9 ,
+.Xr VOP_GETEXTATTR 9 ,
+.Xr VOP_GETPAGES 9 ,
+.Xr VOP_GETVOBJECT 9 ,
+.Xr VOP_INACTIVE 9 ,
+.Xr VOP_IOCTL 9 ,
+.Xr VOP_LINK 9 ,
+.Xr VOP_LISTEXTATTR 9 ,
+.Xr VOP_LOCK 9 ,
+.Xr VOP_LOOKUP 9 ,
+.Xr VOP_OPENCLOSE 9 ,
+.Xr VOP_PATHCONF 9 ,
+.Xr VOP_PRINT 9 ,
+.Xr VOP_RDWR 9 ,
+.Xr VOP_READDIR 9 ,
+.Xr VOP_READLINK 9 ,
+.Xr VOP_REALLOCBLKS 9 ,
+.Xr VOP_REMOVE 9 ,
+.Xr VOP_RENAME 9 ,
+.Xr VOP_REVOKE 9 ,
+.Xr VOP_SETACL 9 ,
+.Xr VOP_SETEXTATTR 9 ,
+.Xr VOP_STRATEGY 9 ,
+.Xr VOP_VPTOCNP 9 ,
+.Xr VOP_VPTOFH 9 ,
+.Xr VFS 9
 .Sh HISTORY
 The
 .Nm
 interface appeared in
 .Bx 4.4 .
-.Sh AUTHORS
-This manual page was written by
-.An Doug Rabson .
