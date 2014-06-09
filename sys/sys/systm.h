@@ -205,6 +205,10 @@ int	kvprintf(char const *, void (*)(int, void*), void *, int,
 	    __va_list) __printflike(1, 0);
 void	log(int, const char *, ...) __printflike(2, 3);
 void	log_console(struct uio *);
+void	logproc(int level, struct proc *p,
+	    const char *msg_fmt, ...) __printflike(3, 4);
+void	logtd(int level, struct thread *td,
+	    const char *msg_fmt, ...) __printflike(3, 4);
 int	printf(const char *, ...) __printflike(1, 2);
 int	snprintf(char *, size_t, const char *, ...) __printflike(3, 4);
 int	sprintf(char *buf, const char *, ...) __printflike(2, 3);

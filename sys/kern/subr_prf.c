@@ -43,6 +43,7 @@ __FBSDID("$FreeBSD$");
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/lock.h>
+#include <sys/jail.h>
 #include <sys/kdb.h>
 #include <sys/mutex.h>
 #include <sys/sx.h>
@@ -287,6 +288,14 @@ _vprintf(int level, int flags, const char *fmt, va_list ap)
 	return (retval);
 }
 
+static void
+vlog(int level, const char *fmt, va_list ap)
+{
+	(void)_vprintf(level, log_open ? TOLOG : TOCONS, fmt, ap);
+
+	msgbuftrigger = 1;
+}
+
 /*
  * Log writes to the log buffer, and guarantees not to sleep (so can be
  * called by interrupt routines).  If there is no process reading the
@@ -298,10 +307,8 @@ log(int level, const char *fmt, ...)
 	va_list ap;
 
 	va_start(ap, fmt);
-	(void)_vprintf(level, log_open ? TOLOG : TOCONS, fmt, ap);
+	vlog(level, fmt, ap);
 	va_end(ap);
-
-	msgbuftrigger = 1;
 }
 
 #define CONSCHUNK 128
@@ -1121,4 +1128,77 @@ hexdump(const void *ptr, int length, const char *hdr, int flags)
 		}
 		printf("\n");
 	}
+}
+
+/*
+ * Generate a message from the given process with the passed in msg.
+ * Logged format is as follows with optional params marked with []:
+ *   pid PID (NAME), [tid TID (name),] [euid EUID] uid RUID,
+ *   [jid JAILID (JAILNAME)] MSG
+ */
+static void
+vlogproc(int level, struct proc *p, struct ucred *ucred, struct thread *td,
+    const char *msg_fmt, va_list ap)
+{
+
+	MPASS(p != NULL);
+	MPASS(ucred != NULL);
+
+	log(level, "pid %d (%s)", p->p_pid, p->p_comm);
+	if (td != NULL && (p->p_flag & P_HADTHREADS))
+		log(level, ", tid %ld (%s)", (long)td->td_tid, td->td_name);
+	if (ucred != NULL) {
+		if (ucred->cr_uid == ucred->cr_ruid)
+			log(level, ", uid %d", ucred->cr_uid);
+		else
+			log(level, ", euid %d uid %d", ucred->cr_uid,
+			    ucred->cr_ruid);
+		if (jailed(ucred)) {
+			mtx_lock(&ucred->cr_prison->pr_mtx);
+			log(level, ", jid %d (%s)", ucred->cr_prison->pr_id,
+			    ucred->cr_prison->pr_name);
+			mtx_unlock(&ucred->cr_prison->pr_mtx);
+		}
+	} else
+		log(level, ", uid -1, jid -1");
+
+	if (msg_fmt == NULL) {
+		log(level, "\n");
+		return;
+	}
+
+	/* Add in a space if the msg did not end in a padding char. */
+	if (strchr(",: ", msg_fmt[0]) == NULL)
+		log(level, " ");
+
+	vlog(level, msg_fmt, ap);
+}
+
+/*
+ * Log the process along with given message.  Requires proc locked.
+ */
+void
+logproc(int level, struct proc *p, const char *msg_fmt, ...)
+{
+	va_list ap;
+
+	/* Need lock for p_ucred. */
+	PROC_LOCK_ASSERT(p, MA_OWNED);
+
+	va_start(ap, msg_fmt);
+	vlogproc(level, p, p->p_ucred, NULL, msg_fmt, ap);
+	va_end(ap);
+}
+
+/*
+ * Log the thread along with given message.
+ */
+void
+logtd(int level, struct thread *td, const char *msg_fmt, ...)
+{
+	va_list ap;
+
+	va_start(ap, msg_fmt);
+	vlogproc(level, td->td_proc, td->td_ucred, td, msg_fmt, ap);
+	va_end(ap);
 }
