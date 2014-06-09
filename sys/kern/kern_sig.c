@@ -2874,8 +2874,7 @@ killproc(p, why)
 	PROC_LOCK_ASSERT(p, MA_OWNED);
 	CTR3(KTR_PROC, "killproc: proc %p (pid %d, %s)", p, p->p_pid,
 	    p->p_comm);
-	log(LOG_ERR, "pid %d (%s), uid %d, was killed: %s\n", p->p_pid,
-	    p->p_comm, p->p_ucred ? p->p_ucred->cr_uid : -1, why);
+	logproc(LOG_ERR, p, "was killed: %s\n", why);
 	p->p_flag |= P_WKILLED;
 	kern_psignal(p, SIGKILL);
 }
@@ -2912,16 +2911,12 @@ sigexit(td, sig)
 		 * Log signals which would cause core dumps
 		 * (Log as LOG_INFO to appease those who don't want
 		 * these messages.)
-		 * XXX : Todo, as well as euid, write out ruid too
 		 * Note that coredump() drops proc lock.
 		 */
 		if (coredump(td) == 0)
 			sig |= WCOREFLAG;
 		if (kern_logsigexit)
-			log(LOG_INFO,
-			    "pid %d (%s), uid %d: exited on signal %d%s\n",
-			    p->p_pid, p->p_comm,
-			    td->td_ucred ? td->td_ucred->cr_uid : -1,
+			logtd(LOG_INFO, td, "exited on signal %d%s\n",
 			    sig &~ WCOREFLAG,
 			    sig & WCOREFLAG ? " (core dumped)" : "");
 	} else
