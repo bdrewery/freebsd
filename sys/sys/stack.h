@@ -61,4 +61,13 @@ struct thread;
 void		 stack_save(struct stack *);
 void		 stack_save_td(struct stack *, struct thread *);
 
+/**
+ * The interface to hardclock
+ */
+extern int	 stack_hardclock_interested;
+void		 stack_hardclock(void);
+
+int		 stack_save_thread(struct stack *, struct thread *);
+void		 stack_save_inpanic(struct stack *st, struct thread *td);
+
 #endif

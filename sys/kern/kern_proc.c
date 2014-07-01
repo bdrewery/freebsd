@@ -2398,18 +2398,18 @@ repeat:
 		bzero(kkstp, sizeof(*kkstp));
 		(void)sbuf_new(&sb, kkstp->kkst_trace,
 		    sizeof(kkstp->kkst_trace), SBUF_FIXEDLEN);
-		thread_lock(td);
 		kkstp->kkst_tid = td->td_tid;
-		if (TD_IS_SWAPPED(td))
-			kkstp->kkst_state = KKST_STATE_SWAPPED;
-		else if (TD_IS_RUNNING(td))
-			kkstp->kkst_state = KKST_STATE_RUNNING;
-		else {
-			kkstp->kkst_state = KKST_STATE_STACKOK;
-			stack_save_td(st, td);
-		}
-		thread_unlock(td);
 		PROC_UNLOCK(p);
+		error = stack_save_thread(st, td);
+		if (error == EFAULT)
+			kkstp->kkst_state = KKST_STATE_SWAPPED;
+		else if (error == 0)
+			kkstp->kkst_state = KKST_STATE_STACKOK;
+		else
+			KASSERT(0, ("unexpected error %d", error));
+		/* Handle serialization window. */
+		if (td->td_proc != p || td->td_tid != kkstp->kkst_tid)
+			continue;
 		stack_sbuf_print(&sb, st);
 		sbuf_finish(&sb);
 		sbuf_delete(&sb);

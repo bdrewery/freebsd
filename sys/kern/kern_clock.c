@@ -41,6 +41,7 @@ __FBSDID("$FreeBSD$");
 #include "opt_device_polling.h"
 #include "opt_hwpmc_hooks.h"
 #include "opt_ntp.h"
+#include "opt_stack.h"
 #include "opt_watchdog.h"
 
 #include <sys/param.h>
@@ -68,6 +69,10 @@ __FBSDID("$FreeBSD$");
 #include <sys/interrupt.h>
 #include <sys/limits.h>
 #include <sys/timetc.h>
+
+#ifdef STACK
+#include <sys/stack.h>
+#endif
 
 #ifdef GPROF
 #include <sys/gmon.h>
@@ -563,6 +568,13 @@ hardclock_cnt(int cnt, int usermode)
 		}
 #endif /* SW_WATCHDOG */
 	}
+
+#if defined(STACK)
+	/* Call into the stack capturing code if it's interested. */
+	if (__predict_false(stack_hardclock_interested))
+		stack_hardclock();
+#endif /* STACK */
+
 	if (curcpu == CPU_FIRST())
 		cpu_tick_calibration();
 }

@@ -35,7 +35,10 @@ __FBSDID("$FreeBSD$");
 #include <sys/ktr.h>
 #endif
 #include <sys/linker.h>
+#include <sys/lock.h>
 #include <sys/malloc.h>
+#include <sys/mutex.h>
+#include <sys/proc.h>
 #include <sys/sbuf.h>
 #include <sys/stack.h>
 #include <sys/systm.h>
@@ -274,4 +277,152 @@ stack_symbol_ddb(vm_offset_t pc, const char **name, long *offset)
 	*offset = 0;
 	*name = "??";
 	return (ENOENT);
+}
+
+struct stack_save_context {
+	TAILQ_ENTRY(stack_save_context) sc_entry;
+	struct thread	*sc_td;
+	struct stack	*sc_st;
+	unsigned int	sc_hardclock_cpuid;
+	uint8_t		sc_hardclock_processed;
+
+	/*
+	 * Getting a stack of a running thread requires using the
+	 * hardclock interrupt, so we may schedule it and miss.
+	 */
+	uint8_t		sc_done;
+};
+
+/**
+ * When this is set, hardclock() calls stack_hardclock().
+ */
+int stack_hardclock_interested = 0;
+
+/**
+ * A list of stack requests to be handled by stack_hardclock().
+ */
+static TAILQ_HEAD(, stack_save_context) stack_hardclock_list =
+    TAILQ_HEAD_INITIALIZER(stack_hardclock_list);
+
+static struct mtx stack_hardclock_lock;
+MTX_SYSINIT(stack_hardclock_lock, &stack_hardclock_lock,
+    "stack_hardclock_lock", MTX_SPIN);
+
+/**
+ * Process the entries in the list for the current CPU.  If the thread
+ * whose stack is requested is running on the CPU, grab its stack.  In
+ * any case, remove the entries for the current CPU from the list and
+ * wake up the stack_get_running().
+ */
+void
+stack_hardclock(void)
+{
+	struct stack_save_context *ctx, *ctx_next;
+	const unsigned int cpuid = PCPU_GET(cpuid);
+	struct thread *td = curthread;
+
+	mtx_lock_spin(&stack_hardclock_lock);
+
+	TAILQ_FOREACH_SAFE(ctx, &stack_hardclock_list, sc_entry, ctx_next) {
+		if (ctx->sc_hardclock_cpuid != cpuid)
+			continue;
+
+		TAILQ_REMOVE(&stack_hardclock_list, ctx, sc_entry);
+		ctx->sc_hardclock_processed = 1;
+		if (ctx->sc_td == td) {
+			stack_save(ctx->sc_st);
+			ctx->sc_done = 1;
+		}
+		wakeup(ctx);
+	}
+
+	stack_hardclock_interested = !TAILQ_EMPTY(&stack_hardclock_list);
+
+	mtx_unlock_spin(&stack_hardclock_lock);
+}
+
+/**
+ * If the thread is running on another CPU, add it to the hardclock
+ * list which will be processed during the clock interrupt.  Return
+ * true if we got the stack, false otherwise.
+ */
+static int
+stack_save_running(struct stack *st, struct thread *td)
+{
+	struct stack_save_context ctx;
+
+	bzero(&ctx, sizeof(ctx));
+	ctx.sc_td = td;
+	ctx.sc_st = st;
+	ctx.sc_hardclock_cpuid = td->td_oncpu;
+	ctx.sc_hardclock_processed = 0;
+	thread_unlock(td);
+
+	WITNESS_WARN(WARN_GIANTOK | WARN_SLEEPOK, NULL,
+	    "stack_save_running(td other than curthread)");
+
+	mtx_lock_spin(&stack_hardclock_lock);
+	TAILQ_INSERT_TAIL(&stack_hardclock_list, &ctx, sc_entry);
+	stack_hardclock_interested = true;
+	while (!ctx.sc_hardclock_processed) {
+		/*
+		 * If the box is panic'ing, the clock interrupt has
+		 * been disabled.
+		 */
+		if (panicstr) {
+			TAILQ_REMOVE(&stack_hardclock_list, &ctx, sc_entry);
+			break;
+		}
+		msleep_spin(&ctx, &stack_hardclock_lock, __func__, 1);
+	}
+	mtx_unlock_spin(&stack_hardclock_lock);
+
+	return (ctx.sc_done);
+}
+
+/**
+ * stack_save_thread
+ *
+ * Save the stack of the specified thread.
+ *
+ * Return values:
+ *	0	- success
+ *	EFAULT	- thread is swapped out
+ */
+int
+stack_save_thread(struct stack *st, struct thread *td)
+{
+
+	mtx_assert(td->td_lock, MA_NOTOWNED);
+
+	if (td == curthread) {
+		stack_save(st);
+		return (0);
+	}
+
+retry:
+	thread_lock(td);
+	if (TD_IS_RUNNING(td)) {
+		if (panicstr) {
+			stack_save_inpanic(st, td);
+			thread_unlock(td);
+			return (0);
+		}
+
+		/*
+		 * stack_save_running() drops the thread lock.
+		 */
+		if (!stack_save_running(st, td))
+			goto retry;
+		return (0);
+	}
+	if (TD_IS_SWAPPED(td)) {
+		thread_unlock(td);
+		return (EFAULT);
+	}
+
+	stack_save_td(st, td);
+	thread_unlock(td);
+
+	return (0);
 }

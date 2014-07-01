@@ -33,6 +33,7 @@ __FBSDID("$FreeBSD$");
 #include <sys/stack.h>
 
 #include <machine/pcb.h>
+#include <machine/smp.h>
 #include <machine/stack.h>
 
 #include <vm/vm.h>
@@ -75,6 +76,18 @@ stack_save_td(struct stack *st, struct thread *td)
 
 	rbp = td->td_pcb->pcb_rbp;
 	stack_capture(st, rbp);
+}
+
+void
+stack_save_inpanic(struct stack *st, struct thread *td)
+{
+#ifdef SMP
+	const struct pcb *pcb = &stoppcbs[td->td_oncpu];
+#else
+	const struct pcb *pcb = td->td_pcb;
+#endif
+
+	stack_capture(st, pcb->pcb_rbp);
 }
 
 void
