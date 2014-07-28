@@ -568,6 +568,11 @@ main(int argc, char *argv[])
 		(void)sigprocmask(SIG_SETMASK, &omask, NULL);
 		waitpid(pid, &status, 0);
 		(void)sigprocmask(SIG_BLOCK, &mask, NULL);
+		/*
+		 * Restore session logname as it was changed
+		 * via setlogin(2) in the session.
+		 */
+		setlogin("root");
 		bail(NO_SLEEP_EXIT, 0);
 	}
 
@@ -588,8 +593,13 @@ main(int argc, char *argv[])
 
 	/*
 	 * We don't need to be root anymore, so set the login name and
-	 * the UID.
+	 * the UID.  A new session must be established before changing
+	 * login name to prevent changing existing session.
 	 */
+	if (0 && setsid() == -1) {
+		syslog(LOG_ERR, "setsid(): %m - exiting");
+		bail(NO_SLEEP_EXIT, 1);
+	}
 	if (setlogin(username) != 0) {
 		syslog(LOG_ERR, "setlogin(%s): %m - exiting", username);
 		bail(NO_SLEEP_EXIT, 1);
