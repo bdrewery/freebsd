@@ -67,7 +67,7 @@ PICFLAG=-fpic
 
 # XXX - only needed on 64
 .if ${MK_PIE} != "no" && defined(INTERNALLIB)
-CFLAGS+=	${PICFLAG} -DPIC
+CFLAGS+=	${PICFLAG}
 .endif
 
 #.if ${MK_PIE} != "no" && defined(SHLIB_NAME) && !defined(NO_PIC)
