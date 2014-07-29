@@ -65,6 +65,15 @@ PICFLAG=-fpic
 .endif
 .endif
 
+# XXX - only needed on 64
+.if ${MK_PIE} != "no" && defined(INTERNALLIB)
+CFLAGS+=	${PICFLAG} -DPIC
+.endif
+
+#.if ${MK_PIE} != "no" && defined(SHLIB_NAME) && !defined(NO_PIC)
+#INSTALL_PIC_ARCHIVE=	PIE
+#.endif
+
 PO_FLAG=-pg
 
 .c.o:

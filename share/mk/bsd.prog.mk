@@ -11,6 +11,8 @@
 CFLAGS+=${COPTS}
 .endif
 
+# XXX - this logic looks wrong...
+# XXX - Need to support NO_PIC as well
 .if ${MK_PIE} != "no" && (!defined(NO_PIE) || ${NO_PIE} == "no")
 .if !defined(RESCUE) && !defined(NO_SHARED)
 CFLAGS+= -fPIE -pie
