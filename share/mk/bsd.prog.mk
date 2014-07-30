@@ -13,7 +13,8 @@ CFLAGS+=${COPTS}
 
 # XXX - this logic looks wrong...
 # XXX - Need to support NO_PIC as well
-.if ${MK_PIE} != "no" && (!defined(NO_PIE) || ${NO_PIE} == "no")
+.if ${MK_PIE} != "no" && (!defined(NO_PIE) || ${NO_PIE} == "no") && \
+    !${LDFLAGS:M-T*}
 .if !defined(RESCUE) && !defined(NO_SHARED)
 CFLAGS+= -fPIE -pie
 LDFLAGS+= -pie

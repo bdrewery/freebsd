@@ -8,8 +8,6 @@ PROG=		${LOADER}.sym
 INTERNALPROG=
 NEWVERSWHAT?=	"bootstrap loader" x86
 
-NO_PIE=	yes
-
 # architecture-specific loader code
 SRCS=		main.c conf.c vers.c
 
@@ -70,6 +68,7 @@ CLEANFILES=	vers.c ${LOADER} ${LOADER}.bin loader.help
 
 CFLAGS+=	-Wall
 LDFLAGS=	-static -Ttext 0x0
+#NO_PIE=		yes		# No need for PIE in loader
 
 # i386 standalone support library
 LIBI386=	${.OBJDIR}/../libi386/libi386.a
