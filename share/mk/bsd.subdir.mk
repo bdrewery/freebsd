@@ -98,6 +98,8 @@ ${__target}_subdir_${__dir}: .MAKE ${__deps}
 		fi; \
 		${MAKE} ${__target:realinstall=install} \
 		    DIRPRFX=${DIRPRFX}$$edir/
+.else
+	@echo ${DIRPRFX}${__dir}
 .endif
 .endif
 .endfor
