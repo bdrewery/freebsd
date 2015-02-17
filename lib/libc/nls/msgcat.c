@@ -56,6 +56,7 @@ __FBSDID("$FreeBSD$");
 #include <unistd.h>
 #include "un-namespace.h"
 
+#include "libc_private.h"
 #include "../locale/setlocale.h"        /* for ENCODING_LEN */
 
 #define _DEFAULT_NLS_PATH "/usr/share/nls/%L/%N.cat:/usr/share/nls/%N/%L:/usr/local/share/nls/%L/%N.cat:/usr/local/share/nls/%N/%L"
@@ -325,6 +326,20 @@ notfound:
 	return ((char *)s);
 }
 
+static void
+catfree(struct catentry *np)
+{
+	if (np->catd != NLERR) {
+		munmap(np->catd->__data, (size_t)np->catd->__size);
+		free(np->catd);
+	}
+	SLIST_REMOVE(&cache, np, catentry, list);
+	free(np->name);
+	free(np->path);
+	free(np->lang);
+	free(np);
+}
+
 int
 catclose(nl_catd catd)
 {
@@ -341,15 +356,8 @@ catclose(nl_catd catd)
 	SLIST_FOREACH(np, &cache, list) {
 		if (catd == np->catd) {
 			np->refcount--;
-			if (np->refcount == 0) {
-				munmap(catd->__data, (size_t)catd->__size);
-				free(catd);
-				SLIST_REMOVE(&cache, np, catentry, list);
-				free(np->name);
-				free(np->path);
-				free(np->lang);
-				free(np);
-			}
+			if (np->refcount == 0)
+				catfree(np);
 			break;
 		}
 	}
@@ -447,3 +455,20 @@ load_msgcat(const char *path, const char *name, const char *lang)
 	UNLOCK;
 	return (catd);
 }
+
+static int
+_nls_msgcat_freeres(void)
+{
+	struct catentry *np, *np_next;
+
+	WLOCK(-1);
+	SLIST_FOREACH_SAFE(np, &cache, list, np_next) {
+		if (np->refcount == 0)
+			catfree(np);
+	}
+	UNLOCK;
+	RWLOCK_RESET(rwlock);
+
+	return (0);
+}
+_LIBC_FREERES_REGISTER(_nls_msgcat_freeres);
