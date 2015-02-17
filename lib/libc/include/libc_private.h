@@ -105,6 +105,27 @@ void _libc_freeres_register(freeres_cb_t *);
 void _libc_freeres_unregister(freeres_cb_t *);
 
 /*
+ * These are used in freeres handlers due to the malloc(3) in
+ * libthr initializer.  If pthread_mutex/rwlock_t become structs
+ * then these will not be needed.
+ */
+#define MUTEX_RESET(mtx)				\
+do {							\
+	if (__isthreaded) {				\
+		_pthread_mutex_destroy(&mtx);		\
+		mtx = PTHREAD_MUTEX_INITIALIZER;	\
+	}						\
+} while (0)
+
+#define RWLOCK_RESET(mtx)				\
+do {							\
+	if (__isthreaded) {				\
+		_pthread_rwlock_destroy(&mtx);		\
+		mtx = PTHREAD_RWLOCK_INITIALIZER;	\
+	}						\
+} while (0)
+
+/*
  * Indexes into the pthread jump table.
  *
  * Warning! If you change this type, you must also change the threads
