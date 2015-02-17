@@ -336,6 +336,23 @@ quit:
 	return (ret);
 }
 
+void
+_citrus_csmapper_freeres()
+{
+
+	WLOCK(&ma_lock);
+	if (csm_none != NULL) {
+		_citrus_mapper_close_direct(csm_none);
+		csm_none = NULL;
+	}
+	UNLOCK(&ma_lock);
+	if (__isthreaded) {
+		pthread_rwlock_destroy(&ma_lock);
+		ma_lock = PTHREAD_RWLOCK_INITIALIZER;
+	}
+	_citrus_mapper_close_area(&maparea);
+}
+
 int
 _citrus_csmapper_open(struct _citrus_csmapper * __restrict * __restrict rcsm,
     const char * __restrict src, const char * __restrict dst, uint32_t flags,

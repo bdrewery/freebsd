@@ -55,6 +55,7 @@
 #include "citrus_lookup.h"
 #include "citrus_hash.h"
 #include "citrus_iconv.h"
+#include "libc_private.h"
 
 #define _CITRUS_ICONV_DIR	"iconv.dir"
 #define _CITRUS_ICONV_ALIAS	"iconv.alias"
@@ -104,6 +105,33 @@ close_shared(struct _citrus_iconv_shared *ci)
 		free(ci);
 	}
 }
+
+void _citrus_csmapper_freeres(void);
+void _citrus_mapper_freeres(void);
+static void
+_citrus_iconv_freeres(void)
+{
+	struct _citrus_iconv_shared *ci, *ci_next;
+
+	WLOCK(&ci_lock);
+	if (!isinit)
+		goto end;
+	TAILQ_FOREACH_SAFE(ci, &shared_unused, ci_tailq_entry, ci_next) {
+		TAILQ_REMOVE(&shared_unused, ci, ci_tailq_entry);
+		_CITRUS_HASH_REMOVE(ci, ci_hash_entry);
+		shared_num_unused--;
+		close_shared(ci);
+	}
+	_citrus_csmapper_freeres();
+	_citrus_mapper_freeres();
+end:
+	UNLOCK(&ci_lock);
+	if (__isthreaded) {
+		pthread_rwlock_destroy(&ci_lock);
+		ci_lock = PTHREAD_RWLOCK_INITIALIZER;
+	}
+}
+_LIBC_FREERES_REGISTER(_citrus_iconv_freeres);
 
 static __inline int
 open_shared(struct _citrus_iconv_shared * __restrict * __restrict rci,

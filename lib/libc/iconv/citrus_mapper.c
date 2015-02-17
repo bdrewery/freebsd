@@ -111,6 +111,29 @@ quit:
 	return (ret);
 }
 
+void
+_citrus_mapper_close_area(
+    struct _citrus_mapper_area *__restrict *__restrict rma)
+{
+
+	WLOCK(&cm_lock);
+	if (*rma != NULL) {
+		free((*rma)->ma_dir);
+		free((*rma));
+		*rma = NULL;
+	}
+	UNLOCK(&cm_lock);
+}
+
+void
+_citrus_mapper_freeres(void)
+{
+
+	if (__isthreaded) {
+		pthread_rwlock_destroy(&cm_lock);
+		cm_lock = PTHREAD_RWLOCK_INITIALIZER;
+	}
+}
 
 /*
  * lookup_mapper_entry:
@@ -192,6 +215,16 @@ mapper_close(struct _citrus_mapper *cm)
 	}
 	free(cm->cm_traits);
 	free(cm);
+}
+
+/*
+ * _citrus_mapper_close_direct:
+ *	close a mapper. (without handling hash)
+ */
+void
+_citrus_mapper_close_direct(struct _citrus_mapper * __restrict cm)
+{
+	mapper_close(cm);
 }
 
 /*
