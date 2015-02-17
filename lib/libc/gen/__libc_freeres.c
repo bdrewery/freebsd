@@ -30,17 +30,26 @@ __FBSDID("$FreeBSD$");
 #include <sys/param.h>
 #include <sys/linker_set.h>
 #include <machine/atomic.h>
+#include <assert.h>
 #include <stdlib.h>
 #include "libc_private.h"
 
 /* Callbacks registered in linker set via _LIBC_FREERES_REGISTER(). */
 SET_DECLARE(freeres_set, freeres_cb_t);
+/*
+ * Externally loaded libraries can call _libc_freeres_register().  This list
+ * is fixed-size as malloc(3) usage would cause __libc_freeres() to register
+ * as a leak, which defeats the purpose.
+ */
+#define FREERES_REGISTER_FIXED_SIZE	10
+static freeres_cb_t *freeres_list[FREERES_REGISTER_FIXED_SIZE];
 static int in_freeres;
 
 void
 __libc_freeres(void)
 {
 	freeres_cb_t * const *cb;
+	int i;
 
 	/*
 	 * Some of the cleanup functions destroy mutexes.  Do not allow
@@ -51,5 +60,36 @@ __libc_freeres(void)
 	/* Call local libc set-loaded callbacks. */
 	SET_FOREACH(cb, freeres_set)
 		(*cb)();
+	/* Call dynamically registered callbacks. */
+	for (i = 0; i < FREERES_REGISTER_FIXED_SIZE; i++) {
+		if (freeres_list[i] != NULL)
+			freeres_list[i]();
+	}
 	atomic_store_rel_int(&in_freeres, 0);
+}
+
+void
+_libc_freeres_register(freeres_cb_t *cb)
+{
+	int i;
+
+	for (i = 0; i <= FREERES_REGISTER_FIXED_SIZE &&
+	    freeres_list[i] != NULL; i++)
+		;
+	assert(i != FREERES_REGISTER_FIXED_SIZE);
+	freeres_list[i] = cb;
+}
+
+void
+_libc_freeres_unregister(freeres_cb_t *cb)
+{
+	int i;
+
+	for (i = 0; i < FREERES_REGISTER_FIXED_SIZE; i++) {
+		if (freeres_list[i] != NULL &&
+		    freeres_list[i] == cb) {
+			freeres_list[i] = NULL;
+			break;
+		}
+	}
 }

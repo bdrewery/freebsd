@@ -288,6 +288,13 @@ _thread_init_hack(void)
 	_libpthread_init(NULL);
 }
 
+static void
+_libpthread_freeres(void)
+{
+	/* Only cleanup once initialized. */
+	if (_thr_initial == NULL)
+		return;
+}
 
 /*
  * Threaded process initialization.
@@ -376,6 +383,7 @@ _libpthread_init(struct pthread *curthread)
 		 * instead of calling sigprocmask(2).
 		 */
 		_thr_rtld_init();
+		_libc_freeres_register(_libpthread_freeres);
 	}
 }
 

@@ -411,6 +411,9 @@ FBSD_1.3 {
 
 FBSD_1.4 {
 	__libc_freeres;
+	_libc_freeres_register;
+	_libc_freeres_unregister;
+
 	scandir_b;
 };
 
