@@ -462,3 +462,11 @@ _libc_sem_getvalue_compat(sem_t * __restrict sem, int * __restrict sval)
 	}
 	return (retval);
 }
+
+static void
+_sem_freeres(void)
+{
+
+	MUTEX_RESET(named_sems_mtx);
+}
+_LIBC_FREERES_REGISTER(_sem_freeres);

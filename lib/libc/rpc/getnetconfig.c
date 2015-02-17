@@ -738,3 +738,12 @@ struct netconfig	*ncp;
     }
     return(p);
 }
+
+static void
+_getnetconfig_freeres(void)
+{
+
+	MUTEX_RESET(nc_file_lock);
+	MUTEX_RESET(ni_lock);
+}
+_LIBC_FREERES_REGISTER(_getnetconfig_freeres);

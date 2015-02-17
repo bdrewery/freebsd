@@ -1218,3 +1218,11 @@ _yp_check(char **dom)
 	YPUNLOCK();
 	return (0);
 }
+
+static void
+_yplib_freeres(void)
+{
+
+	MUTEX_RESET(_ypmutex);
+}
+_LIBC_FREERES_REGISTER(_yplib_freeres);

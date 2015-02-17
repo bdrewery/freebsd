@@ -292,6 +292,14 @@ arc4random_uniform(u_int32_t upper_bound)
 	return r % upper_bound;
 }
 
+static void
+_arc4random_freeres(void)
+{
+
+	MUTEX_RESET(arc4random_mtx);
+}
+_LIBC_FREERES_REGISTER(_arc4random_freeres);
+
 #if 0
 /*-------- Test code for i386 --------*/
 #include <stdio.h>

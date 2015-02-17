@@ -215,3 +215,11 @@ pclose(iop)
 
 	return (pid == -1 ? -1 : pstat);
 }
+
+static void
+_popen_freeres(void)
+{
+
+	MUTEX_RESET(pidlist_mutex);
+}
+_LIBC_FREERES_REGISTER(_popen_freeres);

@@ -242,3 +242,11 @@ __cxa_finalize(void *dso)
 	if (has_phdr && !global_exit && &__pthread_cxa_finalize != NULL)
 		__pthread_cxa_finalize(&phdr_info);
 }
+
+static void
+_stdlib_atexit_freeres(void)
+{
+
+	MUTEX_RESET(atexit_mutex);
+}
+_LIBC_FREERES_REGISTER(_stdlib_atexit_freeres);

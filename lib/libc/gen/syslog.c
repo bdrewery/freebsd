@@ -455,3 +455,11 @@ setlogmask(int pmask)
 	THREAD_UNLOCK();
 	return (omask);
 }
+
+static void
+_syslog_freeres(void)
+{
+
+	MUTEX_RESET(syslog_mutex);
+}
+_LIBC_FREERES_REGISTER(_syslog_freeres);

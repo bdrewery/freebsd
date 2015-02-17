@@ -761,3 +761,11 @@ fin:
 	errno = serrno;
 	return (result);
 }
+
+static void
+_nss_freeres(void)
+{
+
+	RWLOCK_RESET(nss_lock);
+}
+_LIBC_FREERES_REGISTER(_nss_freeres);
