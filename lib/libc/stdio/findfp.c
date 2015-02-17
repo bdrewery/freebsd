@@ -39,7 +39,10 @@ __FBSDID("$FreeBSD$");
 #include <sys/param.h>
 #include <machine/atomic.h>
 #include <unistd.h>
+#include "namespace.h"
 #include <stdio.h>
+#include <pthread.h>
+#include "un-namespace.h"
 #include <stdlib.h>
 #include <string.h>
 
@@ -186,6 +189,31 @@ f_prealloc(void)
 		STDIO_THREAD_UNLOCK();
 	}
 }
+
+static void
+_stdio_fp_freeres(void)
+{
+	int i;
+	FILE *fp;
+
+	if (!__sdidinit)
+		return;
+
+	/* Free stdout/stderr. They can reinitialize in __smakebuf. */
+	for (i = 1; i < 3; i++) {
+		fp = &__sF[i];
+		FLOCKFILE(fp);
+		__sflush(fp);
+		if (fp->_flags & __SMBF) {
+			free(fp->_bf._base);
+			fp->_bf._base = fp->_p = NULL;
+			fp->_flags &= ~__SMBF;
+		}
+		FUNLOCKFILE(fp);
+		MUTEX_RESET(fp->_fl_mutex);
+	}
+}
+_LIBC_FREERES_REGISTER(_stdio_fp_freeres);
 
 /*
  * exit() calls _cleanup() through *__cleanup, set whenever we
