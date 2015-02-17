@@ -36,6 +36,7 @@
 #define _LIBC_PRIVATE_H_
 #include <sys/_types.h>
 #include <sys/_pthreadtypes.h>
+#include <sys/linker_set.h>
 
 /*
  * This global flag is non-zero when a process has created one
@@ -97,6 +98,9 @@ do {							\
 
 void		__libc_spinlock_stub(struct _spinlock *);
 void		__libc_spinunlock_stub(struct _spinlock *);
+
+#define _LIBC_FREERES_REGISTER(fn)	DATA_SET(freeres_set, fn)
+typedef void freeres_cb_t(void);
 
 /*
  * Indexes into the pthread jump table.
