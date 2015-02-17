@@ -935,6 +935,8 @@ void __thr_spinlock(struct _spinlock *lck);
 struct tcb *_tcb_ctor(struct pthread *, int);
 void	_tcb_dtor(struct tcb *);
 
+void _thr_list_freeres(void);
+
 __END_DECLS
 
 #endif  /* !_THR_PRIVATE_H */

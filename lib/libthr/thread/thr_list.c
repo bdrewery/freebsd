@@ -359,3 +359,24 @@ _thr_find_thread(struct pthread *curthread, struct pthread *thread,
 	THREAD_LIST_UNLOCK(curthread);
 	return (ret);
 }
+
+void
+_thr_list_freeres(void)
+{
+	struct pthread *curthread, *td, *td_next;
+
+	curthread = _get_curthread();
+	if (curthread != NULL) {
+		/* GC terminated threads. */
+		_thr_gc(curthread);
+		THR_LOCK_ACQUIRE(curthread, &free_thread_lock);
+	}
+	/* Cleanup cached free threads. */
+	TAILQ_FOREACH_SAFE(td, &free_threadq, tle, td_next) {
+	    TAILQ_REMOVE(&free_threadq, td, tle);
+	    thr_destroy(curthread, td);
+	}
+	free_thread_count = 0;
+	if (curthread != NULL)
+		THR_LOCK_RELEASE(curthread, &free_thread_lock);
+}

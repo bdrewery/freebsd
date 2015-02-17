@@ -294,6 +294,8 @@ _libpthread_freeres(void)
 	/* Only cleanup once initialized. */
 	if (_thr_initial == NULL)
 		return;
+
+	_thr_list_freeres();
 }
 
 /*
