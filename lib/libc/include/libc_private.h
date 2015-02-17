@@ -101,6 +101,8 @@ void		__libc_spinunlock_stub(struct _spinlock *);
 
 #define _LIBC_FREERES_REGISTER(fn)	DATA_SET(freeres_set, fn)
 typedef void freeres_cb_t(void);
+void _libc_freeres_register(freeres_cb_t *);
+void _libc_freeres_unregister(freeres_cb_t *);
 
 /*
  * Indexes into the pthread jump table.
