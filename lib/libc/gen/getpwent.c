@@ -2007,3 +2007,15 @@ __pw_parse_entry(char *buffer, size_t bufsize __unused, struct passwd *pwd,
 	else
 		return (NS_SUCCESS);
 }
+
+static void
+_getpwent_freeres(void)
+{
+
+	if (pwd_storage != NULL) {
+		free(pwd_storage);
+		pwd_storage = NULL;
+		pwd_storage_size = 0;
+	}
+}
+_LIBC_FREERES_REGISTER(_getpwent_freeres);

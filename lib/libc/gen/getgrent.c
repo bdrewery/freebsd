@@ -1552,3 +1552,14 @@ __gr_parse_entry(char *line, size_t linesize, struct group *grp, char *membuf,
 }
 
 
+static void
+_getgrent_freeres(void)
+{
+
+	if (grp_storage != NULL) {
+		free(grp_storage);
+		grp_storage = NULL;
+		grp_storage_size = 0;
+	}
+}
+_LIBC_FREERES_REGISTER(_getgrent_freeres);
