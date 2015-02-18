@@ -291,6 +291,7 @@ _thread_init_hack(void)
 static void
 _libpthread_freeres(void)
 {
+
 	/* Only cleanup once initialized. */
 	if (_thr_initial == NULL)
 		return;
