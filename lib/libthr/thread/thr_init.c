@@ -291,12 +291,12 @@ _thread_init_hack(void)
 static void
 _libpthread_freeres(void)
 {
+	struct pthread *curthread;
 
+	curthread = _get_curthread();
 	/* Only cleanup once initialized. */
-	if (_thr_initial == NULL)
+	if (_thr_initial == NULL || curthread == NULL)
 		return;
-
-	_thr_list_freeres();
 }
 
 /*
