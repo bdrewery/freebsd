@@ -85,3 +85,18 @@ __res_state(void)
 	free(statp);
 	return (&_res);
 }
+
+static void
+_res_state_freeres(void)
+{
+
+	if (__isthreaded) {
+		if (res_thr_keycreated != 0) {
+			_pthread_key_delete(res_key);
+			res_thr_keycreated = 0;
+			res_init_once.state = PTHREAD_NEEDS_INIT;
+		}
+	} else if (_res._u._ext.ext != NULL)
+		res_ndestroy(&_res);
+}
+_LIBC_FREERES_REGISTER(_res_state_freeres);
