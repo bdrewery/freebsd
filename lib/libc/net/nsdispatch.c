@@ -766,6 +766,13 @@ static void
 _nss_freeres(void)
 {
 
+	nss_atexit();
+#ifdef NS_CACHING
+	if (nss_cache_cycle_prevention_func != NULL) {
+		dlclose(nss_cache_cycle_prevention_func);
+		nss_cache_cycle_prevention_func = NULL;
+	}
+#endif
 	RWLOCK_RESET(nss_lock);
 }
 _LIBC_FREERES_REGISTER(_nss_freeres);

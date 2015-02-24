@@ -41,6 +41,7 @@ __FBSDID("$FreeBSD$");
 #include <string.h>
 #include <syslog.h>
 #include "un-namespace.h"
+#include "libc_private.h"
 
 static	void	_nsaddsrctomap(const char *);
 
@@ -176,3 +177,17 @@ _nsaddsrctomap(elem)
 	cursrc.name = elem;
 	_nsdbtaddsrc(&curdbt, &cursrc);
 }
+
+int _nsyylex_destroy(void);
+static void
+_nsparser_freeres(void)
+{
+
+	if (yystack.stacksize > 0) {
+		free(yystack.s_base);
+		free(yystack.l_base);
+	}
+	memset(&yystack, 0, sizeof(yystack));
+	_nsyylex_destroy();
+}
+_LIBC_FREERES_REGISTER(_nsparser_freeres);
