@@ -370,8 +370,9 @@ _thr_list_freeres(struct pthread *curthread)
 	THR_LOCK_ACQUIRE(curthread, &free_thread_lock);
 	/* Cleanup cached free threads. */
 	TAILQ_FOREACH_SAFE(td, &free_threadq, tle, td_next) {
-	    TAILQ_REMOVE(&free_threadq, td, tle);
-	    thr_destroy(curthread, td);
+		TAILQ_REMOVE(&free_threadq, td, tle);
+		thr_destroy(curthread, td);
+		total_threads--;
 	}
 	free_thread_count = 0;
 	THR_LOCK_RELEASE(curthread, &free_thread_lock);
