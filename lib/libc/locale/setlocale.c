@@ -53,6 +53,7 @@ __FBSDID("$FreeBSD$");
 #include "setlocale.h"
 #include "ldpart.h"
 #include "../stdtime/timelocal.h" /* for __time_load_locale() */
+#include "libc_private.h"
 
 /*
  * Category names for getenv()
@@ -84,6 +85,7 @@ static char current_categories[_LC_LAST][ENCODING_LEN + 1] = {
  * Path to locale storage directory
  */
 char	*_PathLocale;
+static int path_locale_from_env;
 
 /*
  * The locales we are going to try and load
@@ -325,9 +327,21 @@ __detect_path_locale(void)
 			_PathLocale = strdup(p);
 			if (_PathLocale == NULL)
 				return (errno == 0 ? ENOMEM : errno);
+			path_locale_from_env = 1;
 		} else
 			_PathLocale = _PATH_LOCALE;
 	}
 	return (0);
 }
 
+static void
+_setlocale_freeres(void)
+{
+
+	if (path_locale_from_env == 1) {
+		free(_PathLocale);
+		_PathLocale = NULL;
+		path_locale_from_env = 0;
+	}
+}
+_LIBC_FREERES_REGISTER(_setlocale_freeres);
