@@ -261,7 +261,8 @@ files_endstate(void *p)
 	if (f != NULL)
 		fclose(f);
 
-	free(p);
+	if (p != &files_gstate)
+		free(p);
 }
 
 /*
@@ -482,7 +483,8 @@ db_endstate(void *p)
 	if (db != NULL)
 		db->close(db);
 
-	free(p);
+	if (p != &db_gstate)
+		free(p);
 }
 
 static int
@@ -655,7 +657,8 @@ nis_endstate(void *p)
 		return;
 
 	free(((struct nis_state *)p)->yp_key);
-	free(p);
+	if (p != &nis_gstate)
+		free(p);
 }
 
 static int
@@ -1272,7 +1275,8 @@ servent_endstate(void *p)
 		return;
 
 	free(((struct servent_state *)p)->buffer);
-	free(p);
+	if (p != &servent_gstate)
+		free(p);
 }
 
 static int
@@ -1371,3 +1375,30 @@ getservent()
 
 	return (getserv(wrap_getservent_r, key));
 }
+
+#define NSS_TLS_FREERES(name)						\
+do {									\
+	if (__isthreaded) {						\
+		_pthread_key_delete(name##_state_key);			\
+		name##_once.state = PTHREAD_NEEDS_INIT;			\
+	} else {							\
+		struct name##_state *st;				\
+									\
+		if (name##_getstate(&st) == 0) {			\
+			name##_endstate(st);				\
+			memset(st, 0, sizeof(struct name##_state));	\
+		}							\
+	}								\
+} while(0)
+
+static void
+_getservent_freeres(void)
+{
+
+	endservent();
+	NSS_TLS_FREERES(files);
+	NSS_TLS_FREERES(db);
+	NSS_TLS_FREERES(nis);
+	NSS_TLS_FREERES(servent);
+}
+_LIBC_FREERES_REGISTER(_getservent_freeres);

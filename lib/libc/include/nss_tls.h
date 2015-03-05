@@ -47,18 +47,18 @@ name##_keyinit(void)							\
 	(void)_pthread_key_create(&name##_state_key, name##_endstate);	\
 }									\
 \
+static pthread_once_t name##_once = PTHREAD_ONCE_INIT;		\
+static struct name##_state name##_gstate;			\
 static int							\
 name##_getstate(struct name##_state **p)			\
 {								\
-	static struct name##_state st;				\
-	static pthread_once_t	keyinit = PTHREAD_ONCE_INIT;	\
 	int			rv;				\
 								\
 	if (!__isthreaded || _pthread_main_np() != 0) {		\
-		*p = &st;					\
+		*p = &name##_gstate;				\
 		return (0);					\
 	}							\
-	rv = _pthread_once(&keyinit, name##_keyinit);		\
+	rv = _pthread_once(&name##_once, name##_keyinit);	\
 	if (rv != 0)						\
 		return (rv);					\
 	*p = _pthread_getspecific(name##_state_key);		\
