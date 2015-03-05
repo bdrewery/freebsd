@@ -856,3 +856,20 @@ time_not_ok(t)
 		t->tv_usec < -1 || t->tv_usec > 1000000);
 }
 
+static void
+_rpcb_clnt_dg_freeres(void)
+{
+	int i;
+
+	mutex_lock(&clnt_fd_lock);
+	if (dg_fd_locks != NULL) {
+		mem_free(dg_fd_locks, fd_allocsz);
+		dg_fd_locks = NULL;
+		for (i = 0; i < __rpc_dtbsize(); i++)
+			_pthread_cond_destroy(&dg_cv[i]);
+		mem_free(dg_cv, cv_allocsz);
+		dg_cv = NULL;
+	}
+	mutex_unlock(&clnt_fd_lock);
+}
+_LIBC_FREERES_REGISTER(_rpcb_clnt_dg_freeres);

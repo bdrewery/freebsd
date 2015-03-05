@@ -178,7 +178,8 @@ delete_cache(addr)
 
 	/* WRITE LOCK HELD ON ENTRY: rpcbaddr_cache_lock */
 	for (cptr = front; cptr != NULL; cptr = cptr->ac_next) {
-		if (!memcmp(cptr->ac_taddr->buf, addr->buf, addr->len)) {
+		if (addr == NULL ||
+		    !memcmp(cptr->ac_taddr->buf, addr->buf, addr->len)) {
 			free(cptr->ac_host);
 			free(cptr->ac_netid);
 			free(cptr->ac_taddr->buf);
@@ -1338,3 +1339,13 @@ rpcb_uaddr2taddr(nconf, uaddr)
 	CLNT_DESTROY(client);
 	return (taddr);
 }
+
+static void
+_rpcb_clnt_freeres(void)
+{
+
+	rwlock_wrlock(&rpcbaddr_cache_lock);
+	delete_cache(NULL);
+	rwlock_unlock(&rpcbaddr_cache_lock);
+}
+_LIBC_FREERES_REGISTER(_rpcb_clnt_freeres);
