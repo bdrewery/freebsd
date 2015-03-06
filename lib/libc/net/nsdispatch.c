@@ -324,6 +324,7 @@ _nsdbtdump(const ns_dbt *dbt)
 #endif
 
 
+static time_t	 confmod;
 /*
  * The first time nsdispatch is called (during a process's lifetime,
  * or after nsswitch.conf has been updated), nss_configure will
@@ -332,7 +333,6 @@ _nsdbtdump(const ns_dbt *dbt)
 static int
 nss_configure(void)
 {
-	static time_t	 confmod;
 	struct stat	 statbuf;
 	int		 result, isthreaded;
 	const char	*path;
@@ -774,5 +774,7 @@ _nss_freeres(void)
 	}
 #endif
 	RWLOCK_RESET(nss_lock);
+	/* Reset for nss_configure() but prevent double atexit(3) call. */
+	confmod = 1;
 }
 _LIBC_FREERES_REGISTER(_nss_freeres);
