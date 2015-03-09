@@ -179,7 +179,7 @@ _nsaddsrctomap(elem)
 }
 
 int _nsyylex_destroy(void);
-static void
+void
 _nsparser_freeres(void)
 {
 
@@ -190,4 +190,3 @@ _nsparser_freeres(void)
 	memset(&yystack, 0, sizeof(yystack));
 	_nsyylex_destroy();
 }
-_LIBC_FREERES_REGISTER(_nsparser_freeres);

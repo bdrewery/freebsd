@@ -1391,7 +1391,7 @@ do {									\
 	}								\
 } while(0)
 
-static void
+void
 _getservent_freeres(void)
 {
 
@@ -1401,4 +1401,3 @@ _getservent_freeres(void)
 	NSS_TLS_FREERES(nis);
 	NSS_TLS_FREERES(servent);
 }
-_LIBC_FREERES_REGISTER(_getservent_freeres);

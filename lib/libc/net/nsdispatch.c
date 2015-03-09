@@ -762,10 +762,17 @@ fin:
 	return (result);
 }
 
+void _getservent_freeres(void) __hidden;
+void _nsparser_freeres(void) __hidden;
 static void
 _nss_freeres(void)
 {
 
+	if (confmod == 0)
+		return;
+
+	_getservent_freeres();
+	_nsparser_freeres();
 	nss_atexit();
 #ifdef NS_CACHING
 	if (nss_cache_cycle_prevention_func != NULL) {
