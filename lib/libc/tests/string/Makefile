@@ -22,10 +22,8 @@ NETBSD_ATF_TESTS_C+=	swab
 
 .include "../Makefile.netbsd-tests"
 
-LDADD.memchr+=	-lmd
-DPADD.memchr+=	${LIBMD}
+LIBADD.memchr+=	md
 
-LDADD.memcpy+=	-lmd
-DPADD.memcpy+=	${LIBMD}
+LIBADD.memcpy+=	md
 
 .include <bsd.test.mk>

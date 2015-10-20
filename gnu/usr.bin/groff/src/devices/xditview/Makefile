@@ -2,8 +2,7 @@
 
 PROG=		gxditview
 SRCS=		device.c draw.c Dvi.c font.c lex.c page.c parse.c xditview.c
-DPADD=		${LIBM}
-LDADD=		-lm
+LIBADD=		m
 CLEANFILES=	${MAN}
 
 GENHDRS=	GXditview-ad.h

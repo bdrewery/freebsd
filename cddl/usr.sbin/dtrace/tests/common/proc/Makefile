@@ -23,8 +23,6 @@ TESTEXES= \
 CFILES= \
      tst.sigwait.c  \
 
-
-LDADD.tst.sigwait.exe+= -lrt
-DPADD.tst.sigwait.exe+= ${LIBRT}
+LIBADD.tst.sigwait.exec=rt
 
 .include "../../Makefile.inc1"

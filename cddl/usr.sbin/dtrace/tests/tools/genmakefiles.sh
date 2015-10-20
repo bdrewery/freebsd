@@ -36,8 +36,7 @@ genmakefile()
     local special
     if [ "$basedir" = proc ]; then
         special="
-LDADD.tst.sigwait.exe+= -lrt
-DPADD.tst.sigwait.exe+= \${LIBRT}
+LIBADD+= rt
 "
     elif [ "$basedir" = uctf ]; then
         special="
