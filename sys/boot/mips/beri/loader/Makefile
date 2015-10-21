@@ -115,7 +115,7 @@ DPADD=		${LIBFICL} ${LIBSTAND}
 LDADD=		${LIBFICL} ${LIBSTAND}
 
 vers.c: ${.CURDIR}/../../../common/newvers.sh ${.CURDIR}/version
-	sh ${.CURDIR}/../../../common/newvers.sh ${.CURDIR}/version	\
+	${SH} ${.CURDIR}/../../../common/newvers.sh ${.CURDIR}/version	\
 	    ${NEWVERSWHAT}
 
 loader.help: help.common help.mips

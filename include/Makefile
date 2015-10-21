@@ -110,7 +110,7 @@ osreldate.h vers.c: ${NEWVERS_SH} ${PARAM_H} ${MK_OSRELDATE_SH}
 	    NEWVERS_SH=${NEWVERS_SH} \
 	    PARAM_H=${PARAM_H} \
 	    SYSDIR=${SYSDIR} \
-	    sh ${MK_OSRELDATE_SH}
+	    ${SH} ${MK_OSRELDATE_SH}
 
 .for i in ${LHDRS}
 INCSLINKS+=	sys/$i ${INCLUDEDIR}/$i

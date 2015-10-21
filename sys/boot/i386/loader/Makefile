@@ -87,7 +87,7 @@ CFLAGS+=	-I${.CURDIR}/../btx/lib
 .include <bsd.init.mk>
 
 vers.c:	${.CURDIR}/../../common/newvers.sh ${.CURDIR}/../loader/version
-	sh ${.CURDIR}/../../common/newvers.sh ${.CURDIR}/../loader/version \
+	${SH} ${.CURDIR}/../../common/newvers.sh ${.CURDIR}/../loader/version \
 		${NEWVERSWHAT}
 
 ${LOADER}: ${LOADER}.bin ${BTXLDR} ${BTXKERN}

@@ -13,7 +13,7 @@ MAN=	newfs.8
 .include <bsd.prog.mk>
 
 test:	${PROG}
-	sh ${.CURDIR}/runtest01.sh 
-	sh ${.CURDIR}/runtest00.sh | tee _.test
+	${SH} ${.CURDIR}/runtest01.sh
+	${SH} ${.CURDIR}/runtest00.sh | tee _.test
 	diff --ignore-matching-lines=FreeBSD _.test ${.CURDIR}/ref.test
 	echo All Tests Passed

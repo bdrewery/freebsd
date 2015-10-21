@@ -14,7 +14,7 @@ SRCS+=	opt_ktrace.h opt_sysvipc.h
 CLEANFILES=	svr4_assym.h svr4_genassym.o
 
 svr4_assym.h: svr4_genassym.o
-	sh ${SYSDIR}/kern/genassym.sh svr4_genassym.o > ${.TARGET}
+	${SH} ${SYSDIR}/kern/genassym.sh svr4_genassym.o > ${.TARGET}
 
 svr4_locore.o: svr4_locore.s svr4_assym.h
 	${CC} -c -x assembler-with-cpp -DLOCORE ${CFLAGS} \

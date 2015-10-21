@@ -50,29 +50,29 @@ ASRC=	${.CURDIR}/vi.c ${.CURDIR}/emacs.c ${.CURDIR}/common.c
 
 .for hdr in vi emacs common
 ${hdr}.h: ${hdr}.c makelist
-	sh ${.CURDIR}/makelist -h ${.CURDIR}/${hdr}.c > ${.TARGET}
+	${SH} ${.CURDIR}/makelist -h ${.CURDIR}/${hdr}.c > ${.TARGET}
 .endfor
 
 fcns.h: ${AHDR} makelist
-	sh ${.CURDIR}/makelist -fh ${AHDR} > ${.TARGET}
+	${SH} ${.CURDIR}/makelist -fh ${AHDR} > ${.TARGET}
 
 fcns.c: ${AHDR} fcns.h makelist
-	sh ${.CURDIR}/makelist -fc ${AHDR} > ${.TARGET}
+	${SH} ${.CURDIR}/makelist -fc ${AHDR} > ${.TARGET}
 
 help.c: ${ASRC} makelist
-	sh ${.CURDIR}/makelist -bc ${ASRC} > ${.TARGET}
+	${SH} ${.CURDIR}/makelist -bc ${ASRC} > ${.TARGET}
 
 help.h: ${ASRC} makelist
-	sh ${.CURDIR}/makelist -bh ${ASRC} > ${.TARGET}
+	${SH} ${.CURDIR}/makelist -bh ${ASRC} > ${.TARGET}
 
 editline.c: ${OSRCS}
-	sh ${.CURDIR}/makelist -e ${.ALLSRC:T} > ${.TARGET}
+	${SH} ${.CURDIR}/makelist -e ${.ALLSRC:T} > ${.TARGET}
 
 tokenizern.c: makelist Makefile
-	sh ${.CURDIR}/makelist -n tokenizer.c > ${.TARGET}
+	${SH} ${.CURDIR}/makelist -n tokenizer.c > ${.TARGET}
 
 historyn.c: makelist Makefile
-	sh ${.CURDIR}/makelist -n history.c > ${.TARGET}
+	${SH} ${.CURDIR}/makelist -n history.c > ${.TARGET}
 
 # minimal dependency to make "make depend" optional
 editline.o editline.po editline.So editline.ln:	\

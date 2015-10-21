@@ -44,7 +44,7 @@ skel.c: config.h mkskel.sh flex.skl version.awk
 	    ${FLEXDIR}/flex.skl | \
 	m4 -I${FLEXDIR} -P ${FLEX_VERSION} | \
 	sed 's/m4postproc_/m4_/g' | \
-	sh ${FLEXDIR}/mkskel.sh > ${.TARGET}
+	${SH} ${FLEXDIR}/mkskel.sh > ${.TARGET}
 
 bootstrap: ${GENFILES:S/^/init/g}
 .for _f in ${GENFILES}

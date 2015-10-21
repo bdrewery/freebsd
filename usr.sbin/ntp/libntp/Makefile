@@ -84,6 +84,6 @@ CFLAGS+= -DHAVE_BSD_NICE -DHAVE_STDINT_H
 CLEANFILES+= .version version.c
 
 version.c:
-	sh -e ${.CURDIR}/../scripts/mkver ntpd
+	${SH} -e ${.CURDIR}/../scripts/mkver ntpd
 
 .include <bsd.lib.mk>

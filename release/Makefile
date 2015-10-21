@@ -128,7 +128,7 @@ base.txz:
 	mkdir -p ${DISTDIR}
 	cd ${WORLDDIR} && ${IMAKE} distributeworld DISTDIR=${.OBJDIR}/${DISTDIR}
 # Set up mergemaster root database
-	sh ${.CURDIR}/scripts/mm-mtree.sh -m ${WORLDDIR} -F \
+	${SH} ${.CURDIR}/scripts/mm-mtree.sh -m ${WORLDDIR} -F \
 	    "TARGET_ARCH=${TARGET_ARCH} TARGET=${TARGET}" -D "${.OBJDIR}/${DISTDIR}/base"
 	etcupdate extract -B -M "TARGET_ARCH=${TARGET_ARCH} TARGET=${TARGET}" \
 	    -s ${WORLDDIR} -d "${.OBJDIR}/${DISTDIR}/base/var/db/etcupdate"
@@ -243,30 +243,30 @@ dvd: packagesystem
 
 release.iso: disc1.iso
 disc1.iso: disc1
-	sh ${.CURDIR}/${TARGET}/mkisoimages.sh -b ${VOLUME_LABEL}_CD ${.TARGET} disc1 ${XTRADIR}
+	${SH} ${.CURDIR}/${TARGET}/mkisoimages.sh -b ${VOLUME_LABEL}_CD ${.TARGET} disc1 ${XTRADIR}
 
 dvd1.iso: dvd pkg-stage
-	sh ${.CURDIR}/${TARGET}/mkisoimages.sh -b ${VOLUME_LABEL}_DVD ${.TARGET} dvd ${XTRADIR}
+	${SH} ${.CURDIR}/${TARGET}/mkisoimages.sh -b ${VOLUME_LABEL}_DVD ${.TARGET} dvd ${XTRADIR}
 
 bootonly.iso: bootonly
-	sh ${.CURDIR}/${TARGET}/mkisoimages.sh -b ${VOLUME_LABEL}_BO ${.TARGET} bootonly ${XTRADIR}
+	${SH} ${.CURDIR}/${TARGET}/mkisoimages.sh -b ${VOLUME_LABEL}_BO ${.TARGET} bootonly ${XTRADIR}
 
 memstick: memstick.img
 memstick.img: disc1
-	sh ${.CURDIR}/${TARGET}/make-memstick.sh disc1 ${.TARGET}
+	${SH} ${.CURDIR}/${TARGET}/make-memstick.sh disc1 ${.TARGET}
 
 mini-memstick: mini-memstick.img
 mini-memstick.img: bootonly
-	sh ${.CURDIR}/${TARGET}/make-memstick.sh bootonly ${.TARGET}
+	${SH} ${.CURDIR}/${TARGET}/make-memstick.sh bootonly ${.TARGET}
 
 packagesystem: base.txz kernel.txz ${EXTRA_PACKAGES}
-	sh ${.CURDIR}/scripts/make-manifest.sh *.txz > MANIFEST
+	${SH} ${.CURDIR}/scripts/make-manifest.sh *.txz > MANIFEST
 	touch ${.TARGET}
 
 pkg-stage:
 .if !defined(NOPKG)
 	env REPOS_DIR=${.CURDIR}/pkg_repos/ \
-		sh ${.CURDIR}/scripts/pkg-stage.sh
+		${SH} ${.CURDIR}/scripts/pkg-stage.sh
 	mkdir -p ${.OBJDIR}/dvd/packages/repos/
 	cp ${.CURDIR}/scripts/FreeBSD_install_cdrom.conf \
 		${.OBJDIR}/dvd/packages/repos/

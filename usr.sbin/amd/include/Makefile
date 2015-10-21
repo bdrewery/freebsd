@@ -19,7 +19,7 @@ all depend: ${SRCS}
 
 config_local.h: newvers.sh
 	@rm -f ${.TARGET}
-	sh ${.ALLSRC} ${.CURDIR}/../../../sys/conf/newvers.sh > ${.TARGET}
+	${SH} ${.ALLSRC} ${.CURDIR}/../../../sys/conf/newvers.sh > ${.TARGET}
 
 localconfig.h:
 	@rm -f ${.TARGET}

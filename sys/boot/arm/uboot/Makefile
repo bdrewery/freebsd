@@ -120,7 +120,7 @@ LDADD=		${LIBFICL} ${LIBUBOOT} ${LIBFDT} ${LIBUBOOT_FDT} -lstand
 OBJS+=  ${SRCS:N*.h:R:S/$/.o/g}
 
 vers.c:	${.CURDIR}/../../common/newvers.sh ${.CURDIR}/version
-	sh ${.CURDIR}/../../common/newvers.sh ${.CURDIR}/version ${NEWVERSWHAT}
+	${SH} ${.CURDIR}/../../common/newvers.sh ${.CURDIR}/version ${NEWVERSWHAT}
 
 loader.help: help.common help.uboot ${.CURDIR}/../../fdt/help.fdt
 	cat ${.ALLSRC} | \

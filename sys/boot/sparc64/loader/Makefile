@@ -89,7 +89,7 @@ DPADD=		${LIBFICL} ${LIBZFSBOOT} ${LIBOFW} ${LIBSTAND}
 LDADD=		${LIBFICL} ${LIBZFSBOOT} ${LIBOFW} -lstand
 
 vers.c:	${.CURDIR}/../../common/newvers.sh ${.CURDIR}/../loader/version
-	sh ${.CURDIR}/../../common/newvers.sh ${.CURDIR}/../loader/version \
+	${SH} ${.CURDIR}/../../common/newvers.sh ${.CURDIR}/../loader/version \
 	    ${NEWVERSWHAT}
 
 loader.help: help.common help.sparc64

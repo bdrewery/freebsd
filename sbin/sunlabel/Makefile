@@ -16,7 +16,7 @@ LIBADD=	geom
 .include <bsd.prog.mk>
 
 test:	${PROG}
-	sh ${.CURDIR}/runtest.sh
+	${SH} ${.CURDIR}/runtest.sh
 
 testx: ${PROG}
-	sh -x ${.CURDIR}/runtest.sh
+	${SH} -x ${.CURDIR}/runtest.sh

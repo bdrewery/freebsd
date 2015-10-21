@@ -26,7 +26,7 @@ tests+=	t_vnd
 
 regress: ${tests}
 .for t in ${tests}
-	@SUBRDIR=${.CURDIR} /bin/sh ${.CURDIR}/${t} ${TEST_ARGS}
+	@SUBRDIR=${.CURDIR} ${SH} ${.CURDIR}/${t} ${TEST_ARGS}
 .endfor
 
 PROG=	h_tools

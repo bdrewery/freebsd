@@ -264,7 +264,7 @@ CROSSENV+=	${TARGET_CFLAGS}
 .endif
 
 # bootstrap-tools stage
-BMAKEENV=	INSTALL="sh ${.CURDIR}/tools/install.sh" \
+BMAKEENV=	INSTALL="${SH} ${.CURDIR}/tools/install.sh" \
 		PATH=${BPATH}:${PATH} \
 		WORLDTMP=${WORLDTMP} \
 		MAKEFLAGS="-m ${.CURDIR}/tools/build/mk ${.MAKEFLAGS}"
@@ -301,7 +301,7 @@ XMAKE=		TOOLS_PREFIX=${WORLDTMP} ${BMAKE} \
 		MK_GDB=no MK_TESTS=no
 
 # kernel-tools stage
-KTMAKEENV=	INSTALL="sh ${.CURDIR}/tools/install.sh" \
+KTMAKEENV=	INSTALL="${SH} ${.CURDIR}/tools/install.sh" \
 		PATH=${BPATH}:${PATH} \
 		WORLDTMP=${WORLDTMP}
 KTMAKE=		TOOLS_PREFIX=${WORLDTMP} MAKEOBJDIRPREFIX=${WORLDTMP} \
@@ -316,7 +316,7 @@ KTMAKE=		TOOLS_PREFIX=${WORLDTMP} MAKEOBJDIRPREFIX=${WORLDTMP} \
 # world stage
 WMAKEENV=	${CROSSENV} \
 		_LDSCRIPTROOT= \
-		INSTALL="sh ${.CURDIR}/tools/install.sh" \
+		INSTALL="${SH} ${.CURDIR}/tools/install.sh" \
 		PATH=${TMPPATH}
 
 # make hierarchy
@@ -454,7 +454,7 @@ LIB32FLAGS+=		--sysroot=${WORLDTMP}
 # Yes, the flags are redundant.
 LIB32WMAKEENV+=	MAKEOBJDIRPREFIX=${LIB32_OBJTREE} \
 		_LDSCRIPTROOT=${LIB32TMP} \
-		INSTALL="sh ${.CURDIR}/tools/install.sh" \
+		INSTALL="${SH} ${.CURDIR}/tools/install.sh" \
 		PATH=${TMPPATH} \
 		LIBDIR=/usr/lib32 \
 		SHLIBDIR=/usr/lib32 \
@@ -1608,7 +1608,7 @@ cross-tools: .MAKE .PHONY
 .endfor
 
 NXBENV=		MAKEOBJDIRPREFIX=${OBJTREE}/nxb \
-		INSTALL="sh ${.CURDIR}/tools/install.sh" \
+		INSTALL="${SH} ${.CURDIR}/tools/install.sh" \
 		PATH=${PATH}:${OBJTREE}/gperf_for_gcc/usr/bin
 NXBMAKE=	${NXBENV} ${MAKE} \
 		TBLGEN=${OBJTREE}/nxb-bin/usr/bin/tblgen \
@@ -2199,7 +2199,7 @@ XDTP?=/usr/${XDDIR}
 .endif
 
 CDBENV=MAKEOBJDIRPREFIX=${MAKEOBJDIRPREFIX}/${XDDIR} \
-	INSTALL="sh ${.CURDIR}/tools/install.sh"
+	INSTALL="${SH} ${.CURDIR}/tools/install.sh"
 CDENV= ${CDBENV} \
 	TOOLS_PREFIX=${XDTP}
 CD2CFLAGS=-isystem ${XDDESTDIR}/usr/include -L${XDDESTDIR}/usr/lib \

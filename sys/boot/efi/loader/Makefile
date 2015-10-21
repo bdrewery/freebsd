@@ -83,7 +83,7 @@ CLEANFILES+=	vers.c loader.efi
 NEWVERSWHAT=	"EFI loader" ${MACHINE}
 
 vers.c:	${.CURDIR}/../../common/newvers.sh ${.CURDIR}/../../efi/loader/version
-	sh ${.CURDIR}/../../common/newvers.sh ${.CURDIR}/version ${NEWVERSWHAT}
+	${SH} ${.CURDIR}/../../common/newvers.sh ${.CURDIR}/version ${NEWVERSWHAT}
 
 OBJCOPY?=	objcopy
 OBJDUMP?=	objdump

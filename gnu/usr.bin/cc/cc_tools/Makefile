@@ -135,9 +135,9 @@ GTFILES_LANG_DIR_NAMES+=	cp
 .for L in ${GTFILES_LANG_DIR_NAMES} c
 .if exists(${GCCDIR}/$L-config-lang.in)
 # Source the language config file
-L_GTFILES!=	sh -c '. ${GCCDIR}/$L-config-lang.in; echo $$gtfiles'
+L_GTFILES!=	${SH} -c '. ${GCCDIR}/$L-config-lang.in; echo $$gtfiles'
 .else
-L_GTFILES!=	sh -c '. ${GCCDIR}/$L/config-lang.in; echo $$gtfiles'
+L_GTFILES!=	${SH} -c '. ${GCCDIR}/$L/config-lang.in; echo $$gtfiles'
 .endif
 .for F in ${L_GTFILES}
 GTFILES_FILES+=	$F
@@ -188,7 +188,7 @@ config.h:
 	TARGET_CPU_DEFAULT="${TARGET_CPU_DEFAULT}" \
 	HEADERS="auto-host.h ansidecl.h" \
 	DEFINES="" \
-	/bin/sh ${GCCDIR}/mkconfig.sh ${.TARGET}
+	${SH} ${GCCDIR}/mkconfig.sh ${.TARGET}
 
 GENSRCS+=	config.h
 CLEANFILES+=	cs-config.h
@@ -198,7 +198,7 @@ bconfig.h:
 	TARGET_CPU_DEFAULT="${TARGET_CPU_DEFAULT}" \
 	HEADERS="auto-host.h ansidecl.h" \
 	DEFINES="" \
-	/bin/sh ${GCCDIR}/mkconfig.sh ${.TARGET}
+	${SH} ${GCCDIR}/mkconfig.sh ${.TARGET}
 .if exists(${GCCDIR}/config/${GCC_CPU}/${GCC_CPU}-modes.def)
 	echo '#define EXTRA_MODES_FILE "${GCC_CPU}/${GCC_CPU}-modes.def"' >> ${.TARGET}
 .endif
@@ -211,7 +211,7 @@ tconfig.h:
 	TARGET_CPU_DEFAULT="${TARGET_CPU_DEFAULT}" \
 	HEADERS="auto-host.h ansidecl.h" \
 	DEFINES="USED_FOR_TARGET" \
-	/bin/sh ${GCCDIR}/mkconfig.sh ${.TARGET}
+	${SH} ${GCCDIR}/mkconfig.sh ${.TARGET}
 
 GENSRCS+=	tconfig.h
 CLEANFILES+=	cs-tconfig.h
@@ -237,7 +237,7 @@ tm.h:
 	TARGET_CPU_DEFAULT="${TARGET_CPU_DEFAULT}" \
 	HEADERS="${TARGET_INC}" \
 	DEFINES="" \
-	/bin/sh ${GCCDIR}/mkconfig.sh ${.TARGET}
+	${SH} ${GCCDIR}/mkconfig.sh ${.TARGET}
 .if exists(${GCCDIR}/config/${GCC_CPU}/${GCC_CPU}-modes.def)
 	echo '#define EXTRA_MODES_FILE "${GCC_CPU}/${GCC_CPU}-modes.def"' >> ${.TARGET}
 .endif
@@ -250,7 +250,7 @@ tm_p.h:
 	TARGET_CPU_DEFAULT="${TARGET_CPU_DEFAULT}" \
 	HEADERS="${GCC_CPU}/${GCC_CPU}-protos.h tm-preds.h" \
 	DEFINES="" \
-	/bin/sh ${GCCDIR}/mkconfig.sh tm_p.h
+	${SH} ${GCCDIR}/mkconfig.sh tm_p.h
 
 GENSRCS+=	tm_p.h
 CLEANFILES+=	cs-tm_p.h

@@ -331,7 +331,7 @@ codes.c: MKcodes.awk
 	${AWK} -f ${NCURSES_DIR}/ncurses/tinfo/MKcodes.awk bigstrings=${USE_BIG_STRINGS} ${NCURSES_DIR}/include/Caps > codes.c
 
 lib_gen.c: MKlib_gen.sh curses.h
-	LC_ALL=C sh ${NCURSES_DIR}/ncurses/base/MKlib_gen.sh "${CC} -E ${CFLAGS}" \
+	LC_ALL=C ${SH} ${NCURSES_DIR}/ncurses/base/MKlib_gen.sh "${CC} -E ${CFLAGS}" \
 	    "${AWK}" generated < curses.h >$@
 
 lib_keyname.c: keys.list MKkeyname.awk
@@ -341,39 +341,39 @@ unctrl.c: MKunctrl.awk
 	echo | ${AWK} -f ${NCURSES_DIR}/ncurses/base/MKunctrl.awk bigstrings=${USE_BIG_STRINGS} > unctrl.c
 
 comp_captab.c: MKcaptab.sh MKcaptab.awk Caps make_hash
-	sh ${NCURSES_DIR}/ncurses/tinfo/MKcaptab.sh "${AWK}" \
+	${SH} ${NCURSES_DIR}/ncurses/tinfo/MKcaptab.sh "${AWK}" \
 	    ${USE_BIG_STRINGS} ${NCURSES_DIR}/ncurses/tinfo/MKcaptab.awk \
 	    ${NCURSES_DIR}/include/Caps > comp_captab.c
 
 expanded.c: MKexpanded.sh
-	sh ${NCURSES_DIR}/ncurses/tty/MKexpanded.sh "${CC} -E" ${CFLAGS} >expanded.c
+	${SH} ${NCURSES_DIR}/ncurses/tty/MKexpanded.sh "${CC} -E" ${CFLAGS} >expanded.c
 
 fallback.c: MKfallback.sh
-	sh ${NCURSES_DIR}/ncurses/tinfo/MKfallback.sh > fallback.c
+	${SH} ${NCURSES_DIR}/ncurses/tinfo/MKfallback.sh > fallback.c
 
 # Generated headers
 nomacros.h: MKlib_gen.sh curses.h
-	LC_ALL=C sh ${NCURSES_DIR}/ncurses/base/MKlib_gen.sh "${CC} -E ${CFLAGS}" \
+	LC_ALL=C ${SH} ${NCURSES_DIR}/ncurses/base/MKlib_gen.sh "${CC} -E ${CFLAGS}" \
 	    "${AWK}" generated < curses.h | fgrep undef > $@
 
 init_keytry.h: keys.list make_keys
 	./make_keys keys.list > init_keytry.h
 
 hashsize.h: MKhashsize.sh Caps
-	sh ${NCURSES_DIR}/include/MKhashsize.sh ${NCURSES_DIR}/include/Caps > $@
+	${SH} ${NCURSES_DIR}/include/MKhashsize.sh ${NCURSES_DIR}/include/Caps > $@
 
 parametrized.h: MKparametrized.sh Caps
-	AWK=${AWK} sh ${NCURSES_DIR}/include/MKparametrized.sh \
+	AWK=${AWK} ${SH} ${NCURSES_DIR}/include/MKparametrized.sh \
 	    ${NCURSES_DIR}/include/Caps > $@
 
 term.h: MKterm.h.awk edit_cfg.sh Caps
 	${AWK} -f MKterm.h.awk ${NCURSES_DIR}/include/Caps > $@.new
-	sh ${NCURSES_DIR}/include/edit_cfg.sh ${NCURSES_CFG_H} $@.new
+	${SH} ${NCURSES_DIR}/include/edit_cfg.sh ${NCURSES_CFG_H} $@.new
 	mv -f $@.new $@
 
 curses.h: curses.head MKkey_defs.sh Caps
 	cat curses.head > $@.new
-	AWK=${AWK} _POSIX2_VERSION=199209 sh ${NCURSES_DIR}/include/MKkey_defs.sh \
+	AWK=${AWK} _POSIX2_VERSION=199209 ${SH} ${NCURSES_DIR}/include/MKkey_defs.sh \
 	    ${NCURSES_DIR}/include/Caps >> $@.new
 .if defined(ENABLE_WIDEC)
 	cat ${NCURSES_DIR}/include/curses.wide >> $@.new
@@ -383,7 +383,7 @@ curses.h: curses.head MKkey_defs.sh Caps
 
 # Generated intermediate files
 keys.list: MKkeys_list.sh Caps
-	AWK=${AWK} sh ${NCURSES_DIR}/ncurses/tinfo/MKkeys_list.sh \
+	AWK=${AWK} ${SH} ${NCURSES_DIR}/ncurses/tinfo/MKkeys_list.sh \
 	    ${NCURSES_DIR}/include/Caps | LC_ALL=C sort > keys.list
 
 # Build tools
@@ -472,7 +472,7 @@ unctrl.h: unctrl.h.in
 
 # MAN page gunk
 terminfo.5: MKterminfo.sh terminfo.head Caps
-	sh ${NCURSES_DIR}/man/MKterminfo.sh ${NCURSES_DIR}/man/terminfo.head \
+	${SH} ${NCURSES_DIR}/man/MKterminfo.sh ${NCURSES_DIR}/man/terminfo.head \
 	    ${NCURSES_DIR}/include/Caps ${NCURSES_DIR}/man/terminfo.tail >$@
 
 CLEANFILES+=	terminfo.5

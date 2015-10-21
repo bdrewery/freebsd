@@ -46,7 +46,7 @@ EXPORT_SYMS+=	linux_ioctl_unregister_handler
 CLEANFILES=	linux${SFX}_assym.h linux${SFX}_genassym.o linux${SFX}_locore.o
 
 linux${SFX}_assym.h: linux${SFX}_genassym.o
-	sh ${SYSDIR}/kern/genassym.sh linux${SFX}_genassym.o > ${.TARGET}
+	${SH} ${SYSDIR}/kern/genassym.sh linux${SFX}_genassym.o > ${.TARGET}
 
 linux${SFX}_locore.o: linux${SFX}_assym.h assym.s
 	${CC} -x assembler-with-cpp -DLOCORE -m32 -shared -s			\

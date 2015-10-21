@@ -27,6 +27,6 @@ template.c: template.txt
 		< ${.CURDIR}/template.txt > template.c
 
 test: ${PROG}
-	sh ${.CURDIR}/test.sh ${.CURDIR}
+	${SH} ${.CURDIR}/test.sh ${.CURDIR}
 
 .include <bsd.prog.mk>

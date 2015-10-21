@@ -12,7 +12,8 @@ CLEANFILES= ioctl.c
 
 ioctl.c: ${.CURDIR}/../kdump/mkioctls
 	env MACHINE=${MACHINE} CPP="${CPP}" \
-		/bin/sh ${.CURDIR}/../kdump/mkioctls return ${DESTDIR}${INCLUDEDIR} > ${.TARGET}
+	    ${SH} ${.CURDIR}/../kdump/mkioctls return \
+	    ${DESTDIR}${INCLUDEDIR} > ${.TARGET}
 
 # Define where to generate syscalls for each ABI.
 ABI_SYSPATH.freebsd=		sys/kern
@@ -48,14 +49,14 @@ abi_src=	${f}
 SRCS:=		${SRCS} ${abi_src} ${abi}_syscalls.h
 CLEANFILES+=	${abi}_syscalls.conf ${abi}_syscalls.master ${abi}_syscalls.h
 ${abi}_syscalls.conf: ${.CURDIR}/makesyscallsconf.sh
-	/bin/sh ${.CURDIR}/makesyscallsconf.sh ${abi} ${.TARGET}
+	${SH} ${.CURDIR}/makesyscallsconf.sh ${abi} ${.TARGET}
 
 ${abi}_syscalls.master:	${.CURDIR:H:H}/${ABI_SYSPATH.${abi}}/syscalls.master
 	cp -f ${.ALLSRC} ${.TARGET}
 
 ${abi}_syscalls.h:	${abi}_syscalls.master ${abi}_syscalls.conf \
 			${.CURDIR:H:H}/sys/kern/makesyscalls.sh
-	/bin/sh ${.CURDIR:H:H}/sys/kern/makesyscalls.sh \
+	${SH} ${.CURDIR:H:H}/sys/kern/makesyscalls.sh \
 	    ${abi}_syscalls.master ${abi}_syscalls.conf
 # Eliminate compiler warning about non-static global.
 	sed -i '' '/^const char \*/s/^/static /' ${.TARGET}.tmp

@@ -31,6 +31,6 @@ LIBADD+=	md
 CLEANFILES+= .version version.c
 
 version.c:
-	sh -e ${.CURDIR}/../scripts/mkver ntpdc
+	${SH} -e ${.CURDIR}/../scripts/mkver ntpdc
 
 .include <bsd.prog.mk>

@@ -70,7 +70,7 @@ CFLAGS+=	-I${.CURDIR}/../btx/lib
 .include <bsd.init.mk>
 
 vers.c:	${.CURDIR}/../../common/newvers.sh ${.CURDIR}/../../i386/loader/version
-	sh ${.CURDIR}/../../common/newvers.sh ${.CURDIR}/../../i386/loader/version ${NEWVERSWHAT}
+	${SH} ${.CURDIR}/../../common/newvers.sh ${.CURDIR}/../../i386/loader/version ${NEWVERSWHAT}
 
 ${LOADER}: ${LOADER}.bin ${BTXLDR} ${BTXKERN}
 	btxld -v -f aout -e ${LOADER_ADDRESS} -o ${.TARGET} -l ${BTXLDR} \

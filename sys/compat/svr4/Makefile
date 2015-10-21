@@ -13,5 +13,5 @@ svr4_syscallnames.c svr4_sysent.c svr4_syscall.h svr4_proto.h: \
 	-mv -f svr4_sysent.c svr4_sysent.c.bak
 	-mv -f svr4_syscall.h svr4_syscall.h.bak
 	-mv -f svr4_proto.h svr4_proto.h.bak
-	sh ../../kern/makesyscalls.sh syscalls.master syscalls.conf
+	${SH} ../../kern/makesyscalls.sh syscalls.master syscalls.conf
 

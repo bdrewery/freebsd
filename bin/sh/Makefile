@@ -39,7 +39,7 @@ build-tools: mknodes mksyntax
 
 .ORDER: builtins.c builtins.h
 builtins.c builtins.h: mkbuiltins builtins.def
-	sh ${.CURDIR}/mkbuiltins ${.CURDIR}
+	${SH} ${.CURDIR}/mkbuiltins ${.CURDIR}
 
 # XXX this is just to stop the default .c rule being used, so that the
 # intermediate object has a fixed name.
@@ -58,7 +58,7 @@ syntax.c syntax.h: mksyntax
 	./mksyntax
 
 token.h: mktokens
-	sh ${.CURDIR}/mktokens
+	${SH} ${.CURDIR}/mktokens
 
 .if ${MK_TESTS} != "no"
 SUBDIR+=    tests

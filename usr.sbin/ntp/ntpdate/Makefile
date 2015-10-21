@@ -25,6 +25,6 @@ LIBADD+=	md
 CLEANFILES+= .version version.c
 
 version.c: 
-	sh -e ${.CURDIR}/../scripts/mkver ntpdate
+	${SH} -e ${.CURDIR}/../scripts/mkver ntpdate
 
 .include <bsd.prog.mk>

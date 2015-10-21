@@ -35,6 +35,6 @@ CFLAGS+=	-DHAVE_LIBEDIT -DHAVE_READLINE_READLINE_H \
 CLEANFILES+= .version version.c
 
 version.c:
-	sh -e ${.CURDIR}/../scripts/mkver ntpq
+	${SH} -e ${.CURDIR}/../scripts/mkver ntpq
 
 .include <bsd.prog.mk>

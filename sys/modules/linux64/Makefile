@@ -23,7 +23,7 @@ CLEANFILES=	linux_assym.h linux_genassym.o linux_locore.o
 OBJS=	${VDSO}.so
 
 linux_assym.h: linux_genassym.o
-	sh ${SYSDIR}/kern/genassym.sh linux_genassym.o > ${.TARGET}
+	${SH} ${SYSDIR}/kern/genassym.sh linux_genassym.o > ${.TARGET}
 
 linux_locore.o: linux_locore.s linux_assym.h
 	${CC} -x assembler-with-cpp -DLOCORE -shared -mcmodel=small	\

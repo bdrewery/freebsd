@@ -103,7 +103,7 @@ DPADD=		${LIBFICL} ${LIBOFW} ${LIBFDT} ${LIBSTAND}
 LDADD=		${LIBFICL} ${LIBOFW} ${LIBFDT} ${LIBSTAND}
 
 vers.c:	${.CURDIR}/../../common/newvers.sh ${.CURDIR}/version
-	sh ${.CURDIR}/../../common/newvers.sh ${.CURDIR}/version ${NEWVERSWHAT}
+	${SH} ${.CURDIR}/../../common/newvers.sh ${.CURDIR}/version ${NEWVERSWHAT}
 
 loader.help: help.common help.ofw ${.CURDIR}/../../fdt/help.fdt
 	cat ${.ALLSRC} | \

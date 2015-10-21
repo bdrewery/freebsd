@@ -12,4 +12,4 @@ LIBADD=	geom
 .include <bsd.prog.mk>
 
 test:	${PROG}
-	sh ${.CURDIR}/runtest.sh
+	${SH} ${.CURDIR}/runtest.sh

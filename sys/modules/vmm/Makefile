@@ -57,10 +57,10 @@ SRCS+=	vmcb.c		\
 CLEANFILES=	vmx_assym.h vmx_genassym.o svm_assym.h svm_genassym.o
 
 vmx_assym.h:    vmx_genassym.o
-	sh ${SYSDIR}/kern/genassym.sh vmx_genassym.o > ${.TARGET}
+	${SH} ${SYSDIR}/kern/genassym.sh vmx_genassym.o > ${.TARGET}
 
 svm_assym.h:    svm_genassym.o
-	sh ${SYSDIR}/kern/genassym.sh svm_genassym.o > ${.TARGET}
+	${SH} ${SYSDIR}/kern/genassym.sh svm_genassym.o > ${.TARGET}
 
 vmx_support.o:
 	${CC} -c -x assembler-with-cpp -DLOCORE ${CFLAGS} \

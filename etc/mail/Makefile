@@ -221,21 +221,21 @@ maps: ${SENDMAIL_MAP_OBJ}
 start start-mta start-mspq:
 	@if [ -r ${SENDMAIL_START_SCRIPT} ]; then \
 		echo -n 'Starting:'; \
-		sh ${SENDMAIL_START_SCRIPT} $@; \
+		${SH} ${SENDMAIL_START_SCRIPT} $@; \
 		echo '.'; \
 	fi
 
 stop stop-mta stop-mspq:
 	@if [ -r ${SENDMAIL_START_SCRIPT} ]; then \
 		echo -n 'Stopping:'; \
-		sh ${SENDMAIL_START_SCRIPT} $@; \
+		${SH} ${SENDMAIL_START_SCRIPT} $@; \
 		echo '.'; \
 	fi
 
 restart restart-mta restart-mspq:
 	@if [ -r ${SENDMAIL_START_SCRIPT} ]; then \
 		echo -n 'Restarting:'; \
-		sh ${SENDMAIL_START_SCRIPT} $@; \
+		${SH} ${SENDMAIL_START_SCRIPT} $@; \
 		echo '.'; \
 	fi
 
