@@ -125,7 +125,7 @@ SUBDIR+=.WAIT
 .endif
 SUBDIR+=etc
 
-.endif	# defined(SUBDIR_OVERRIDE)
+.endif	# !empty(SUBDIR_OVERRIDE)
 
 .if defined(NOCLEAN)
 NO_CLEAN=	${NOCLEAN}
