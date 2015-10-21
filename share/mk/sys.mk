@@ -205,7 +205,12 @@ RFLAGS		?=
 # to work like POSIX sh.
 SHELL		?=	sh
 
-SH		?=	sh
+.if exists(/rescue/sh)
+_default_sh=	/rescue/sh
+.else
+_default_sh=	/bin/sh
+.endif
+SH		?=	${_default_sh}
 
 .if !defined(%POSIX)
 SIZE		?=	size
