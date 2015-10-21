@@ -374,7 +374,6 @@ WMAKEENV+=	CC="${XCC} ${XCFLAGS}" CXX="${XCXX} ${XCFLAGS} ${XCXXFLAGS}" \
 		RANLIB=${XRANLIB} STRINGS=${XSTRINGS} \
 		SIZE="${XSIZE}"
 
-.if ${XCC:M/*}
 .if defined(CROSS_BINUTILS_PREFIX)
 # In the case of xdev-build tools, CROSS_BINUTILS_PREFIX won't be a
 # directory, but the compiler will look in the right place for it's
@@ -392,7 +391,7 @@ TARGET_ABI=	gnueabihf
 TARGET_ABI=	gnueabi
 .endif
 .endif
-.if defined(X_COMPILER_TYPE) && ${X_COMPILER_TYPE} == gcc
+.if ${COMPILER_TYPE} == gcc
 XCFLAGS+=	-isystem ${WORLDTMP}/usr/include -L${WORLDTMP}/usr/lib
 XCXXFLAGS+=	-I${WORLDTMP}/usr/include/c++/v1 -std=gnu++11 -L${WORLDTMP}/../lib/libc++
 DEPFLAGS+=	-I${WORLDTMP}/usr/include/c++/v1
@@ -403,13 +402,6 @@ XCFLAGS+=	-target ${TARGET_TRIPLE}
 .endif
 XCFLAGS+=	--sysroot=${WORLDTMP} ${BFLAGS}
 XCXXFLAGS+=	--sysroot=${WORLDTMP} ${BFLAGS}
-.else
-.if defined(CROSS_BINUTILS_PREFIX) && exists(${CROSS_BINUTILS_PREFIX})
-BFLAGS+=	-B${CROSS_BINUTILS_PREFIX}
-XCFLAGS+=	${BFLAGS}
-XCXXFLAGS+=	${BFLAGS}
-.endif
-.endif # ${XCC:M/*}
 
 WMAKE=		${WMAKEENV} ${MAKE} ${WORLD_FLAGS} -f Makefile.inc1 DESTDIR=${WORLDTMP}
 
@@ -447,10 +439,8 @@ LIB32WMAKEFLAGS=	\
 LIB32FLAGS=	-m32 ${LIB32CPUFLAGS} -DCOMPAT_32BIT \
 		-isystem ${LIB32TMP}/usr/include/ \
 		-L${LIB32TMP}/usr/lib32 \
-		-B${LIB32TMP}/usr/lib32
-.if ${XCC:M/*}
-LIB32FLAGS+=		--sysroot=${WORLDTMP}
-.endif
+		-B${LIB32TMP}/usr/lib32 \
+		--sysroot=${WORLDTMP}
 
 # Yes, the flags are redundant.
 LIB32WMAKEENV+=	MAKEOBJDIRPREFIX=${LIB32_OBJTREE} \
