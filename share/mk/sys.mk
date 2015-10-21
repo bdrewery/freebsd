@@ -201,7 +201,11 @@ RC		?=	f77
 RFLAGS		?=
 .endif
 
+# XXX: This is set to whatever the user's shell is and cannot be trusted
+# to work like POSIX sh.
 SHELL		?=	sh
+
+SH		?=	sh
 
 .if !defined(%POSIX)
 SIZE		?=	size
@@ -382,10 +386,7 @@ __MAKE_CONF?=/etc/make.conf
 # late include for customization
 .sinclude <local.sys.mk>
 
-.if defined(__MAKE_SHELL) && !empty(__MAKE_SHELL)
-SHELL=	${__MAKE_SHELL}
-.SHELL: path=${__MAKE_SHELL}
-.endif
+__MAKE_SHELL?=	${SH}
 
 # Tell bmake to expand -V VAR by default
 .MAKE.EXPAND_VARIABLES= yes
@@ -401,12 +402,13 @@ SHELL=	${__MAKE_SHELL}
 # when running target scripts, this is a problem for many makefiles here.
 # So define a shell that will do what FreeBSD expects.
 .ifndef WITHOUT_SHELL_ERRCTL
-__MAKE_SHELL?=/bin/sh
 .SHELL: name=sh \
 	quiet="set -" echo="set -v" filter="set -" \
 	hasErrCtl=yes check="set -e" ignore="set +e" \
 	echoFlag=v errFlag=e \
 	path=${__MAKE_SHELL}
+.else
+.SHELL: path=${__MAKE_SHELL}
 .endif
 
 .include <bsd.cpu.mk>
