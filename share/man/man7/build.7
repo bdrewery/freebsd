@@ -467,6 +467,11 @@ If combined with
 .Cm buildworld
 then all libraries and includes, and some of the build tools will still build
 as well.
+When combined with
+.Cm buildworld
+it is necesarry to override
+.Va LOCAL_LIB_DIRS
+with any custom directories containing libraries.
 This allows building a subset of the system in the same way as
 .Cm buildworld
 does using its sysroot handling.

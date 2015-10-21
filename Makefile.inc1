@@ -741,10 +741,7 @@ WMAKE_TGTS+=	_worldtmp _legacy
 .if empty(SUBDIR_OVERRIDE)
 WMAKE_TGTS+=	_bootstrap-tools
 .endif
-WMAKE_TGTS+=	_cleanobj _obj _build-tools
-.if empty(SUBDIR_OVERRIDE)
-WMAKE_TGTS+=	_cross-tools
-.endif
+WMAKE_TGTS+=	_cleanobj _obj _build-tools _cross-tools
 WMAKE_TGTS+=	_includes _libraries _depend everything
 .if defined(LIB32TMP) && ${MK_LIB32} != "no"
 WMAKE_TGTS+=	build32
