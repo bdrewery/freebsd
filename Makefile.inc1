@@ -727,9 +727,9 @@ distribute32 install32: .MAKE .PHONY
 .endif
 
 WMAKE_TGTS=
-WMAKE_TGTS+=	_worldtmp
+WMAKE_TGTS+=	_worldtmp _legacy
 .if !defined(SUBDIR_OVERRIDE)
-WMAKE_TGTS+=	_legacy _bootstrap-tools
+WMAKE_TGTS+=	_bootstrap-tools
 .endif
 WMAKE_TGTS+=	_cleanobj _obj _build-tools
 .if !defined(SUBDIR_OVERRIDE)
