@@ -125,6 +125,14 @@ SUBDIR+=.WAIT
 .endif
 SUBDIR+=etc
 
+# Only a subset of directories are needed during the 'includes' phase as
+# others contain no INCS.
+.if make(*includes*)
+INCLUDE_DIRS?=	lib libexec gnu include kerberos5 secure usr.bin/lex \
+		usr.sbin/bsnmpd/modules
+SUBDIR=		${INCLUDE_DIRS}
+.endif
+
 .endif	# !empty(SUBDIR_OVERRIDE)
 
 .if defined(NOCLEAN)
