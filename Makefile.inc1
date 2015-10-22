@@ -128,8 +128,10 @@ SUBDIR+=etc
 # Only a subset of directories are needed during the 'includes' phase as
 # others contain no INCS.
 .if make(*includes*)
-INCLUDE_DIRS?=	lib libexec gnu include kerberos5 secure usr.bin/lex \
-		usr.sbin/bsnmpd/modules
+.if !defined(INCLUDE_DIRS)
+INCLUDE_DIRS!=	cd ${.CURDIR} && find ${SUBDIR:N.WAIT:Nsys} -name Makefile \
+		    -exec grep -l '^INCS' {} + | sed -e 's,/Makefile$$,,'
+.endif
 SUBDIR=		${INCLUDE_DIRS}
 .endif
 
