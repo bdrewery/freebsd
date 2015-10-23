@@ -2005,7 +2005,6 @@ _generic_libs: ${_generic_libs:S/$/__L/}
 # built libraries in a proper order and installed includes into WORLDTMP.
 # Special handling is done for SUBDIR ordering for 'install*' to avoid
 # trashing a system if it crashes mid-install.
-par-all: all .PHONY
 .if !make(all)
 SUBDIR_PARALLEL=
 .endif
