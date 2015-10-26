@@ -10,6 +10,10 @@ _LD=	${CXX}
 .else
 _LD=	${CC}
 .endif
+.if ${MK_CCACHE_BUILD} == "yes"
+# Avoid overhead of calling ccache for linking.
+_LD:=	${_LD:N${CCACHE_PATH}}
+.endif
 
 LIB_PRIVATE=	${PRIVATELIB:Dprivate}
 # Set up the variables controlling shared libraries.  After this section,

@@ -27,6 +27,13 @@ CTFFLAGS+= -g
 
 .if defined(PROG_CXX)
 PROG=	${PROG_CXX}
+_LD=	${CXX}
+.else
+_LD=	${CC}
+.endif
+.if ${MK_CCACHE_BUILD} == "yes"
+# Avoid overhead of calling ccache for linking.
+_LD:=	${_LD:N${CCACHE_PATH}}
 .endif
 
 .if !empty(LDFLAGS:M-Wl,*--oformat,*) || !empty(LDFLAGS:M-static)
@@ -82,9 +89,9 @@ ${PROG_FULL}: beforelinking
 .endif
 ${PROG_FULL}: ${OBJS}
 .if defined(PROG_CXX)
-	${CXX} ${CXXFLAGS:N-M*} ${LDFLAGS} -o ${.TARGET} ${OBJS} ${LDADD}
+	${_LD} ${CXXFLAGS:N-M*} ${LDFLAGS} -o ${.TARGET} ${OBJS} ${LDADD}
 .else
-	${CC} ${CFLAGS:N-M*} ${LDFLAGS} -o ${.TARGET} ${OBJS} ${LDADD}
+	${_LD} ${CFLAGS:N-M*} ${LDFLAGS} -o ${.TARGET} ${OBJS} ${LDADD}
 .endif
 .if ${MK_CTF} != "no"
 	${CTFMERGE} ${CTFFLAGS} -o ${.TARGET} ${OBJS}
@@ -112,9 +119,9 @@ ${PROG_FULL}: beforelinking
 .endif
 ${PROG_FULL}: ${OBJS}
 .if defined(PROG_CXX)
-	${CXX} ${CXXFLAGS:N-M*} ${LDFLAGS} -o ${.TARGET} ${OBJS} ${LDADD}
+	${_LD} ${CXXFLAGS:N-M*} ${LDFLAGS} -o ${.TARGET} ${OBJS} ${LDADD}
 .else
-	${CC} ${CFLAGS:N-M*} ${LDFLAGS} -o ${.TARGET} ${OBJS} ${LDADD}
+	${_LD} ${CFLAGS:N-M*} ${LDFLAGS} -o ${.TARGET} ${OBJS} ${LDADD}
 .endif
 .if ${MK_CTF} != "no"
 	${CTFMERGE} ${CTFFLAGS} -o ${.TARGET} ${OBJS}
