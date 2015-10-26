@@ -46,9 +46,14 @@ LOCALBASE?=		/usr/local
 CCACHE_WRAPPER_PATH?=	${LOCALBASE}/libexec/ccache
 CCACHE_PATH?=		${LOCALBASE}/bin/ccache
 .if ${MK_CCACHE_BUILD} == "yes" && exists(${CCACHE_PATH})
-# Handle compiler changes properly.  This avoids needing to use the 'world'
-# wrappers.
+# Handle bootstrapped compiler changes properly by hashing their content
+# rather than checking mtime.  For external compilers it should be safe
+# to use the more optimal mtime check.
+.if ${CC:N${CCACHE_PATH}:[1]:M/*} == ""
 CCACHE_COMPILERCHECK?=	content
+.else
+CCACHE_COMPILERCHECK?=	mtime
+.endif
 .export CCACHE_COMPILERCHECK
 # Remove ccache from the PATH to prevent double calls and wasted CPP/LD time.
 PATH:=	${PATH:C,:?${CCACHE_WRAPPER_PATH}(/world)?(:$)?,,g}
