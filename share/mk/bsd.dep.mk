@@ -58,11 +58,7 @@ _MKDEPCC:=	${_MKDEPCC:N${CCACHE_PATH}}
 .if !empty(DEPFLAGS)
 _MKDEPCC+=	${DEPFLAGS}
 .endif
-.if ${_MKDEPCC} != "cc"
 MKDEPCMD?=	CC='${_MKDEPCC}' mkdep
-.else
-MKDEPCMD?=	mkdep
-.endif
 DEPENDFILE?=	.depend
 
 # Keep `tags' here, before SRCS are mangled below for `depend'.
