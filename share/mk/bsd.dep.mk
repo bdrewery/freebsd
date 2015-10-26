@@ -48,11 +48,13 @@ CTAGSFLAGS?=
 GTAGSFLAGS?=	-o
 HTAGSFLAGS?=
 
-.if ${CC} != "cc"
-MKDEPCMD?=	CC='${CC} ${DEPFLAGS}' mkdep
-.else
-MKDEPCMD?=	mkdep
+_MKDEPCC=	${CC}
+# XXX: DEPFLAGS can come out once Makefile.inc1 properly passes down
+# CXXFLAGS.
+.if !empty(DEPFLAGS)
+_MKDEPCC+=	${DEPFLAGS}
 .endif
+MKDEPCMD?=	CC='${_MKDEPCC}' mkdep
 DEPENDFILE?=	.depend
 
 # Keep `tags' here, before SRCS are mangled below for `depend'.
