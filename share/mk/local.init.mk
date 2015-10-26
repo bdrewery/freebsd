@@ -64,6 +64,14 @@ PATH:=	${PATH:C,:?${CCACHE_WRAPPER_PATH}(/world)?(:$)?,,g}
 ${var}:=	${CCACHE_PATH} ${${var}}
 .endif
 .endfor
+# For GCC, avoid the need for the CCACHE_CPP2 hack which the devel/ccache port
+# enables by default to work around ccache passing preprocessed C to clang
+# which fails due to -Wparentheses-equality, -Wtautological-compare,
+# and -Wself-assign on macro-expanded lines.
+.if defined(COMPILER_TYPE) && ${COMPILER_TYPE} == "gcc"
+CCACHE_NOCPP2=	1
+.export CCACHE_NOCPP2
+.endif
 # Canonicalize CCACHE_DIR for meta mode usage.
 .if defined(CCACHE_DIR) && empty(.MAKE.META.IGNORE_PATHS:M${CCACHE_DIR})
 CCACHE_DIR:=	${CCACHE_DIR:tA}
