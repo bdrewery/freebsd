@@ -48,11 +48,17 @@ CTAGSFLAGS?=
 GTAGSFLAGS?=	-o
 HTAGSFLAGS?=
 
-.if ${CC} != "cc"
-MKDEPCMD?=	CC='${CC} ${DEPFLAGS}' mkdep
-.else
-MKDEPCMD?=	mkdep
+_MKDEPCC=	${CC}
+.if ${MK_CCACHE_BUILD} == "yes"
+# Avoid overhead of calling ccache for mkdep.
+_MKDEPCC:=	${_MKDEPCC:N${CCACHE_BIN}}
 .endif
+# XXX: DEPFLAGS can come out once Makefile.inc1 properly passes down
+# CXXFLAGS.
+.if !empty(DEPFLAGS)
+_MKDEPCC+=	${DEPFLAGS}
+.endif
+MKDEPCMD?=	CC='${_MKDEPCC}' mkdep
 DEPENDFILE?=	.depend
 DEPENDFILES=	${DEPENDFILE}
 .if ${MK_FAST_DEPEND} == "yes"
