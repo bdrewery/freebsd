@@ -38,3 +38,31 @@ CPP=		${HOST_CPP}
 HOST_CFLAGS+= -DHOSTPROG
 CFLAGS+= ${HOST_CFLAGS}
 .endif
+
+# Handle ccache after CC is determined.
+# CC is always prepended with the ccache wrapper rather than modifying
+# PATH since it is more clear that ccache is used.
+LOCALBASE?=		/usr/local
+CCACHE_WRAPPER_PATH?=	${LOCALBASE}/libexec/ccache
+CCACHE_PATH?=		${LOCALBASE}/bin/ccache
+.if ${MK_CCACHE_BUILD} == "yes" && exists(${CCACHE_PATH})
+# Handle compiler changes properly.  This avoids needing to use the 'world'
+# wrappers.
+CCACHE_COMPILERCHECK?=	content
+.export CCACHE_COMPILERCHECK
+# Remove ccache from the PATH to prevent double calls and wasted CPP/LD time.
+PATH:=	${PATH:C,:?${CCACHE_WRAPPER_PATH}(/world)?(:$)?,,g}
+.export PATH
+# Override various toolchain vars.
+.for var in CC CXX HOST_CC HOST_CXX
+.if defined(${var}) && ${${var}:M${CCACHE_PATH}} == ""
+${var}:=	${CCACHE_PATH} ${${var}}
+.endif
+.endfor
+# Canonicalize CCACHE_DIR for meta mode usage.
+.if defined(CCACHE_DIR) && empty(.MAKE.META.IGNORE_PATHS:M${CCACHE_DIR})
+CCACHE_DIR:=	${CCACHE_DIR:tA}
+.MAKE.META.IGNORE_PATHS+= ${CCACHE_DIR}
+.export CCACHE_DIR
+.endif
+.endif	# ${MK_CCACHE_BUILD} == "yes"

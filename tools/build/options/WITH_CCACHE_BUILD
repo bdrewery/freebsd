@@ -1,0 +1,17 @@
+.\" $FreeBSD$
+Set to use
+.Xr ccache 1
+for the build.
+No configuration is required except to install the
+.Sy devel/ccache
+package .
+Using with
+.Xr distcc 1
+should set
+.Sy CCACHE_PREFIX=distcc .
+The default cache directory of ccache will be used, which can be overriden
+with
+.Sy CCACHE_DIR .
+See
+.Xr ccache 1
+for more configuration options.
