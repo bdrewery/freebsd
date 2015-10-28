@@ -60,6 +60,7 @@ _MKDEPCC+=	${DEPFLAGS}
 .endif
 MKDEPCMD?=	CC='${_MKDEPCC}' mkdep
 DEPENDFILE?=	.depend
+DEPENDFILES=	${DEPENDFILE}
 
 # Keep `tags' here, before SRCS are mangled below for `depend'.
 .if !target(tags) && defined(SRCS) && !defined(NO_TAGS)
@@ -174,31 +175,58 @@ MKDEP_CXXFLAGS=	${CXXFLAGS:M-nostdinc*} ${CXXFLAGS:M-[BIDU]*} \
 		${CXXFLAGS:M-std=*} ${CXXFLAGS:M-ansi} ${CXXFLAGS:M-stdlib=*}
 
 DPSRCS+= ${SRCS}
-DPDEPS=  ${DPSRCS:S/^/${DEPENDFILE}./}
-.for _dpdep in ${DPDEPS}
-_dpsrc:= ${_dpdep:C/^${DEPENDFILE}\.//}
-${_dpdep}: ${_dpsrc}
-	rm -f ${.TARGET}
+.if !empty(DPSRCS)
+.for __dpsrc in ${DPSRCS:O:u}
+# Need _dpsrc for .if checks on iteration variable.
+_dpsrc= ${__dpsrc}
 .if !empty(_dpsrc:M*.[cS])
-	${MKDEPCMD} -f ${.TARGET} -a ${MKDEP} ${MKDEP_CFLAGS} ${.ALLSRC}
+_mkdep_flags=	${MKDEP_CFLAGS}
 .elif !empty(_dpsrc:M*.cc) || !empty(_dpsrc:M*.C) || !empty(_dpsrc:M*.cpp) || \
     !empty(_dpsrc:M*.cxx)
-	${MKDEPCMD} -f ${.TARGET} -a ${MKDEP} ${MKDEP_CXXFLAGS} ${.ALLSRC}
+_mkdep_flags=	${MKDEP_CXXFLAGS}
+.else
+_mkdep_flags=
+.endif
+.if !empty(_mkdep_flags)
+# Using iteration variable allows +=.  If _dpsrc were used then it would
+# require :=.
+DPDEPS+=	${DEPENDFILE}.${__dpsrc}
+_mkdep_flags.${__dpsrc}:=	${_mkdep_flags}
+${DEPENDFILE}.${_dpsrc}: ${_dpsrc}
+	rm -f ${.TARGET}
+	${MKDEPCMD} -f ${.TARGET} -a ${MKDEP} ${_mkdep_flags.${__dpsrc}} \
+	    ${.ALLSRC:[1]}
 .endif
 .endfor
+.endif	# !empty(DPSRCS)
 
-${DEPENDFILE}: ${DPDEPS}
-	rm -f ${DEPENDFILE}
-	for f in ${.ALLSRC}; do \
+.if !empty(DPDEPS)
+# The DPDEPS are included via .depend_srcs so that .depend has less to
+# regenerate if one of its extra dependencies needs to rebuild .depend.
+DEPENDFILES+=	${DEPENDFILE}_srcs ${DPDEPS}
+${DEPENDFILE}_srcs: ${DPSRCS} ${DPDEPS}
+	rm -f ${.TARGET}
+	for f in ${DPDEPS}; do \
 		echo ".sinclude \"$${f}\""; \
-	done > ${.TARGET}
+	done > ${.TARGET}.tmp && \
+	mv ${.TARGET}.tmp ${.TARGET}
+${DEPENDFILE}: ${DEPENDFILE}_srcs
+.endif
+
+${DEPENDFILE}: ${DPSRCS}
+	rm -f ${DEPENDFILE}
+.if !empty(DPDEPS)
+	echo ".sinclude \"${DEPENDFILE}_srcs\"" > ${.TARGET}
+.else
+	touch ${.TARGET}
+.endif
 .if target(_EXTRADEPEND)
 _EXTRADEPEND: .USE
 ${DEPENDFILE}: _EXTRADEPEND
 .endif
 
 # Tell bmake not to look for generated files via .PATH
-.NOPATH: ${DEPENDFILE} ${DPDEPS}
+.NOPATH: ${DEPENDFILES}
 
 .ORDER: ${DEPENDFILE} afterdepend
 .else
@@ -219,12 +247,12 @@ afterdepend:
 cleandepend:
 .if defined(SRCS)
 .if ${CTAGS:T} == "gtags"
-	rm -f ${DEPENDFILE} ${DPDEPS} GPATH GRTAGS GSYMS GTAGS
+	rm -f ${DEPENDFILES} GPATH GRTAGS GSYMS GTAGS
 .if defined(HTML)
 	rm -rf HTML
 .endif
 .else
-	rm -f ${DEPENDFILE} ${DPDEPS} tags
+	rm -f ${DEPENDFILES} tags
 .endif
 .endif
 .endif
