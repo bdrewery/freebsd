@@ -306,13 +306,12 @@ all: _manpages
 .endif
 .endif
 
+_EXTRADEPEND_SRC:
+	sed -e 's/^\([^\.]*\).o[ ]*:/\1.o \1.po \1.So:/' < ${.TARGET} \
+	    > ${.TARGET}.tmp; \
+	mv ${.TARGET}.tmp ${.TARGET}
+
 _EXTRADEPEND:
-	TMP=_depend$$$$; \
-	for file in ${DEPENDFILES}; do \
-	sed -e 's/^\([^\.]*\).o[ ]*:/\1.o \1.po \1.So:/' < $${file} \
-	    > $$TMP; \
-	mv $$TMP $${file}; \
-	done
 .if !defined(NO_EXTRADEPEND) && defined(SHLIB_NAME)
 .if defined(DPADD) && !empty(DPADD)
 	echo ${SHLIB_NAME_FULL}: ${DPADD} >> ${DEPENDFILE}

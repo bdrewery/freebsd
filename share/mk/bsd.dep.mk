@@ -173,6 +173,9 @@ MKDEP_CXXFLAGS=	${CXXFLAGS:M-nostdinc*} ${CXXFLAGS:M-[BIDU]*} \
 		${CXXFLAGS:M-std=*} ${CXXFLAGS:M-ansi} ${CXXFLAGS:M-stdlib=*}
 DPSRCS+= ${SRCS}
 .if !empty(DPSRCS)
+.if target(_EXTRADEPEND_SRC)
+_EXTRADEPEND_SRC: .USE
+.endif
 .for __dpsrc in ${DPSRCS:O:u}
 # Need _dpsrc for .if checks on iteration variable.
 _dpsrc= ${__dpsrc}
@@ -191,6 +194,9 @@ DPDEPS+=	${DEPENDFILE}.${__dpsrc}
 ${DEPENDFILE}.${_dpsrc}: ${_dpsrc} ${DPSRCS}
 	${MKDEPCMD} -f ${.TARGET} ${MKDEP} ${_mkdep_flags.${__dpsrc}} \
 	    ${.ALLSRC:[1]}
+.if target(_EXTRADEPEND_SRC)
+${DEPENDFILE}.${_dpsrc}: _EXTRADEPEND_SRC
+.endif
 .endif
 .endfor
 .endif	# !empty(DPSRCS)
