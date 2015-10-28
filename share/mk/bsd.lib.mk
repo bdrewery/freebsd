@@ -307,7 +307,7 @@ all: _manpages
 .endif
 
 _EXTRADEPEND:
-	@TMP=_depend$$$$; \
+	TMP=_depend$$$$; \
 	for file in ${DEPENDFILES}; do \
 	sed -e 's/^\([^\.]*\).o[ ]*:/\1.o \1.po \1.So:/' < $${file} \
 	    > $$TMP; \

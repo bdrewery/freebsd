@@ -165,36 +165,31 @@ afterdepend: beforedepend
 
 .if !target(depend)
 .if defined(SRCS)
-depend: beforedepend ${DEPENDFILE} afterdepend
-
 # Different types of sources are compiled with slightly different flags.
 # Split up the sources, and filter out headers and non-applicable flags.
 MKDEP_CFLAGS=	${CFLAGS:M-nostdinc*} ${CFLAGS:M-[BIDU]*} ${CFLAGS:M-std=*} \
 		${CFLAGS:M-ansi}
 MKDEP_CXXFLAGS=	${CXXFLAGS:M-nostdinc*} ${CXXFLAGS:M-[BIDU]*} \
 		${CXXFLAGS:M-std=*} ${CXXFLAGS:M-ansi} ${CXXFLAGS:M-stdlib=*}
-
 DPSRCS+= ${SRCS}
 .if !empty(DPSRCS)
 .for __dpsrc in ${DPSRCS:O:u}
 # Need _dpsrc for .if checks on iteration variable.
 _dpsrc= ${__dpsrc}
+# Carefully ensure that the cflags variable for the target is not expanded
+# now as CFLAGS may change after the inclusion of this file.
 .if !empty(_dpsrc:M*.[cS])
-_mkdep_flags=	${MKDEP_CFLAGS}
+_mkdep_flags.${__dpsrc}= ${MKDEP_CFLAGS}
 .elif !empty(_dpsrc:M*.cc) || !empty(_dpsrc:M*.C) || !empty(_dpsrc:M*.cpp) || \
     !empty(_dpsrc:M*.cxx)
-_mkdep_flags=	${MKDEP_CXXFLAGS}
-.else
-_mkdep_flags=
+_mkdep_flags.${__dpsrc}= ${MKDEP_CXXFLAGS}
 .endif
-.if !empty(_mkdep_flags)
+.if !empty(_mkdep_flags.${__dpsrc})
 # Using iteration variable allows +=.  If _dpsrc were used then it would
 # require :=.
 DPDEPS+=	${DEPENDFILE}.${__dpsrc}
-_mkdep_flags.${__dpsrc}:=	${_mkdep_flags}
-${DEPENDFILE}.${_dpsrc}: ${_dpsrc}
-	rm -f ${.TARGET}
-	${MKDEPCMD} -f ${.TARGET} -a ${MKDEP} ${_mkdep_flags.${__dpsrc}} \
+${DEPENDFILE}.${_dpsrc}: ${_dpsrc} ${DPSRCS}
+	${MKDEPCMD} -f ${.TARGET} ${MKDEP} ${_mkdep_flags.${__dpsrc}} \
 	    ${.ALLSRC:[1]}
 .endif
 .endfor
@@ -203,20 +198,16 @@ ${DEPENDFILE}.${_dpsrc}: ${_dpsrc}
 .if !empty(DPDEPS)
 # The DPDEPS are included via .depend_srcs so that .depend has less to
 # regenerate if one of its extra dependencies needs to rebuild .depend.
-DEPENDFILES+=	${DEPENDFILE}_srcs ${DPDEPS}
-${DEPENDFILE}_srcs: ${DPSRCS} ${DPDEPS}
-	rm -f ${.TARGET}
-	for f in ${DPDEPS}; do \
-		echo ".sinclude \"$${f}\""; \
-	done > ${.TARGET}.tmp && \
-	mv ${.TARGET}.tmp ${.TARGET}
-${DEPENDFILE}: ${DEPENDFILE}_srcs
+DEPENDFILES+=	${DPDEPS}
+${DEPENDFILE_SRCS}: ${DPSRCS} ${DPDEPS}
 .endif
 
-${DEPENDFILE}: ${DPSRCS}
-	rm -f ${DEPENDFILE}
+${DEPENDFILE}: ${DPSRCS} ${DPDEPS}
+	rm -f ${.TARGET}
 .if !empty(DPDEPS)
-	echo ".sinclude \"${DEPENDFILE}_srcs\"" > ${.TARGET}
+	for f in ${DPDEPS}; do \
+		echo ".sinclude \"$${f}\""; \
+	done > ${.TARGET}
 .else
 	touch ${.TARGET}
 .endif
@@ -228,6 +219,7 @@ ${DEPENDFILE}: _EXTRADEPEND
 # Tell bmake not to look for generated files via .PATH
 .NOPATH: ${DEPENDFILES}
 
+depend: beforedepend ${DEPENDFILE} afterdepend
 .ORDER: ${DEPENDFILE} afterdepend
 .else
 depend: beforedepend afterdepend
