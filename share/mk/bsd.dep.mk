@@ -166,9 +166,6 @@ afterdepend: beforedepend
 .if defined(SRCS)
 depend: beforedepend ${DEPENDFILE} afterdepend
 
-# Tell bmake not to look for generated files via .PATH
-.NOPATH: ${DEPENDFILE}
-
 # Different types of sources are compiled with slightly different flags.
 # Split up the sources, and filter out headers and non-applicable flags.
 MKDEP_CFLAGS=	${CFLAGS:M-nostdinc*} ${CFLAGS:M-[BIDU]*} ${CFLAGS:M-std=*} \
@@ -177,22 +174,31 @@ MKDEP_CXXFLAGS=	${CXXFLAGS:M-nostdinc*} ${CXXFLAGS:M-[BIDU]*} \
 		${CXXFLAGS:M-std=*} ${CXXFLAGS:M-ansi} ${CXXFLAGS:M-stdlib=*}
 
 DPSRCS+= ${SRCS}
-${DEPENDFILE}: ${DPSRCS}
+DPDEPS=  ${DPSRCS:S/^/${DEPENDFILE}./}
+.for _dpdep in ${DPDEPS}
+_dpsrc:= ${_dpdep:C/^${DEPENDFILE}\.//}
+${_dpdep}: ${_dpsrc}
+	rm -f ${.TARGET}
+.if !empty(_dpsrc:M*.[cS])
+	${MKDEPCMD} -f ${.TARGET} -a ${MKDEP} ${MKDEP_CFLAGS} ${.ALLSRC}
+.elif !empty(_dpsrc:M*.cc) || !empty(_dpsrc:M*.C) || !empty(_dpsrc:M*.cpp) || \
+    !empty(_dpsrc:M*.cxx)
+	${MKDEPCMD} -f ${.TARGET} -a ${MKDEP} ${MKDEP_CXXFLAGS} ${.ALLSRC}
+.endif
+.endfor
+
+${DEPENDFILE}: ${DPDEPS}
 	rm -f ${DEPENDFILE}
-.if !empty(DPSRCS:M*.[cS])
-	${MKDEPCMD} -f ${DEPENDFILE} -a ${MKDEP} \
-	    ${MKDEP_CFLAGS} ${.ALLSRC:M*.[cS]}
-.endif
-.if !empty(DPSRCS:M*.cc) || !empty(DPSRCS:M*.C) || !empty(DPSRCS:M*.cpp) || \
-    !empty(DPSRCS:M*.cxx)
-	${MKDEPCMD} -f ${DEPENDFILE} -a ${MKDEP} \
-	    ${MKDEP_CXXFLAGS} \
-	    ${.ALLSRC:M*.cc} ${.ALLSRC:M*.C} ${.ALLSRC:M*.cpp} ${.ALLSRC:M*.cxx}
-.endif
+	for f in ${.ALLSRC}; do \
+		echo ".sinclude \"$${f}\""; \
+	done > ${.TARGET}
 .if target(_EXTRADEPEND)
 _EXTRADEPEND: .USE
 ${DEPENDFILE}: _EXTRADEPEND
 .endif
+
+# Tell bmake not to look for generated files via .PATH
+.NOPATH: ${DEPENDFILE} ${DPDEPS}
 
 .ORDER: ${DEPENDFILE} afterdepend
 .else
@@ -213,12 +219,12 @@ afterdepend:
 cleandepend:
 .if defined(SRCS)
 .if ${CTAGS:T} == "gtags"
-	rm -f ${DEPENDFILE} GPATH GRTAGS GSYMS GTAGS
+	rm -f ${DEPENDFILE} ${DPDEPS} GPATH GRTAGS GSYMS GTAGS
 .if defined(HTML)
 	rm -rf HTML
 .endif
 .else
-	rm -f ${DEPENDFILE} tags
+	rm -f ${DEPENDFILE} ${DPDEPS} tags
 .endif
 .endif
 .endif
