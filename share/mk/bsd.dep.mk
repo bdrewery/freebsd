@@ -208,7 +208,7 @@ DEPENDFILES+=	${DPDEPS}
 ${DEPENDFILE_SRCS}: ${DPSRCS} ${DPDEPS}
 .endif
 
-${DEPENDFILE}: ${DPSRCS} ${DPDEPS}
+${DEPENDFILE}: ${DPDEPS}
 	rm -f ${.TARGET}
 .if !empty(DPDEPS)
 	for f in ${DPDEPS}; do \
