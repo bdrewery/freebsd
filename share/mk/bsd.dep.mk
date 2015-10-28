@@ -245,12 +245,12 @@ afterdepend:
 cleandepend:
 .if defined(SRCS)
 .if ${CTAGS:T} == "gtags"
-	rm -f ${DEPENDFILES} GPATH GRTAGS GSYMS GTAGS
+	rm -f ${DEPENDFILE} ${DPDEPS:D${DEPENDFILE}.*} GPATH GRTAGS GSYMS GTAGS
 .if defined(HTML)
 	rm -rf HTML
 .endif
 .else
-	rm -f ${DEPENDFILES} tags
+	rm -f ${DEPENDFILE} ${DPDEPS:D${DEPENDFILE}.*} tags
 .endif
 .endif
 .endif
