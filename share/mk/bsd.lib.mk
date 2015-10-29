@@ -306,11 +306,6 @@ all: _manpages
 .endif
 .endif
 
-_EXTRADEPEND_SRC:
-	sed -e 's/^\([^\.]*\).o[ ]*:/\1.o \1.po \1.So:/' < ${.TARGET} \
-	    > ${.TARGET}.tmp; \
-	mv ${.TARGET}.tmp ${.TARGET}
-
 _EXTRADEPEND:
 .if !defined(NO_EXTRADEPEND) && defined(SHLIB_NAME)
 .if defined(DPADD) && !empty(DPADD)
@@ -431,6 +426,11 @@ ${_S:R}.So: ${_S}
 .endfor
 .endif
 .endif
+
+# Make .So and .po files rebuild when main object is rebuilt.
+.for _O in ${POBJS} ${SOBJS}
+${_O}: ${_O:R}.o
+.endfor
 
 .include <bsd.obj.mk>
 
