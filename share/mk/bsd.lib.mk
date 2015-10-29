@@ -10,10 +10,6 @@ _LD=	${CXX}
 .else
 _LD=	${CC}
 .endif
-.if ${MK_CCACHE_BUILD} == "yes"
-# Avoid overhead of calling ccache for linking.
-_LD:=	${_LD:N${CCACHE_PATH}}
-.endif
 
 LIB_PRIVATE=	${PRIVATELIB:Dprivate}
 # Set up the variables controlling shared libraries.  After this section,
@@ -255,7 +251,7 @@ ${SHLIB_NAME_FULL}: ${SOBJS}
 .if defined(SHLIB_LINK) && !commands(${SHLIB_LINK:R}.ld)
 	@${INSTALL_SYMLINK} ${SHLIB_NAME} ${SHLIB_LINK}
 .endif
-	${_LD} ${LDFLAGS} ${SSP_CFLAGS} ${SOLINKOPTS} \
+	${_LD:N${CCACHE_PATH}} ${LDFLAGS} ${SSP_CFLAGS} ${SOLINKOPTS} \
 	    -o ${.TARGET} -Wl,-soname,${SONAME} \
 	    `NM='${NM}' NMFLAGS='${NMFLAGS}' lorder ${SOBJS} | tsort -q` ${LDADD}
 .if ${MK_CTF} != "no"
