@@ -187,7 +187,7 @@ _mkdep_flags.${__dpsrc}= ${MKDEP_CFLAGS}
     !empty(_dpsrc:M*.cxx)
 _mkdep_flags.${__dpsrc}= ${MKDEP_CXXFLAGS}
 .endif
-.if !empty(_mkdep_flags.${__dpsrc})
+.if defined(_mkdep_flags.${__dpsrc})
 # Using iteration variable allows +=.  If _dpsrc were used then it would
 # require :=.
 DPDEPS+=	${DEPENDFILE}.${__dpsrc}
