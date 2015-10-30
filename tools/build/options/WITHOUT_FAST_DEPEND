@@ -1,0 +1,5 @@
+.\" $FreeBSD$
+Set to use
+.Xr mkdep 1
+during the 'make depend'
+phase of the build.
