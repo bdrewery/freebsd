@@ -61,7 +61,7 @@ DEPEND_CFLAGS+=	-MD -MP -MF${DEPENDFILE}.${.TARGET}
 DEPEND_CFLAGS+=	-MT${.TARGET}
 CFLAGS+=	${DEPEND_CFLAGS}
 DEPENDOBJS+=	${OBJS} ${POBJS} ${SOBJS}
-.for __obj in ${DEPENDOBJS}
+.for __obj in ${DEPENDOBJS:O:u}
 .sinclude "${DEPENDFILE}.${__obj}"
 DEPENDFILES_REAL+=	${DEPENDFILE}.${__obj}
 .endfor
