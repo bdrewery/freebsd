@@ -186,8 +186,8 @@ MKDEP_CXXFLAGS=	${CXXFLAGS:M-nostdinc*} ${CXXFLAGS:M-[BIDU]*} \
 
 DPSRCS+= ${SRCS}
 ${DEPENDFILE}: ${DPSRCS}
-	rm -f ${DEPENDFILE}
 .if ${MK_FAST_DEPEND} == "no"
+	rm -f ${DEPENDFILE}
 .if !empty(DPSRCS:M*.[cS])
 	${MKDEPCMD} -f ${DEPENDFILE} -a ${MKDEP} \
 	    ${MKDEP_CFLAGS} ${.ALLSRC:M*.[cS]}
@@ -197,7 +197,10 @@ ${DEPENDFILE}: ${DPSRCS}
 	${MKDEPCMD} -f ${DEPENDFILE} -a ${MKDEP} \
 	    ${MKDEP_CXXFLAGS} \
 	    ${.ALLSRC:M*.cc} ${.ALLSRC:M*.C} ${.ALLSRC:M*.cpp} ${.ALLSRC:M*.cxx}
+.else
 .endif
+.else
+	: > ${.TARGET}
 .endif	# ${MK_FAST_DEPEND} == "no"
 .if target(_EXTRADEPEND)
 _EXTRADEPEND: .USE
