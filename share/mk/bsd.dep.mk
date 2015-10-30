@@ -58,12 +58,10 @@ DEPENDFILES=	${DEPENDFILE}
 .if ${MK_FAST_DEPEND} == "yes"
 DEPENDFILES+=	${DEPENDFILE}.*
 DEPEND_CFLAGS+=	-MD -MP -MF${DEPENDFILE}.${.TARGET}
-DEPEND_SUFFIXES+= o
-.for __suffix in ${DEPEND_SUFFIXES}
-DEPEND_CFLAGS+=	-MT${.TARGET:R}.${__suffix}
-.endfor
+DEPEND_CFLAGS+=	-MT${.TARGET}
 CFLAGS+=	${DEPEND_CFLAGS}
-.for __obj in ${OBJS}
+DEPENDOBJS+=	${OBJS} ${POBJS} ${SOBJS}
+.for __obj in ${DEPENDOBJS}
 .sinclude "${DEPENDFILE}.${__obj}"
 DEPENDFILES_REAL+=	${DEPENDFILE}.${__obj}
 .endfor

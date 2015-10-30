@@ -317,10 +317,6 @@ _EXTRADEPEND:
 .endif
 .endif
 
-.if ${MK_FAST_DEPEND} == "yes"
-DEPEND_SUFFIXES+= po So
-.endif
-
 .if !target(install)
 
 .if defined(PRECIOUSLIB)
