@@ -54,6 +54,20 @@ MKDEPCMD?=	CC='${CC} ${DEPFLAGS}' mkdep
 MKDEPCMD?=	mkdep
 .endif
 DEPENDFILE?=	.depend
+DEPENDFILES=	${DEPENDFILE}
+.if ${MK_FAST_DEPEND} == "yes"
+DEPENDFILES+=	${DEPENDFILE}.*
+DEPEND_CFLAGS+=	-MD -MP -MF${DEPENDFILE}.${.TARGET}
+DEPEND_SUFFIXES+= o
+.for __suffix in ${DEPEND_SUFFIXES}
+DEPEND_CFLAGS+=	-MT${.TARGET:R}.${__suffix}
+.endfor
+CFLAGS+=	${DEPEND_CFLAGS}
+.for __obj in ${OBJS}
+.sinclude "${DEPENDFILE}.${__obj}"
+DEPENDFILES_REAL+=	${DEPENDFILE}.${__obj}
+.endfor
+.endif	# ${MK_FAST_DEPEND} == "yes"
 
 # Keep `tags' here, before SRCS are mangled below for `depend'.
 .if !target(tags) && defined(SRCS) && !defined(NO_TAGS)
@@ -161,7 +175,7 @@ afterdepend: beforedepend
 depend: beforedepend ${DEPENDFILE} afterdepend
 
 # Tell bmake not to look for generated files via .PATH
-.NOPATH: ${DEPENDFILE}
+.NOPATH: ${DEPENDFILE} ${DEPENDFILES_REAL}
 
 # Different types of sources are compiled with slightly different flags.
 # Split up the sources, and filter out headers and non-applicable flags.
@@ -173,6 +187,7 @@ MKDEP_CXXFLAGS=	${CXXFLAGS:M-nostdinc*} ${CXXFLAGS:M-[BIDU]*} \
 DPSRCS+= ${SRCS}
 ${DEPENDFILE}: ${DPSRCS}
 	rm -f ${DEPENDFILE}
+.if ${MK_FAST_DEPEND} == "no"
 .if !empty(DPSRCS:M*.[cS])
 	${MKDEPCMD} -f ${DEPENDFILE} -a ${MKDEP} \
 	    ${MKDEP_CFLAGS} ${.ALLSRC:M*.[cS]}
@@ -183,6 +198,7 @@ ${DEPENDFILE}: ${DPSRCS}
 	    ${MKDEP_CXXFLAGS} \
 	    ${.ALLSRC:M*.cc} ${.ALLSRC:M*.C} ${.ALLSRC:M*.cpp} ${.ALLSRC:M*.cxx}
 .endif
+.endif	# ${MK_FAST_DEPEND} == "no"
 .if target(_EXTRADEPEND)
 _EXTRADEPEND: .USE
 ${DEPENDFILE}: _EXTRADEPEND
@@ -207,12 +223,12 @@ afterdepend:
 cleandepend:
 .if defined(SRCS)
 .if ${CTAGS:T} == "gtags"
-	rm -f ${DEPENDFILE} GPATH GRTAGS GSYMS GTAGS
+	rm -f ${DEPENDFILES} GPATH GRTAGS GSYMS GTAGS
 .if defined(HTML)
 	rm -rf HTML
 .endif
 .else
-	rm -f ${DEPENDFILE} tags
+	rm -f ${DEPENDFILES} tags
 .endif
 .endif
 .endif
