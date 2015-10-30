@@ -82,7 +82,6 @@ __DEFAULT_YES_OPTIONS = \
     EE \
     ELFTOOLCHAIN_BOOTSTRAP \
     EXAMPLES \
-    FAST_DEPEND \
     FDT \
     FILE \
     FINGER \
