@@ -47,6 +47,9 @@ LOCALBASE?=		/usr/local
 CCACHE_WRAPPER_PATH?=	${LOCALBASE}/libexec/ccache
 CCACHE_BIN?=		${LOCALBASE}/bin/ccache
 .if exists(${CCACHE_BIN})
+# Export to ensure sub-makes can filter it out for mkdep/linking and
+# to chain down into kernel build which won't include this file.
+.export CCACHE_BIN
 # Handle bootstrapped compiler changes properly by hashing their content
 # rather than checking mtime.  For external compilers it should be safe
 # to use the more optimal mtime check.

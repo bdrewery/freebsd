@@ -195,21 +195,22 @@ SFILES_CDDL=	${SFILES:M*/cddl/*}
 kernel-depend: .depend
 # The argument list can be very long, so use make -V and xargs to
 # pass it to mkdep.
+_CC:=	${CC:N${CCACHE_BIN}}
 SRCS=	assym.s vnode_if.h ${BEFORE_DEPEND} ${CFILES} \
 	${SYSTEM_CFILES} ${GEN_CFILES} ${SFILES} \
 	${MFILES:T:S/.m$/.h/}
 .depend: .PRECIOUS ${SRCS}
-	rm -f .newdep
+	rm -f ${.TARGET}.tmp
 	${MAKE} -V CFILES_NOCDDL -V SYSTEM_CFILES -V GEN_CFILES | \
-	    MKDEP_CPP="${CC} -E" CC="${CC}" xargs mkdep -a -f .newdep ${CFLAGS}
+	    CC="${_CC}" xargs mkdep -a -f ${.TARGET}.tmp ${CFLAGS}
 	${MAKE} -V CFILES_CDDL | \
-	    MKDEP_CPP="${CC} -E" CC="${CC}" xargs mkdep -a -f .newdep ${ZFS_CFLAGS} ${FBT_CFLAGS} ${DTRACE_CFLAGS}
+	    CC="${_CC}" xargs mkdep -a -f ${.TARGET}.tmp ${ZFS_CFLAGS} \
+	    ${FBT_CFLAGS} ${DTRACE_CFLAGS}
 	${MAKE} -V SFILES_NOCDDL | \
-	    MKDEP_CPP="${CC} -E" xargs mkdep -a -f .newdep ${ASM_CFLAGS}
+	    CC="${_CC}" xargs mkdep -a -f ${.TARGET}.tmp ${ASM_CFLAGS}
 	${MAKE} -V SFILES_CDDL | \
-	    MKDEP_CPP="${CC} -E" xargs mkdep -a -f .newdep ${ZFS_ASM_CFLAGS}
-	rm -f .depend
-	mv .newdep .depend
+	    CC="${_CC}" xargs mkdep -a -f ${.TARGET}.tmp ${ZFS_ASM_CFLAGS}
+	mv ${.TARGET}.tmp ${.TARGET}
 
 _ILINKS= machine
 .if ${MACHINE} != ${MACHINE_CPUARCH} && ${MACHINE} != "arm64"
