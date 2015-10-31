@@ -51,7 +51,7 @@ HTAGSFLAGS?=
 _MKDEPCC=	${CC}
 .if ${MK_CCACHE_BUILD} == "yes"
 # Avoid overhead of calling ccache for mkdep.
-_MKDEPCC:=	${_MKDEPCC:N${CCACHE_PATH}}
+_MKDEPCC:=	${_MKDEPCC:N${CCACHE_BIN}}
 .endif
 # XXX: DEPFLAGS can come out once Makefile.inc1 properly passes down
 # CXXFLAGS.

@@ -82,10 +82,10 @@ ${PROG_FULL}: beforelinking
 .endif
 ${PROG_FULL}: ${OBJS}
 .if defined(PROG_CXX)
-	${CXX:N${CCACHE_PATH}} ${CXXFLAGS:N-M*} ${LDFLAGS} -o ${.TARGET} \
+	${CXX:N${CCACHE_BIN}} ${CXXFLAGS:N-M*} ${LDFLAGS} -o ${.TARGET} \
 	    ${OBJS} ${LDADD}
 .else
-	${CC:N${CCACHE_PATH}} ${CFLAGS:N-M*} ${LDFLAGS} -o ${.TARGET} ${OBJS} \
+	${CC:N${CCACHE_BIN}} ${CFLAGS:N-M*} ${LDFLAGS} -o ${.TARGET} ${OBJS} \
 	    ${LDADD}
 .endif
 .if ${MK_CTF} != "no"
@@ -114,10 +114,10 @@ ${PROG_FULL}: beforelinking
 .endif
 ${PROG_FULL}: ${OBJS}
 .if defined(PROG_CXX)
-	${CXX:N${CCACHE_PATH}} ${CXXFLAGS:N-M*} ${LDFLAGS} -o ${.TARGET} \
+	${CXX:N${CCACHE_BIN}} ${CXXFLAGS:N-M*} ${LDFLAGS} -o ${.TARGET} \
 	    ${OBJS} ${LDADD}
 .else
-	${CC:N${CCACHE_PATH}} ${CFLAGS:N-M*} ${LDFLAGS} -o ${.TARGET} ${OBJS} \
+	${CC:N${CCACHE_BIN}} ${CFLAGS:N-M*} ${LDFLAGS} -o ${.TARGET} ${OBJS} \
 	    ${LDADD}
 .endif
 .if ${MK_CTF} != "no"
