@@ -45,12 +45,12 @@ CFLAGS+= ${HOST_CFLAGS}
 # PATH since it is more clear that ccache is used.
 LOCALBASE?=		/usr/local
 CCACHE_WRAPPER_PATH?=	${LOCALBASE}/libexec/ccache
-CCACHE_PATH?=		${LOCALBASE}/bin/ccache
-.if exists(${CCACHE_PATH})
+CCACHE_BIN?=		${LOCALBASE}/bin/ccache
+.if exists(${CCACHE_BIN})
 # Handle bootstrapped compiler changes properly by hashing their content
 # rather than checking mtime.  For external compilers it should be safe
 # to use the more optimal mtime check.
-.if ${CC:N${CCACHE_PATH}:[1]:M/*} == ""
+.if ${CC:N${CCACHE_BIN}:[1]:M/*} == ""
 CCACHE_COMPILERCHECK?=	content
 .else
 CCACHE_COMPILERCHECK?=	mtime
@@ -61,8 +61,8 @@ PATH:=	${PATH:C,:?${CCACHE_WRAPPER_PATH}(/world)?(:$)?,,g}
 .export PATH
 # Override various toolchain vars.
 .for var in CC CXX HOST_CC HOST_CXX
-.if defined(${var}) && ${${var}:M${CCACHE_PATH}} == ""
-${var}:=	${CCACHE_PATH} ${${var}}
+.if defined(${var}) && ${${var}:M${CCACHE_BIN}} == ""
+${var}:=	${CCACHE_BIN} ${${var}}
 .endif
 .endfor
 # For GCC, avoid the need for the CCACHE_CPP2 hack which the devel/ccache port
@@ -79,5 +79,5 @@ CCACHE_DIR:=	${CCACHE_DIR:tA}
 .MAKE.META.IGNORE_PATHS+= ${CCACHE_DIR}
 .export CCACHE_DIR
 .endif
-.endif	# exists(${CCACHE_PATH})
+.endif	# exists(${CCACHE_BIN})
 .endif	# ${MK_CCACHE_BUILD} == "yes"
