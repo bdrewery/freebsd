@@ -84,5 +84,7 @@ CCACHE_DIR:=	${CCACHE_DIR:tA}
 .MAKE.META.IGNORE_PATHS+= ${CCACHE_DIR}
 .export CCACHE_DIR
 .endif
+ccache-print-options: .PHONY
+	@${CCACHE_BIN} -p
 .endif	# exists(${CCACHE_BIN})
 .endif	# ${MK_CCACHE_BUILD} == "yes"
