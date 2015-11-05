@@ -53,6 +53,7 @@ CCACHE_BIN?=		${LOCALBASE}/bin/ccache
 # Handle bootstrapped compiler changes properly by hashing their content
 # rather than checking mtime.  For external compilers it should be safe
 # to use the more optimal mtime check.
+# XXX: CCACHE_COMPILERCHECK= string:<compiler_version, compiler_build_rev, compiler_patch_rev, compiler_default_target, compiler_default_sysroot>
 .if ${CC:N${CCACHE_BIN}:[1]:M/*} == ""
 CCACHE_COMPILERCHECK?=	content
 .else
@@ -68,10 +69,10 @@ PATH:=	${PATH:C,:?${CCACHE_WRAPPER_PATH}(/world)?(:$)?,,g}
 ${var}:=	${CCACHE_BIN} ${${var}}
 .endif
 .endfor
-# For GCC, avoid the need for the CCACHE_CPP2 hack which the devel/ccache port
-# enables by default to work around ccache passing preprocessed C to clang
-# which fails due to -Wparentheses-equality, -Wtautological-compare,
-# and -Wself-assign on macro-expanded lines.
+# GCC does not need the CCACHE_CPP2 hack enabled by default in devel/ccache.
+# The port enables it due to ccache passing preprocessed C to clang
+# which fails with -Wparentheses-equality, -Wtautological-compare, and
+# -Wself-assign on macro-expanded lines.
 .if defined(COMPILER_TYPE) && ${COMPILER_TYPE} == "gcc"
 CCACHE_NOCPP2=	1
 .export CCACHE_NOCPP2
