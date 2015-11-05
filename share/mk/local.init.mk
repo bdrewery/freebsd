@@ -51,6 +51,15 @@ CCACHE_BIN?=		${LOCALBASE}/bin/ccache
 # Export to ensure sub-makes can filter it out for mkdep/linking and
 # to chain down into kernel build which won't include this file.
 .export CCACHE_BIN
+# Expand and export some variables so they may be based on make vars.
+# This allows doing something like the following in the environment:
+# CCACHE_BASEDIR='${SRCTOP:H}' MAKEOBJDIRPREFIX='${SRCTOP:H}/obj'
+.for var in CCACHE_LOGFILE CCACHE_BASEDIR
+.if defined(${var})
+${var}:=	${${var}}
+.export		${var}
+.endif
+.endfor
 # Handle bootstrapped compiler changes properly by hashing their content
 # rather than checking mtime.  For external compilers it should be safe
 # to use the more optimal mtime check.
