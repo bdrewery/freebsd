@@ -42,7 +42,8 @@ CFLAGS+= ${HOST_CFLAGS}
 .if ${MK_CCACHE_BUILD} == "yes"
 # Handle ccache after CC is determined.
 # CC is always prepended with the ccache wrapper rather than modifying
-# PATH since it is more clear that ccache is used.
+# PATH since it is more clear that ccache is used and avoids wasting time
+# for mkdep/linking/asm builds.
 LOCALBASE?=		/usr/local
 CCACHE_WRAPPER_PATH?=	${LOCALBASE}/libexec/ccache
 CCACHE_BIN?=		${LOCALBASE}/bin/ccache
