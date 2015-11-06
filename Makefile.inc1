@@ -782,10 +782,13 @@ buildenvvars: .PHONY
 .endif
 .endif
 BUILDENV_DIR?=	${.CURDIR}
+BUILDENV=	${WMAKEENV} BUILDENV=1
+.if ${BUILDENV_SHELL:M*zsh*}
+BUILDENV+=	_BUILDENV_CPUTYPE=${CPUTYPE}
+.endif
 buildenv: .PHONY
 	@echo Entering world for ${TARGET_ARCH}:${TARGET}
-	@cd ${BUILDENV_DIR} && env ${WMAKEENV} BUILDENV=1 ${BUILDENV_SHELL} \
-	    || true
+	@cd ${BUILDENV_DIR} && env ${BUILDENV} ${BUILDENV_SHELL} || true
 
 TOOLCHAIN_TGTS=	${WMAKE_TGTS:N_depend:Neverything:Nbuild32}
 toolchain: ${TOOLCHAIN_TGTS}

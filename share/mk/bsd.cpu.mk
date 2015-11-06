@@ -1,5 +1,11 @@
 # $FreeBSD$
 
+# Hack to handle ZSH hijacking CPUTYPE for 'buildenv'.
+.if defined(_BUILDENV_CPUTYPE) && ${SHELL:M*zsh*}
+CPUTYPE= ${_BUILDENV_CPUTYPE}
+.undef _BUILDENV_CPUTYPE
+.endif
+
 # Set default CPU compile flags and baseline CPUTYPE for each arch.  The
 # compile flags must support the minimum CPU type for each architecture but
 # may tune support for more advanced processors.
