@@ -38,8 +38,10 @@
 #include <sys/types.h>
 __FBSDID("$FreeBSD$");
 
+#include <sys/param.h>
 #include <sys/stat.h>
 
+#include <dirent.h>
 #include <err.h>
 #include <stdio.h>
 #include <libutil.h>
@@ -150,14 +152,23 @@ static Hash_Entry *make_fake_provision(filenode *);
 static void crunch_all_files(void);
 static void initialize(void);
 static void generate_ordering(void);
+static int get_files(strnodelist *, char ***);
 
 int
 main(int argc, char *argv[])
 {
-	int ch;
+	strnodelist *directories;
+	int ch, Dflag;
 
-	while ((ch = getopt(argc, argv, "dk:s:")) != -1)
+	directories = NULL;
+	Dflag = 0;
+
+	while ((ch = getopt(argc, argv, "D:dk:s:")) != -1)
 		switch (ch) {
+		case 'D':
+			Dflag = 1;
+			strnode_add(&directories, optarg, 0);
+			break;
 		case 'd':
 #ifdef DEBUG
 			debug = 1;
@@ -178,8 +189,12 @@ main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 
-	file_count = argc;
-	file_list = argv;
+	if (Dflag)
+		file_count = get_files(directories, &file_list);
+	else {
+		file_count = argc;
+		file_list = argv;
+	}
 
 	DPRINTF((stderr, "parse_args\n"));
 	initialize();
@@ -190,6 +205,43 @@ main(int argc, char *argv[])
 	DPRINTF((stderr, "generate_ordering\n"));
 
 	exit(exit_code);
+}
+
+static int
+get_files(strnodelist *directories, char ***list)
+{
+	strnodelist *dirnode;
+	char *dir, *fname;
+	DIR *dirp;
+	int count;
+	size_t dirlen;
+	struct dirent *entry;
+
+	count = 0;
+
+	for (dirnode = directories; dirnode != NULL; dirnode = dirnode->next) {
+		dir = dirnode->s;
+		dirlen = strlen(dir);
+		if (dir[dirlen - 1] == '/')
+			dir[dirlen - 1] = '\0';
+
+		if ((dirp = opendir(dir)) == NULL)
+			continue;
+
+		while ((entry = readdir(dirp)) != NULL) {
+			if (strcmp(entry->d_name, ".") == 0 ||
+			    strcmp(entry->d_name, "..") == 0)
+				continue;
+			fname = emalloc(MAXPATHLEN);
+			snprintf(fname, MAXPATHLEN, "%s/%s", dir, entry->d_name);
+			*list = erealloc(*list, (count+1)*sizeof(char *));
+			(*list)[count] = fname;
+			count++;
+		}
+		closedir(dirp);
+	}
+
+	return (count);
 }
 
 /*

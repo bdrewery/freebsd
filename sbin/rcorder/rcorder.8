@@ -31,7 +31,7 @@
 .\"
 .\" $FreeBSD$
 .\"
-.Dd August 5, 2011
+.Dd November 5, 2015
 .Dt RCORDER 8
 .Os
 .Sh NAME
@@ -41,7 +41,7 @@
 .Nm
 .Op Fl k Ar keep
 .Op Fl s Ar skip
-.Ar
+.Fl D Ar directory | Ar
 .Sh DESCRIPTION
 The
 .Nm
@@ -107,6 +107,14 @@ Add the specified keyword to the
 If any
 .Fl s
 option is given, files containing the matching keyword are not listed.
+.It Fl D
+Instead of listing all filenames on the command line, use the files
+located in the specified
+.Ar directory .
+The
+.Fl D
+flag may be specified multiple times to add each directory into the search
+list.
 .El
 .Pp
 An example block follows:
