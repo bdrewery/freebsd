@@ -4,7 +4,7 @@
 # of the definitions that need to be before %BEFORE_DEPEND.
 
 # Allow user to configure things that only effect src tree builds.
-# Note: This is duplicated from src.sys.mk to ensure that we include
+# Note: This is duplicated from src.own.mk to ensure that we include
 # /etc/src.conf when building the kernel. Kernels can be built without
 # the rest of /usr/src, but they still always process SRCCONF even though
 # the normal mechanisms to prevent that (compiling out of tree) won't

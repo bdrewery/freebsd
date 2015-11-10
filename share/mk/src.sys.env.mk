@@ -1,6 +1,6 @@
 # $FreeBSD$
 
-# early setup only see also src.sys.mk
+# early setup only see also src.own.mk
 
 # make sure this is defined in a consistent manner
 SRCTOP:= ${.PARSEDIR:tA:H:H}
