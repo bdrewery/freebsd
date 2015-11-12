@@ -207,11 +207,13 @@ MK_SHARED_TOOLCHAIN= no
 TOOLCHAIN_VARS=	AS AR CC CXX CPP LD NM OBJDUMP OBJCOPY RANLIB STRINGS SIZE
 .ifdef WITH_TOOLSDIR
 TOOLSDIR?= ${HOST_OBJTOP}/tools
-.elif defined(STAGE_HOST_OBJTOP) && exists(${STAGE_HOST_OBJTOP}/usr/bin)
+.elif defined(STAGE_HOST_OBJTOP)
 TOOLSDIR?= ${STAGE_HOST_OBJTOP}
 .endif
-.if !empty(TOOLSDIR) && ${.MAKE.LEVEL} == 0 && exists(${TOOLSDIR}/usr/bin)
-PATH:= ${PATH:S,:, ,g:@d@${exists(${TOOLSDIR}$d):?${TOOLSDIR}$d:}@:ts:}:${PATH}
+.if !empty(TOOLSDIR) && ${.MAKE.LEVEL} == 0
+.for dir in /sbin /bin /usr/sbin /usr/bin
+PATH:= ${TOOLSDIR}${dir}:${PATH}
+.endfor
 .export PATH
 # Prefer the TOOLSDIR version of the toolchain if present vs the host version.
 .for var in ${TOOLCHAIN_VARS}
