@@ -204,34 +204,31 @@ TRACER= ${TIME_STAMP} ${:U}
 .if ${MACHINE} == "host"
 MK_SHARED_TOOLCHAIN= no
 .endif
+TOOLCHAIN_VARS=	AS AR CC CXX CPP LD NM OBJDUMP OBJCOPY RANLIB STRINGS SIZE
 .ifdef WITH_TOOLSDIR
 TOOLSDIR?= ${HOST_OBJTOP}/tools
 .elif defined(STAGE_HOST_OBJTOP) && exists(${STAGE_HOST_OBJTOP}/usr/bin)
 TOOLSDIR?= ${STAGE_HOST_OBJTOP}
 .endif
-.if !empty(TOOLSDIR)
-.if ${.MAKE.LEVEL} == 0 && exists(${TOOLSDIR}/usr/bin)
+.if !empty(TOOLSDIR) && ${.MAKE.LEVEL} == 0 && exists(${TOOLSDIR}/usr/bin)
 PATH:= ${PATH:S,:, ,g:@d@${exists(${TOOLSDIR}$d):?${TOOLSDIR}$d:}@:ts:}:${PATH}
 .export PATH
-.if exists(${TOOLSDIR}/usr/bin/cc)
-HOST_CC?=	${TOOLSDIR}/usr/bin/cc
-CC?=		${HOST_CC}
-HOST_CXX?=	${TOOLSDIR}/usr/bin/c++
-CXX?=		${HOST_CXX}
-HOST_CPP?=	${TOOLSDIR}/usr/bin/cpp
-CPP?=		${HOST_CPP}
-.export HOST_CC CC HOST_CXX CXX HOST_CPP CPP
+# Prefer the TOOLSDIR version of the toolchain if present vs the host version.
+.for var in ${TOOLCHAIN_VARS}
+_toolchain_bin.${var}=	${TOOLSDIR}/usr/bin/${var:C/CXX/c++/:tl}
+.if exists(${_toolchain_bin.${var}})
+HOST_${var}?=	${_toolchain_bin.${var}}
+${var}?=	${HOST_${var}}
+.export		HOST_${var} ${var}
 .endif
-.endif
+.endfor
 .endif
 
 .if ${MACHINE} == "host"
-HOST_CC?=	/usr/bin/cc
-CC=		${HOST_CC}
-HOST_CXX?=	/usr/bin/c++
-CXX=		${HOST_CXX}
-HOST_CPP?=	/usr/bin/cpp
-CPP=		${HOST_CPP}
+.for var in ${TOOLCHAIN_VARS}
+HOST_${var}?=	/usr/bin/${var:C/CXX/c++/:tl}
+${var}=		${HOST_${var}}
+.endfor
 .endif
 
 .if ${MACHINE:Nhost:Ncommon} != "" && ${MACHINE} != ${HOST_MACHINE}
