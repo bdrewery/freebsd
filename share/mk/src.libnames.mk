@@ -7,6 +7,9 @@
 .error src.libnames.mk cannot be included directly.
 .endif
 
+.if !target(__<src.libnames.mk>__)
+__<src.libnames.mk>__:
+
 .include <src.opts.mk>
 
 .if ${.OBJDIR:S,${.CURDIR},,} != ${.OBJDIR}
@@ -430,3 +433,5 @@ LIBLNDIR=	${ROOTOBJDIR}/usr.bin/lex/lib
 .for lib in ${_LIBRARIES}
 LIB${lib:tu}DIR?=	${ROOTOBJDIR}/lib/lib${lib}
 .endfor
+
+.endif	# !target(__<src.libnames.mk>__)
