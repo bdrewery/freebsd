@@ -785,6 +785,10 @@ DIRDEPS.powerpc= \
 	usr.sbin/nvram \
 	usr.sbin/ofwdump
 
+.if ${MK_GPL_DTC} != "yes"
+DIRDEPS+= usr.bin/dtc
+.endif
+
 DIRDEPS+= ${DIRDEPS.${MACHINE}:U}
 
 
