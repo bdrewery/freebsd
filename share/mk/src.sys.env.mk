@@ -28,3 +28,10 @@ _src_env_conf_included_:	.NOTMAIN
 MAKESYSPATH:= ${MAKESYSPATH:S,.../share/mk,${.PARSEDIR:tA},}
 .export MAKESYSPATH
 .endif
+
+# Canonicalize CCACHE_DIR for meta mode usage.
+.if defined(CCACHE_DIR) && empty(.MAKE.META.IGNORE_PATHS:M${CCACHE_DIR})
+CCACHE_DIR:=	${CCACHE_DIR:tA}
+.MAKE.META.IGNORE_PATHS+= ${CCACHE_DIR}
+.export CCACHE_DIR
+.endif

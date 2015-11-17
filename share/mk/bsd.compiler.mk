@@ -79,12 +79,6 @@ ${var}:=	${CCACHE_BIN} ${${var}}
 CCACHE_NOCPP2=	1
 .export CCACHE_NOCPP2
 .endif
-# Canonicalize CCACHE_DIR for meta mode usage.
-.if defined(CCACHE_DIR) && empty(.MAKE.META.IGNORE_PATHS:M${CCACHE_DIR})
-CCACHE_DIR:=	${CCACHE_DIR:tA}
-.MAKE.META.IGNORE_PATHS+= ${CCACHE_DIR}
-.export CCACHE_DIR
-.endif
 ccache-print-options: .PHONY
 	@${CCACHE_BIN} -p
 .endif	# exists(${CCACHE_BIN})
