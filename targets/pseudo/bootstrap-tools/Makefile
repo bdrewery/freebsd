@@ -49,6 +49,7 @@ BSARGS+= OBJTOP=${BTOOLSDIR}${SRCTOP} OBJROOT='$${OBJTOP}/'
 BSARGS+= MK_CROSS_COMPILER=no MK_CLANG=no MK_GCC=no
 
 DISTRIB_ENV=	INSTALL="sh ${SRCTOP}/tools/install.sh" NO_FSCHG=1 MK_TESTS=no
+# XXX: Should extend the WITH_META_MODE checks into here with cookies per stage.
 legacy: .MAKE .META
 	mkdir -p ${LEGACY_TOOLS}
 	${DISTRIB_ENV} ${MAKE} -C ${SRCTOP}/etc distrib-dirs \

@@ -33,6 +33,18 @@ SRCS+=		reallocarray.c
 CFLAGS+=	-I${.CURDIR}/../../lib/libc/include
 .endif
 
+.if !exists(/usr/include/xlocale.h) && 0
+.PATH: ${.CURDIR}/../../lib/libc/locale
+SRCS+=		xlocale.c
+.PATH: ${.CURDIR}/../../include ${.CURDIR}/../../include/xlocale
+INCS+=		xlocale.h
+INCSXLOCALE=	_locale.h \
+		_stdio.h _stdlib.h _string.h _time.h _wchar.h
+INCSXLOCALEDIR=	${INCLUDEDIR}/xlocale
+INCSGROUPS+=	INCSXLOCALE
+
+.endif
+
 .if empty(SRCS)
 SRCS=		dummy.c
 .endif
