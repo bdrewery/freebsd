@@ -136,15 +136,8 @@ NO_STAGE_INCLUDES=
 
 .if ${MK_STAGING} != "no" && !defined(_SKIP_BUILD)
 .if make(all)
-DESTDIR= ${STAGE_OBJTOP}
-
 all:	stage_include
 installincludes: buildincludes
-buildincludes: stage_prep
-
-stage_prep:
-	@mkdir -p ${DESTDIR}${INCLUDEDIR}
-	@touch $@
 
 stage_include: .dirdep installincludes
 	@touch $@
