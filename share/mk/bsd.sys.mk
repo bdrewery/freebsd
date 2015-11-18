@@ -150,7 +150,8 @@ CXXFLAGS.clang+=	 -Wno-c++11-extensions
     ${MACHINE_CPUARCH} != "arm" && ${MACHINE_CPUARCH} != "mips"
 .if (${COMPILER_TYPE} == "clang" && ${COMPILER_VERSION} >= 30500) || \
     (${COMPILER_TYPE} == "gcc" && \
-     (${COMPILER_VERSION} == 40201 || ${COMPILER_VERSION} >= 40900))
+     ((${COMPILER_VERSION} == 40201 && ${CC:M/*} == "") || \
+     ${COMPILER_VERSION} >= 40900))
 # Don't use -Wstack-protector as it breaks world with -Werror.
 SSP_CFLAGS?=	-fstack-protector-strong
 .else

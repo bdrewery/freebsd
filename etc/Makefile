@@ -329,7 +329,7 @@ distribution:
 
 MTREE_CMD?=	mtree
 
-.if ${MK_INSTALL_AS_USER} == "yes" && ${_uid} != 0
+.if ${MK_INSTALL_AS_USER} == "yes"
 MTREE_FILTER= sed -e 's,\([gu]\)name=,\1id=,g' \
 	-e 's,\(uid=\)[^ ]* ,\1${_uid} ,' \
 	-e 's,\(gid=\)[^ ]* ,\1${_gid} ,' \

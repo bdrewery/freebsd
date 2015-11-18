@@ -44,6 +44,8 @@ _need_host_libs+= ${LIB${lib:tu}DIR:S,^${ROOTOBJDIR}/,,}
 .endfor
 
 N_host_libs:= ${cd ${SRCTOP} && echo lib/lib*:L:sh:${_need_host_libs:${M_ListToSkip}}:${M_ListToSkip}}
+# XXX: This really needs to be dependent on LOGIC, such as exists(/usr/bin/something) or something_new_enough!= some --check
+#      The way ports does it is really needed.
 DIRDEPS_FILTER.host = \
 	${N_host_libs} \
 	Ninclude* \

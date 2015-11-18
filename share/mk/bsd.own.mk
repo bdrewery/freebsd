@@ -134,7 +134,7 @@ CTFCONVERT_CMD=	@:
 
 .if ${MK_INSTALL_AS_USER} != "no"
 _uid!=	id -u
-.if ${_uid} != 0
+.if ${_uid} != 0 || 1
 .if !defined(USER)
 USER!=	id -un
 .endif
