@@ -44,6 +44,7 @@ BSARGS= 	DESTDIR= \
 		MK_INCLUDES=yes
 
 DISTRIB_ENV=	INSTALL="sh ${SRCTOP}/tools/install.sh" NO_FSCHG=1 MK_TESTS=no
+# XXX: Should extend the WITH_META_MODE checks into here with cookies per stage.
 legacy: .MAKE .META
 	mkdir -p ${LEGACY_TOOLS}
 	${DISTRIB_ENV} ${MAKE} -C ${SRCTOP}/etc distrib-dirs \

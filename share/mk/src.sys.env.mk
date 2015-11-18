@@ -29,6 +29,7 @@ MAKESYSPATH:= ${MAKESYSPATH:S,.../share/mk,${.PARSEDIR:tA},}
 .export MAKESYSPATH
 .endif
 
+# XXX: Wait, why? The actual build stuff should have been including bsd.compiler.mk
 # Canonicalize CCACHE_DIR for meta mode usage.
 .if defined(CCACHE_DIR) && empty(.MAKE.META.IGNORE_PATHS:M${CCACHE_DIR})
 CCACHE_DIR:=	${CCACHE_DIR:tA}

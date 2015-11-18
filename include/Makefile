@@ -5,6 +5,8 @@
 
 .include <src.opts.mk>
 
+# XXX: This doesn't respect cookies - it keeps running installincludes/_INSINCS every time.
+
 CLEANFILES= osreldate.h version
 SUBDIR= arpa protocols rpcsvc rpc xlocale
 SUBDIR_PARALLEL=

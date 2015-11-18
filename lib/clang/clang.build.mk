@@ -41,6 +41,7 @@ CXXFLAGS.clang+= -stdlib=libc++
 
 .if ${MK_META_MODE} == "yes"
 .if empty(TOOLSDIR) || !exists(${TOOLSDIR}/usr/bin/clang-tblgen)
+# XXX: WE should always do this as Makefile.inc1 always did
 .if ${MACHINE} == "host" && defined(BOOTSTRAPPING_TOOLS)
 .if !empty(LEGACY_TOOLS) && exists(${LEGACY_TOOLS}/usr/bin/tblgen)
 TOOLSDIR= ${LEGACY_TOOLS}

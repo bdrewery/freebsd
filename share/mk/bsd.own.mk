@@ -136,7 +136,7 @@ CTFCONVERT_CMD=	@:
 .if !defined(_uid)
 _uid!=	id -u
 .export _uid
-.if ${_uid} != 0
+.if ${_uid} != 0 || 1
 .if !defined(USER)
 USER!=	id -un
 .export USER
