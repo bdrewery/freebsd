@@ -27,7 +27,6 @@ _BSD.sendmail.dist=	BSD.sendmail.dist
 _BSD.tests.dist=	BSD.tests.dist
 .endif
 
-NO_OBJ=
 FILESDIR= /etc/mtree
 
 .include <bsd.prog.mk>
