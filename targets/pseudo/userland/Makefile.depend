@@ -335,6 +335,7 @@ DIRDEPS+= \
 	usr.bin/seq \
 	usr.bin/shar \
 	usr.bin/showmount \
+	usr.bin/smbutil \
 	usr.bin/sockstat \
 	usr.bin/sort \
 	usr.bin/split \
@@ -451,6 +452,45 @@ DIRDEPS+= \
 	usr.sbin/bsdinstall/distfetch \
 	usr.sbin/bsdinstall/partedit \
 	usr.sbin/bsdinstall/scripts \
+	usr.sbin/bsdconfig \
+	usr.sbin/bsdconfig/console \
+	usr.sbin/bsdconfig/console/include \
+	usr.sbin/bsdconfig/diskmgmt \
+	usr.sbin/bsdconfig/diskmgmt/include \
+	usr.sbin/bsdconfig/docsinstall \
+	usr.sbin/bsdconfig/docsinstall/include \
+	usr.sbin/bsdconfig/dot \
+	usr.sbin/bsdconfig/dot/include \
+	usr.sbin/bsdconfig/examples \
+	usr.sbin/bsdconfig/include \
+	usr.sbin/bsdconfig/includes \
+	usr.sbin/bsdconfig/includes/include \
+	usr.sbin/bsdconfig/mouse \
+	usr.sbin/bsdconfig/mouse/include \
+	usr.sbin/bsdconfig/networking \
+	usr.sbin/bsdconfig/networking/include \
+	usr.sbin/bsdconfig/networking/share \
+	usr.sbin/bsdconfig/packages \
+	usr.sbin/bsdconfig/packages/include \
+	usr.sbin/bsdconfig/password \
+	usr.sbin/bsdconfig/password/include \
+	usr.sbin/bsdconfig/password/share \
+	usr.sbin/bsdconfig/security \
+	usr.sbin/bsdconfig/security/include \
+	usr.sbin/bsdconfig/share \
+	usr.sbin/bsdconfig/share/media \
+	usr.sbin/bsdconfig/share/packages \
+	usr.sbin/bsdconfig/startup \
+	usr.sbin/bsdconfig/startup/include \
+	usr.sbin/bsdconfig/startup/share \
+	usr.sbin/bsdconfig/timezone \
+	usr.sbin/bsdconfig/timezone/include \
+	usr.sbin/bsdconfig/timezone/share \
+	usr.sbin/bsdconfig/ttys \
+	usr.sbin/bsdconfig/ttys/include \
+	usr.sbin/bsdconfig/usermgmt \
+	usr.sbin/bsdconfig/usermgmt/include \
+	usr.sbin/bsdconfig/usermgmt/share \
 	usr.sbin/bsnmpd/gensnmptree \
 	usr.sbin/bsnmpd/bsnmpd \
 	usr.sbin/bsnmpd/modules/snmp_atm \
@@ -564,6 +604,7 @@ DIRDEPS+= \
 	usr.sbin/mld6query \
 	usr.sbin/mlxcontrol \
 	usr.sbin/mountd \
+	usr.sbin/mount_smbfs \
 	usr.sbin/moused \
 	usr.sbin/mpsutil \
 	usr.sbin/mptutil \
@@ -703,7 +744,9 @@ DIRDEPS+= \
 	${DEP_RELDIR}/gnu \
 	${DEP_RELDIR}/include \
 	${DEP_RELDIR}/kerberos5 \
+	${DEP_RELDIR}/lib \
 	${DEP_RELDIR}/libexec \
+	${DEP_RELDIR}/misc \
 	${DEP_RELDIR}/secure \
 	${DEP_RELDIR}/share \
 
@@ -759,11 +802,9 @@ DIRDEPS.i386= \
 	usr.sbin/boot0cfg \
 	usr.sbin/wlconfig
 
-DIRDEPS.ia64= \
-	sbin/mca \
+DIRDEPS.arm64= \
 	usr.sbin/acpi \
-	usr.sbin/kgmon \
-	usr.sbin/zzz
+	usr.sbin/ofwdump
 
 DIRDEPS.mips= \
 	sbin/bsdlabel \
