@@ -25,7 +25,7 @@
 
 .MAIN: all
 
-.if !exists(${.CURDIR}/${.MAKE.DEPENDFILE:T}) || make(gendirdeps)
+.if defined(BOOTSTRAP_DEPENDFILES) || !exists(${.CURDIR}/${.MAKE.DEPENDFILE:T}) || make(gendirdeps)
 # start with this
 DIRDEPS = ${SUBDIR:N.WAIT:O:u:@d@${RELDIR}/$d@}
 
