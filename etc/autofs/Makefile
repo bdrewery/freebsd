@@ -1,8 +1,6 @@
 # $FreeBSD$
 
 FILES=		include_ldap special_hosts special_media special_noauto special_null
-
-NO_OBJ=
 FILESDIR=	/etc/autofs
 FILESMODE=	755
 

@@ -25,7 +25,6 @@ FILES+=	uath.conf ulpt.conf usb.conf
 FILES+=	zfs.conf
 .endif
 
-NO_OBJ=
 FILESDIR=	/etc/devd
 FILESMODE=	644
 

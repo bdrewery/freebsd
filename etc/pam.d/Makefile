@@ -2,8 +2,6 @@
 
 .include <src.opts.mk>
 
-NO_OBJ=
-
 FILES=	README \
 	cron \
 	ftpd \

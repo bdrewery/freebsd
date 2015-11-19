@@ -1,7 +1,5 @@
 # $FreeBSD$
 
-NO_OBJ=
-
 FILES=	leap-seconds
 
 FILESDIR=	/etc/ntp

@@ -1,7 +1,5 @@
 # $FreeBSD$
 
-NO_OBJ=
-
 FILES=	FreeBSD.conf
 
 FILESDIR=	/etc/pkg
