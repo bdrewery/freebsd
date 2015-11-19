@@ -14,11 +14,14 @@ LDFLAGS+= ${LDFLAGS_LAST}
 
 CLEANFILES+= .depend
 
+# XXX: Seems unneeded
+.if 0 && !exists(${.OBJDIR}/${DEPENDFILE})
 .for h in ${SRCS:M*.h}
 .if target($h)
-buildfiles: $h
+${OBJS}: ${h}
 .endif
 .endfor
+.endif
 
 # handy for debugging
 .SUFFIXES:  .S .c .cc .cpp .cpp-out
