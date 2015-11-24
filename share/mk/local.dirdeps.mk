@@ -135,7 +135,7 @@ DIRDEPS+=	usr.bin/yacc.host
 # _INTERNALLIBS.
 DIRDEPS+= \
 	${DPADD:M${OBJTOP}*:H:C,${OBJTOP}[^/]*/,,:N.:O:u} \
-	${DPADD:M${OBJROOT}*:N${OBJTOP}*:H:S,${OBJROOT},,:C,^([^/]+)/(.*),\2.\1,:S,${HOST_TARGET}$,host,:N.*:O:u}
+	${DPADD:M${OBJROOT}*:N${OBJTOP}*:N${STAGE_ROOT}/*:H:S,${OBJROOT},,:C,^([^/]+)/(.*),\2.\1,:S,${HOST_TARGET}$,host,:N.*:O:u}
 .endif
 .if !empty(LIBADD)
 # Also handle LIBADD for non-internal libraries.
