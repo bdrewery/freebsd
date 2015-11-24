@@ -21,6 +21,9 @@ DIRDEPS = \
 	rescue/librescue \
 	rescue/rescue \
 
+# XXX: Broken
+DIRDEPS:= ${DIRDEPS:Nrescue/rescue}
+
 .if ${MK_BOOT} != "no"
 DIRDEPS+= sys/boot/common
 
