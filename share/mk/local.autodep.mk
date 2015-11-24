@@ -1,5 +1,9 @@
 # $FreeBSD$
 
+_OBJDIR ?= ${.OBJDIR}
+_OBJTOP ?= ${OBJTOP}
+_OBJROOT ?= ${OBJROOT:U${_OBJTOP}}
+
 .if ${.MAKE.DEPENDFILE:M*.${MACHINE}} == ""
 # by default only MACHINE0 does updates
 UPDATE_DEPENDFILE_MACHINE?= ${MACHINE0}
