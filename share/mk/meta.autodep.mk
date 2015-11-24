@@ -51,6 +51,9 @@ UPDATE_DEPENDFILE = NO
 .endif
 
 _CURDIR ?= ${.CURDIR}
+_OBJDIR ?= ${.OBJDIR}
+_OBJTOP ?= ${OBJTOP}
+_OBJROOT ?= ${OBJROOT:U${_OBJTOP}}
 _DEPENDFILE := ${_CURDIR}/${.MAKE.DEPENDFILE:T}
 
 .if ${.MAKE.LEVEL} == 0
@@ -193,7 +196,7 @@ gendirdeps:	${_DEPENDFILE}
 # The pseudo machine "host" is used for HOST_TARGET
 DIRDEPS += \
 	${DPADD:M${_OBJTOP}*:H:C,${_OBJTOP}[^/]*/,,:N.:O:u} \
-	${DPADD:M${_OBJROOT}*:N${_OBJTOP}*:H:S,${_OBJROOT},,:C,^([^/]+)/(.*),\2.\1,:S,${HOST_TARGET}$,host,:N.*:O:u}
+	${DPADD:M${_OBJROOT}*:N${_OBJTOP}*:N${STAGE_ROOT:U${_OBJTOP}}/*:H:S,${_OBJROOT},,:C,^([^/]+)/(.*),\2.\1,:S,${HOST_TARGET}$,host,:N.*:O:u}
 
 .endif
 .endif
