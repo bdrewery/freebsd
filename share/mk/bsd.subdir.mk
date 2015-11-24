@@ -50,7 +50,22 @@ STANDALONE_SUBDIR_TARGETS?= obj checkdpadd clean cleandepend cleandir \
 
 .if !defined(NEED_SUBDIR)
 .if ${.MAKE.LEVEL} == 0 && ${MK_META_MODE} == "yes" && !empty(SUBDIR) && !(make(clean*) || make(destroy*))
+.if defined(USE_SUBDIR) || defined(BOOTSTRAP_DEPENDFILES)
+.MAIN: all
+DEP_RELDIR= ${RELDIR}
+FIND_SUBDIR_ENV= \
+	MAKE_JOBS=${.MAKE.JOBS} \
+	TARGET_SPEC=${TARGET_SPEC:Q} \
+
+# Prevent the local Makefile.depend from being included.
+.MAKE.DEPENDFILE= /dev/null
+# Run helper script which recurses SUBDIR finding all DIRDEPS.
+DIRDEPS!= env ${FIND_SUBDIR_ENV} \
+    sh ${.PARSEDIR}/find_subdirs.sh ${.CURDIR} DIRDEPS
+.include <dirdeps.mk>
+.else
 .include <meta.subdir.mk>
+.endif
 # ignore this
 _SUBDIR:
 .endif

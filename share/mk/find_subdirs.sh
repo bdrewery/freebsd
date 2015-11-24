@@ -58,7 +58,7 @@ list() {
 		dirdeps="${dirdeps} "
 		if ! [ -z "${dirdeps##${reldir} *}" -o \
 		    -z "${dirdeps##${reldir}.${TARGET_SPEC} *}" ]; then
-			echo -n "${reldir} "
+			echo -n "${reldir}.${TARGET_SPEC} "
 		fi
 		echo "${dirdeps% }"
 		;;
