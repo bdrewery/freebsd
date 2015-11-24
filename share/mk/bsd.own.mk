@@ -133,12 +133,19 @@ CTFCONVERT_CMD=	@:
 .endif 
 
 .if ${MK_INSTALL_AS_USER} != "no"
+.if !defined(_uid)
 _uid!=	id -u
+.export _uid
+.endif
 .if ${_uid} != 0 || 1
 .if !defined(USER)
 USER!=	id -un
+.export USER
 .endif
+.if !defined(_gid)
 _gid!=	id -g
+.export _gid
+.endif
 .for x in BIN CONF DOC DTB INFO KMOD LIB MAN NLS SHARE
 $xOWN=	${USER}
 $xGRP=	${_gid}
