@@ -131,7 +131,7 @@ DIRDEPS+=	usr.bin/yacc.host
 .info Bootstrapping ${RELDIR}/${.MAKE.DEPENDFILE:T} ${DIRDEPS}
 .endif
 .if !empty(DPADD)
-# Taken from meta.autodep.mk (where it does only does something with
+# Taken from meta.autodep.mk (where it only does something with
 # BUILD_AT_LEVEL0, which we don't use).
 # This only works for DPADD with full OBJ/SRC paths, which is mostly just
 # _INTERNALLIBS.
