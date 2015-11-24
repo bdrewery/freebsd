@@ -62,6 +62,7 @@ FIND_SUBDIR_ENV= \
 # Run helper script which recurses SUBDIR finding all DIRDEPS.
 DIRDEPS!= env ${FIND_SUBDIR_ENV} \
     sh ${.PARSEDIR}/find_subdirs.sh ${.CURDIR} DIRDEPS
+DIRDEPS:= ${DIRDEPS:O:u}
 .include <dirdeps.mk>
 .else
 .include <meta.subdir.mk>
