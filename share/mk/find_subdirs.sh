@@ -14,6 +14,9 @@ RELDIR="${CURDIR#${SRCTOP}}"
 RELDIR="${RELDIR#/}"
 curdir=
 
+# Allow local.dirdeps.mk to be used to bootstrap deps
+unset MAKELEVEL
+
 list() {
 	local mode="${1}"
 	local curdir="${2}"
