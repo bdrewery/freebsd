@@ -33,6 +33,7 @@ DIRDEPS = \
 	lib/libcrypt \
 	lib/libcuse \
 	lib/libcxxrt \
+	lib/libdevctl \
 	lib/libdevinfo \
 	lib/libdevstat \
 	lib/libdwarf \

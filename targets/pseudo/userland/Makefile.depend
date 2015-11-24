@@ -209,6 +209,7 @@ DIRDEPS+= \
 	usr.bin/dc \
 	usr.bin/dig \
 	usr.bin/dirname \
+	usr.bin/dpv \
 	usr.bin/du \
 	usr.bin/ee \
 	usr.bin/elf2aout \
@@ -240,6 +241,7 @@ DIRDEPS+= \
 	usr.bin/hexdump \
 	usr.bin/host \
 	usr.bin/id \
+	usr.bin/ident \
 	usr.bin/indent \
 	usr.bin/ipcrm \
 	usr.bin/ipcs \
@@ -284,6 +286,7 @@ DIRDEPS+= \
 	usr.bin/ministat \
 	usr.bin/mkdep \
 	usr.bin/mkfifo \
+	usr.bin/mkimg \
 	usr.bin/mklocale \
 	usr.bin/mkstr \
 	usr.bin/mktemp \
@@ -309,12 +312,14 @@ DIRDEPS+= \
 	usr.bin/pagesize \
 	usr.bin/passwd \
 	usr.bin/paste \
+	usr.bin/patch \
 	usr.bin/pathchk \
 	usr.bin/perror \
 	usr.bin/pr \
 	usr.bin/printenv \
 	usr.bin/printf \
 	usr.bin/procstat \
+	usr.bin/protect \
 	usr.bin/quota \
 	usr.bin/rctl \
 	usr.bin/renice \
@@ -332,11 +337,13 @@ DIRDEPS+= \
 	usr.bin/rwho \
 	usr.bin/script \
 	usr.bin/sed \
+	usr.bin/send-pr \
 	usr.bin/seq \
 	usr.bin/shar \
 	usr.bin/showmount \
 	usr.bin/smbutil \
 	usr.bin/sockstat \
+	usr.bin/soelim \
 	usr.bin/sort \
 	usr.bin/split \
 	usr.bin/ssh-copy-id \
@@ -397,8 +404,9 @@ DIRDEPS+= \
 	usr.bin/xinstall \
 	usr.bin/xlint/lint1 \
 	usr.bin/xlint/lint2 \
-	usr.bin/xlint/xlint \
 	usr.bin/xlint/llib \
+	usr.bin/xlint/xlint \
+	usr.bin/xo \
 	usr.bin/xstr \
 	usr.bin/xz \
 	usr.bin/xzdec \
