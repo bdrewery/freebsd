@@ -146,6 +146,9 @@ DIRDEPS+= ${_lib${_lib}reldir}
 .endif
 .endfor
 .endif	# !empty(LIBADD)
+.if !empty(DIRDEPS)
+.info Bootstrapping ${RELDIR}/${.MAKE.DEPENDFILE:T} ${DIRDEPS}
+.endif
 .endif	# no Makefile.depend*
 .endif	# ${RELDIR} == ${DEP_RELDIR}
 
