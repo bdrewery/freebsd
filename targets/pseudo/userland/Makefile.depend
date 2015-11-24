@@ -515,6 +515,7 @@ DIRDEPS+= \
 	usr.sbin/bsnmpd/tools/libbsnmptools \
 	usr.sbin/bsnmpd/tools/bsnmptools \
 	usr.sbin/burncd \
+	usr.sbin/casperd \
 	usr.sbin/cdcontrol \
 	usr.sbin/chkgrp \
 	usr.sbin/chown \

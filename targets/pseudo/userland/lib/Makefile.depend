@@ -27,6 +27,7 @@ DIRDEPS = \
 	lib/libc++ \
 	lib/libcalendar \
 	lib/libcam \
+	lib/libcasper \
 	lib/libcom_err/doc \
 	lib/libcompat \
 	lib/libcompiler_rt \
@@ -82,6 +83,7 @@ DIRDEPS = \
 	lib/libmp \
 	lib/libnetgraph \
 	lib/libngatm \
+	lib/libnv \
 	lib/libopie \
 	lib/libpam/libpam \
 	lib/libpam/modules/pam_chroot \
@@ -109,6 +111,7 @@ DIRDEPS = \
 	lib/libpam/modules/pam_tacplus \
 	lib/libpam/modules/pam_unix \
 	lib/libpcap \
+	lib/libpjdlog \
 	lib/libpmc \
 	lib/libproc \
 	lib/libprocstat \
