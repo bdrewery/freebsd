@@ -1,6 +1,8 @@
 #! /bin/sh
 set -e
 
+# XXX: Need to import all options from environment somehow, it may be enough to
+# just pass in MAKEFLAGS and then let src.conf work - but what about MAKEARGS?
 export NEED_SUBDIR=yes
 CURDIR=$(realpath "${1:-.}")
 MODE="${2:-SUBDIR}"
@@ -77,8 +79,8 @@ list() {
 # Utilize Poudriere scripts to parallelize the lookups.
 if [ -f /usr/local/share/poudriere/include/hash.sh ] &&
     [ -f /usr/local/share/poudriere/include/parallel.sh ]; then
-	. /usr/local/share/poudriere/include/hash.sh
-	. /usr/local/share/poudriere/include/parallel.sh
+	. /root/git/poudriere/src/share/poudriere/include/hash.sh
+	. /root/git/poudriere/src/share/poudriere/include/parallel.sh
 	if type coparallel_start 2>/dev/null >&2; then
 		: ${MAKE_JOBS:=$(sysctl -n hw.ncpu)}
 		# No real benefit found above 5-7 as this is mostly IO-bound.

@@ -57,12 +57,16 @@ FIND_SUBDIR_ENV= \
 	MAKE_JOBS=${.MAKE.JOBS} \
 	TARGET_SPEC=${TARGET_SPEC:Q} \
 
+#DIRDEP_USE_ENV+= MAKELEVEL=0
 # Prevent the local Makefile.depend from being included.
 .MAKE.DEPENDFILE= /dev/null
 # Run helper script which recurses SUBDIR finding all DIRDEPS.
 DIRDEPS!= env ${FIND_SUBDIR_ENV} \
     sh ${.PARSEDIR}/find_subdirs.sh ${.CURDIR} DIRDEPS
 DIRDEPS:= ${DIRDEPS:O:u}
+# XXX: This will end up reading in DIRDEPS we already read in; the purpose
+# of the previous read is to get the local.dirdeps.mk DIRDEPS per directory,
+# which dirdeps.mk won't find via its include walk.
 .include <dirdeps.mk>
 .else
 .include <meta.subdir.mk>
