@@ -127,9 +127,6 @@ DIRDEPS+= lib/msun
 .if !empty(SRCS:M*.y)
 DIRDEPS+=	usr.bin/yacc.host
 .endif
-.if !empty(DIRDEPS)
-.info Bootstrapping ${RELDIR}/${.MAKE.DEPENDFILE:T} ${DIRDEPS}
-.endif
 .if !empty(DPADD)
 # Taken from meta.autodep.mk (where it only does something with
 # BUILD_AT_LEVEL0, which we don't use).
