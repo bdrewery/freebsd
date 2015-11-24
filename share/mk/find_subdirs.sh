@@ -74,4 +74,19 @@ list() {
 	esac
 }
 
+# Utilize Poudriere scripts to parallelize the lookups.
+if [ -f /usr/local/share/poudriere/include/hash.sh ] &&
+    [ -f /usr/local/share/poudriere/include/parallel.sh ]; then
+	. /usr/local/share/poudriere/include/hash.sh
+	. /usr/local/share/poudriere/include/parallel.sh
+	if type coparallel_start 2>/dev/null >&2; then
+		: ${MAKE_JOBS:=$(sysctl -n hw.ncpu)}
+		# No real benefit found above 5-7 as this is mostly IO-bound.
+		[ ${MAKE_JOBS} -gt 5 ] && MAKE_JOBS=5
+		coparallel_start ${MAKE_JOBS}
+		trap coparallel_sighandler INT TERM
+		trap coparallel_stop EXIT
+	fi
+fi
+
 list "${MODE}" "${curdir}"
