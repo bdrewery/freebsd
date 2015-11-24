@@ -92,8 +92,8 @@ DIRDEPS += \
 # used will be added in and handled via [local.]gendirdeps.mk.  This is not
 # done for MACHINE=host builds.
 .if ${RELDIR} == ${DEP_RELDIR} # Only do this for main build target
-.for _depfile in ${.MAKE.DEPENDFILE_PREFERENCE}
-.if !defined(_have_depfile) && exists(${_depfile})
+.for _depfile in ${.MAKE.DEPENDFILE_PREFERENCE:T}
+.if !defined(_have_depfile) && exists(${.CURDIR}/${_depfile})
 _have_depfile=
 .endif
 .endfor
