@@ -22,20 +22,21 @@ unset MAKELEVEL
 list() {
 	local mode="${1}"
 	local curdir="${2}"
-	local makeargs make_results subdirs dirdeps subdir subdir_subst reldir
+	local makeargs make_results subdirs dirdeps subdir reldir
+
+	if [ -n "${RELDIR}" -a -n "${curdir}" ]; then
+		reldir="${RELDIR}/${curdir}"
+	else
+		reldir="${RELDIR}${curdir}"
+	fi
 
 	# Special handling for top-level.
 	makeargs=
 	[ -e "${curdir:-.}/Makefile.inc1" ] &&
 	    makeargs="TARGET=amd64 TARGET_ARCH=amd64 -f Makefile.inc1"
 
-	subdir_subst=
-	false &&
-	[ "${curdir}" != "." ] &&
-	    subdir_subst="C,^,${curdir}/,"
-
-	if ! make_results=$(${MAKE} ${makeargs} -C "${curdir:-.}" \
-	    -V "\${SUBDIR:N.WAIT:${subdir_subst}}" -V DIRDEPS:M* |
+	if ! make_results=$(${MAKE} ${makeargs} -C "${SRCTOP}/${reldir}" \
+	    -V "\${SUBDIR:N.WAIT}" -V DIRDEPS:M* |
 	    paste -s -d '!' -); then
 		echo "Error looking up SUBDIR for ${curdir}" >&2
 		return 1
@@ -53,11 +54,6 @@ list() {
 
 	case ${mode} in
 	DIRDEPS)
-		if [ -n "${RELDIR}" -a -n "${curdir}" ]; then
-			reldir="${RELDIR}/${curdir}"
-		else
-			reldir="${RELDIR}${curdir}"
-		fi
 		# Show curdir if not already in DIRDEPS (which happens if
 		# there is already a Makefile.depend).
 		dirdeps="${dirdeps} "
