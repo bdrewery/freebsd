@@ -9,6 +9,10 @@ MODE="${2:-SUBDIR}"
 : ${MAKE:=make}
 : ${SRCTOP:=$(${MAKE} -V SRCTOP:tA)}
 : ${TARGET_SPEC:=$(${MAKE} -V TARGET_SPEC)}
+# Store tempfiles in the objdir if possible.
+if [ -n "${OBJROOT}" ] && [ -d "${OBJROOT}" ]; then
+	export TMPDIR="${OBJROOT%/}"
+fi
 
 # Avoid prefixing all subdirs with first CURDIR.
 cd "${CURDIR}"
@@ -23,6 +27,7 @@ list() {
 	local mode="${1}"
 	local curdir="${2}"
 	local makeargs make_results subdirs dirdeps subdir reldir
+	local dirdep dirdeps_qual
 
 	if [ -n "${RELDIR}" -a -n "${curdir}" ]; then
 		reldir="${RELDIR}/${curdir}"
@@ -63,6 +68,39 @@ list() {
 		fi
 		echo "${dirdeps% }"
 		;;
+	DIRDEPS_GRAPH)
+		# Show curdir if not already in DIRDEPS (which happens if
+		# there is already a Makefile.depend).
+		dirdeps="${dirdeps} "
+		dirdeps_qual=
+		for dirdep in ${dirdeps}; do
+			if [ -n "${dirdep%%*.${TARGET_SPEC}}" ]; then
+				dirdep="${dirdep}.${TARGET_SPEC}"
+			fi
+			# Skip self-reference.
+			if [ -z "${dirdep##${reldir}.${TARGET_SPEC}}" ]; then
+				continue;
+			fi
+			dirdeps_qual="${dirdeps_qual}${dirdeps_qual:+ }${dirdep}"
+		done
+		[ -n "${DIRDEPS_GRAPH}" ] || err 1 "MISSING DIRDEPS_GRAPH"
+		echo "${reldir}.${TARGET_SPEC}:${dirdeps_qual:+ }${dirdeps_qual}" \
+		    >> "${DIRDEPS_GRAPH}"
+		# The directory itself is sometimes prepended.
+		dirdeps="${dirdeps#${reldir}.${TARGET_SPEC}}"
+		dirdeps="${dirdeps#${reldir}}"
+		dirdeps="${dirdeps# }"
+		export PROCESSED="${PROCESSED} ${reldir}"
+		for dirdep in ${dirdeps}; do
+			case " ${PROCESSED} " in
+			*\ ${dirdep}\ *) continue ;;
+			esac
+			export PROCESSED="${PROCESSED} ${dirdep}"
+			RELDIR= list "${mode}" "${dirdep}"
+		done
+		echo "DIRDEPS+= ${reldir} ${dirdeps}" \
+		    >> "${DIRDEPS_GRAPH}"
+		;;
 	SUBDIR)
 		# Don't print top-level directory, which is empty.
 		if [ -n "${curdir}" ]; then
@@ -72,7 +110,14 @@ list() {
 	esac
 }
 
+if [ "${MODE}" = "DIRDEPS_GRAPH" ]; then
+	# Use a tempfile that the parent make will include to define
+	# the DIRDEPS graph and DIRDEPS to build.
+	export DIRDEPS_GRAPH=$(mktemp -t find_subdirs)
+fi
+
 # Utilize Poudriere scripts to parallelize the lookups.
+false &&
 if [ -f /usr/local/share/poudriere/include/hash.sh ] &&
     [ -f /usr/local/share/poudriere/include/parallel.sh ]; then
 	. /root/git/poudriere/src/share/poudriere/include/hash.sh
@@ -88,3 +133,9 @@ if [ -f /usr/local/share/poudriere/include/hash.sh ] &&
 fi
 
 list "${MODE}" "${curdir}"
+
+if [ "${MODE}" = "DIRDEPS_GRAPH" ]; then
+	echo 'DIRDEPS:= ${DIRDEPS:O:u}' >> "${DIRDEPS_GRAPH}"
+	${COPARALLEL_HANDLE:+coparallel_wait}
+	echo "${DIRDEPS_GRAPH}"
+fi

@@ -49,7 +49,9 @@ STANDALONE_SUBDIR_TARGETS?= obj checkdpadd clean cleandepend cleandir \
 .include <bsd.init.mk>
 
 .if !defined(NEED_SUBDIR)
-.if ${.MAKE.LEVEL} == 0 && ${MK_META_MODE} == "yes" && !empty(SUBDIR) && !(make(clean*) || make(destroy*))
+.if ${.MAKE.LEVEL} == 0 && ${MK_META_MODE} == "yes" && \
+    !(make(clean*) || make(destroy*)) && \
+    (!empty(SUBDIR) || defined(USE_SUBDIR) || defined(BOOTSTRAP_DEPENDFILES))
 .if defined(USE_SUBDIR) || defined(BOOTSTRAP_DEPENDFILES)
 .MAIN: all
 DEP_RELDIR= ${RELDIR}
@@ -60,10 +62,15 @@ FIND_SUBDIR_ENV= \
 # Prevent the local Makefile.depend from being included.
 .MAKE.DEPENDFILE= /dev/null
 # Run helper script which recurses SUBDIR finding all DIRDEPS.
-DIRDEPS!= env ${FIND_SUBDIR_ENV} \
-    sh ${.PARSEDIR}/find_subdirs.sh ${.CURDIR} DIRDEPS
+DIRDEPS_MK!= env ${FIND_SUBDIR_ENV} \
+    sh ${.PARSEDIR}/find_subdirs.sh ${.CURDIR} DIRDEPS_GRAPH
+.if exists(${DIRDEPS_MK})
+.include "${DIRDEPS_MK}"
 DIRDEPS:= ${DIRDEPS:O:u}
 .include <dirdeps.mk>
+.else
+.error Error generating DIRDEPS from find_subdirs.sh.
+.endif
 .else
 .include <meta.subdir.mk>
 .endif
