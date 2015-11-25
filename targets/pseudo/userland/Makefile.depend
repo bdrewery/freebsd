@@ -146,6 +146,7 @@ DIRDEPS+= \
 	sbin/resolvconf \
 	sbin/restore \
 	sbin/route \
+	sbin/routed \
 	sbin/routed/rtquery \
 	sbin/rtsol \
 	sbin/savecore \
@@ -763,10 +764,6 @@ DIRDEPS+= \
 	${DEP_RELDIR}/secure \
 	${DEP_RELDIR}/share \
 
-	usr.sbin/bhyve \
-	usr.sbin/bhyvectl \
-	usr.sbin/bhyveload \
-
 DIRDEPS.amd64= \
 	sbin/bsdlabel \
 	sbin/fdisk \
@@ -777,6 +774,9 @@ DIRDEPS.amd64= \
 	usr.sbin/acpi/iasl \
 	usr.sbin/apm \
 	usr.sbin/asf \
+	usr.sbin/bhyve \
+	usr.sbin/bhyvectl \
+	usr.sbin/bhyveload \
 	usr.sbin/boot0cfg \
 	usr.sbin/btxld \
 	usr.sbin/cpucontrol \
