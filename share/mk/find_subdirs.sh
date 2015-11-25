@@ -62,8 +62,7 @@ list() {
 		# Show curdir if not already in DIRDEPS (which happens if
 		# there is already a Makefile.depend).
 		dirdeps="${dirdeps} "
-		if ! [ -z "${dirdeps##${reldir} *}" -o \
-		    -z "${dirdeps##${reldir}.${TARGET_SPEC} *}" ]; then
+		if ! [ -z "${dirdeps##${reldir}.${TARGET_SPEC} *}" ]; then
 			echo -n "${reldir}.${TARGET_SPEC} "
 		fi
 		echo "${dirdeps% }"
@@ -81,14 +80,12 @@ list() {
 			if [ -z "${dirdep##${reldir}.${TARGET_SPEC}}" ]; then
 				continue;
 			fi
-			dirdeps_qual="${dirdeps_qual}${dirdeps_qual:+ }${dirdep}"
+			dirdeps_qual="${dirdeps_qual}${dirdeps_qual:+ }${SRCTOP}/${dirdep}"
 		done
-		[ -n "${DIRDEPS_GRAPH}" ] || err 1 "MISSING DIRDEPS_GRAPH"
-		echo "${reldir}.${TARGET_SPEC}:${dirdeps_qual:+ }${dirdeps_qual}" \
+		echo "${SRCTOP}/${reldir}.${TARGET_SPEC}:${dirdeps_qual:+ }${dirdeps_qual}" \
 		    >> "${DIRDEPS_GRAPH}"
 		# The directory itself is sometimes prepended.
 		dirdeps="${dirdeps#${reldir}.${TARGET_SPEC}}"
-		dirdeps="${dirdeps#${reldir}}"
 		dirdeps="${dirdeps# }"
 		export PROCESSED="${PROCESSED} ${reldir}"
 		for dirdep in ${dirdeps}; do
@@ -135,7 +132,9 @@ fi
 list "${MODE}" "${curdir}"
 
 if [ "${MODE}" = "DIRDEPS_GRAPH" ]; then
-	echo 'DIRDEPS:= ${DIRDEPS:O:u}' >> "${DIRDEPS_GRAPH}"
 	${COPARALLEL_HANDLE:+coparallel_wait}
+	cat >> "${DIRDEPS_GRAPH}" <<-EOF
+	DIRDEPS:= \${DIRDEPS:O:u}
+	EOF
 	echo "${DIRDEPS_GRAPH}"
 fi

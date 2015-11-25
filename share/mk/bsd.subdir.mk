@@ -65,8 +65,14 @@ FIND_SUBDIR_ENV= \
 DIRDEPS_MK!= env ${FIND_SUBDIR_ENV} \
     sh ${.PARSEDIR}/find_subdirs.sh ${.CURDIR} DIRDEPS_GRAPH
 .if exists(${DIRDEPS_MK})
+.if defined(DEBUG_DIRDEPS)
+.endif
 .include "${DIRDEPS_MK}"
-DIRDEPS:= ${DIRDEPS:O:u}
+.if !defined(DEBUG_DIRDEPS)
+_remove_dirdeps_mk!= rm -f ${DIRDEPS_MK}
+.else
+.info dirdeps loaded from ${DIRDEPS_MK}
+.endif
 .include <dirdeps.mk>
 .else
 .error Error generating DIRDEPS from find_subdirs.sh.
