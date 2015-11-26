@@ -504,6 +504,7 @@ DIRDEPS+= \
 	usr.sbin/bsnmpd/gensnmptree \
 	usr.sbin/bsnmpd/modules/snmp_atm \
 	usr.sbin/bsnmpd/modules/snmp_bridge \
+	usr.sbin/bsnmpd/modules/snmp_hast \
 	usr.sbin/bsnmpd/modules/snmp_hostres \
 	usr.sbin/bsnmpd/modules/snmp_lm75 \
 	usr.sbin/bsnmpd/modules/snmp_mibII \

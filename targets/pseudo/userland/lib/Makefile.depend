@@ -40,6 +40,7 @@ DIRDEPS = \
 	lib/libdwarf \
 	lib/libedit/edit/readline \
 	lib/libelf \
+	lib/libevent \
 	lib/libexecinfo \
 	lib/libexpat \
 	lib/libfetch \
