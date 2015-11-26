@@ -438,8 +438,10 @@ DIRDEPS+= \
 	usr.sbin/arpaname \
 	usr.sbin/audit \
 	usr.sbin/auditd \
+	usr.sbin/auditdistd \
 	usr.sbin/auditreduce \
 	usr.sbin/authpf \
+	usr.sbin/autofs \
 	usr.sbin/binmiscctl \
 	usr.sbin/bluetooth/ath3kfw \
 	usr.sbin/bluetooth/bcmfw \
@@ -539,6 +541,7 @@ DIRDEPS+= \
 	usr.sbin/daemon \
 	usr.sbin/dconschat \
 	usr.sbin/ddns-confgen \
+	usr.sbin/devctl \
 	usr.sbin/devinfo \
 	usr.sbin/digictl \
 	usr.sbin/diskinfo \
@@ -566,6 +569,7 @@ DIRDEPS+= \
 	usr.sbin/fmtree \
 	usr.sbin/freebsd-update \
 	usr.sbin/fstyp \
+	usr.sbin/ftp-proxy \
 	usr.sbin/fwcontrol \
 	usr.sbin/genrandom \
 	usr.sbin/getfmac \
@@ -581,6 +585,7 @@ DIRDEPS+= \
 	usr.sbin/ip6addrctl \
 	usr.sbin/ipfwpcap \
 	usr.sbin/isc-hmac-fixup \
+	usr.sbin/iscsid \
 	usr.sbin/isfctl \
 	usr.sbin/jail \
 	usr.sbin/jexec \
@@ -639,6 +644,13 @@ DIRDEPS+= \
 	usr.sbin/nscd \
 	usr.sbin/nsec3hash \
 	usr.sbin/ntp/doc \
+	usr.sbin/ntp/doc/drivers/icons \
+	usr.sbin/ntp/doc/drivers/scripts \
+	usr.sbin/ntp/doc/drivers \
+	usr.sbin/ntp/doc/hints \
+	usr.sbin/ntp/doc/icons \
+	usr.sbin/ntp/doc/pic \
+	usr.sbin/ntp/doc/scripts \
 	usr.sbin/ntp/libntp \
 	usr.sbin/ntp/libopts \
 	usr.sbin/ntp/libparse \
@@ -730,6 +742,11 @@ DIRDEPS+= \
 	usr.sbin/uefisign \
 	usr.sbin/ugidfw \
 	usr.sbin/uhsoctl \
+	usr.sbin/unbound/anchor \
+	usr.sbin/unbound/checkconf \
+	usr.sbin/unbound/control \
+	usr.sbin/unbound/daemon \
+	usr.sbin/unbound/local-setup \
 	usr.sbin/usbconfig \
 	usr.sbin/usbdump \
 	usr.sbin/utx \
