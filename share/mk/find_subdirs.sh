@@ -46,6 +46,7 @@ list() {
 	if [ "${machine}" = "host" ]; then
 		machine_arch=
 		export MK_TESTS=no
+		makeargs="${makeargs} TARGET_SPEC=host"
 	else
 		machine_arch="${TARGET_SPEC#*,}"
 	fi
