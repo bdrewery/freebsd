@@ -22,12 +22,13 @@ curdir=
 
 # Allow local.dirdeps.mk to be used to bootstrap deps
 unset MAKELEVEL
+#export BUILD_DIRDEPS=no
 
 list() {
 	local mode="${1}"
 	local curdir="${2}"
 	local makeargs make_results subdirs dirdeps subdir reldir
-	local dirdep dirdeps_qual
+	local dirdep dirdeps_qual target_spec machine machine_arch
 
 	if [ -n "${RELDIR}" -a -n "${curdir}" ]; then
 		reldir="${RELDIR}/${curdir}"
@@ -40,8 +41,19 @@ list() {
 	[ -e "${curdir:-.}/Makefile.inc1" ] &&
 	    makeargs="TARGET=amd64 TARGET_ARCH=amd64 -f Makefile.inc1"
 
-	if ! make_results=$(${MAKE} ${makeargs} -C "${SRCTOP}/${reldir}" \
-	    -V "\${SUBDIR:N.WAIT}" -V DIRDEPS:M* |
+	machine="${TARGET_SPEC%,*}"
+	# Trim off arch for host and avoid test dependencies.
+	if [ "${machine}" = "host" ]; then
+		machine_arch=
+		export MK_TESTS=no
+	else
+		machine_arch="${TARGET_SPEC#*,}"
+	fi
+	if ! make_results=$(\
+	    MACHINE="${machine}" \
+	    MACHINE_ARCH="${machine_arch}" \
+	    ${MAKE} ${makeargs} -C "${SRCTOP}/${reldir%.host}" \
+	    -V "\${SUBDIR:N.WAIT}" -V '${DIRDEPS:${DEP_DIRDEPS_FILTER:ts:}:M*}' |
 	    paste -s -d '!' -); then
 		echo "Error looking up SUBDIR for ${curdir}" >&2
 		return 1
@@ -73,7 +85,7 @@ list() {
 		dirdeps="${dirdeps} "
 		dirdeps_qual=
 		for dirdep in ${dirdeps}; do
-			if [ -n "${dirdep%%*.${TARGET_SPEC}}" ]; then
+			if [ -n "${dirdep%%*.*}" ]; then
 				dirdep="${dirdep}.${TARGET_SPEC}"
 			fi
 			# Skip self-reference.
@@ -82,21 +94,26 @@ list() {
 			fi
 			dirdeps_qual="${dirdeps_qual}${dirdeps_qual:+ }${SRCTOP}/${dirdep}"
 		done
-		echo "${SRCTOP}/${reldir}.${TARGET_SPEC}:${dirdeps_qual:+ }${dirdeps_qual}" \
+		# Build the dependency graph.
+		echo "${SRCTOP}/${reldir%.host}.${TARGET_SPEC}:${dirdeps_qual:+ }${dirdeps_qual}" \
 		    >> "${DIRDEPS_GRAPH}"
 		# The directory itself is sometimes prepended.
 		dirdeps="${dirdeps#${reldir}.${TARGET_SPEC}}"
 		dirdeps="${dirdeps# }"
 		export PROCESSED="${PROCESSED} ${reldir}"
+		echo "DIRDEPS+= ${reldir}" >> "${DIRDEPS_GRAPH}"
 		for dirdep in ${dirdeps}; do
 			case " ${PROCESSED} " in
 			*\ ${dirdep}\ *) continue ;;
 			esac
+			target_spec="${TARGET_SPEC}"
+			case "${dirdep}" in
+			*.host) target_spec="host" ;;
+			esac
 			export PROCESSED="${PROCESSED} ${dirdep}"
-			RELDIR= list "${mode}" "${dirdep}"
+			TARGET_SPEC="${target_spec}" RELDIR= \
+			    list "${mode}" "${dirdep}"
 		done
-		echo "DIRDEPS+= ${reldir} ${dirdeps}" \
-		    >> "${DIRDEPS_GRAPH}"
 		;;
 	SUBDIR)
 		# Don't print top-level directory, which is empty.
