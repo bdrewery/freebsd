@@ -111,8 +111,12 @@ list() {
 			*.host) target_spec="host" ;;
 			esac
 			export PROCESSED="${PROCESSED} ${dirdep}"
-			TARGET_SPEC="${target_spec}" RELDIR= \
-			    list "${mode}" "${dirdep}"
+			if ! TARGET_SPEC="${target_spec}" RELDIR= \
+			    list "${mode}" "${dirdep}"; then
+				# It probably does not exist. Add a fake target
+				# for it.
+				echo "${SRCTOP}/${dirdep}:" >> "${DIRDEPS_GRAPH}"
+			fi
 		done
 		;;
 	SUBDIR)
