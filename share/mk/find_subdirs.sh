@@ -85,7 +85,8 @@ list() {
 		dirdeps="${dirdeps} "
 		dirdeps_qual=
 		for dirdep in ${dirdeps}; do
-			if [ -n "${dirdep%%*.*}" ]; then
+			if [ -n "${dirdep%%*.${TARGET_SPEC}}" ] && \
+			    [ -n "${dirdep%%*.host}" ]; then
 				dirdep="${dirdep}.${TARGET_SPEC}"
 			fi
 			# Skip self-reference.
