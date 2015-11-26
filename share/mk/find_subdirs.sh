@@ -1,4 +1,5 @@
 #! /bin/sh
+# XXX: Convert [] to case for speed
 set -e
 
 # XXX: Need to import all options from environment somehow, it may be enough to
@@ -28,7 +29,7 @@ list() {
 	local mode="${1}"
 	local curdir="${2}"
 	local makeargs make_results subdirs dirdeps subdir reldir
-	local dirdep dirdeps_qual target_spec machine machine_arch
+	local dirdep dirdeps_qual have_depfile target_spec machine machine_arch
 
 	if [ -n "${RELDIR}" -a -n "${curdir}" ]; then
 		reldir="${RELDIR}/${curdir}"
@@ -50,6 +51,13 @@ list() {
 	else
 		machine_arch="${TARGET_SPEC#*,}"
 	fi
+
+	#echo "LISTING ${reldir} TARGET_SPEC=${TARGET_SPEC} MACHINE=${machine} MACHINE_ARCH=${machine_arch}" >&2
+
+	# XXX: BUILD_DIRDEPS=no ?
+	# XXX: Only should mess with DIRDEPS when there is no Makefile.depend,
+	#      unless we have a ALWAYS_TRY_BOOTSTRAPPING or something? Probably too complex.
+	#[ -d "${SRCTOP}/${reldir%.host}" ] || return 1
 	if ! make_results=$(\
 	    MACHINE="${machine}" \
 	    MACHINE_ARCH="${machine_arch}" \
@@ -75,12 +83,18 @@ list() {
 		# Show curdir if not already in DIRDEPS (which happens if
 		# there is already a Makefile.depend).
 		dirdeps="${dirdeps} "
+		#if ! [ -z "${dirdeps##${reldir} *}" -o
 		if ! [ -z "${dirdeps##${reldir}.${TARGET_SPEC} *}" ]; then
 			echo -n "${reldir}.${TARGET_SPEC} "
 		fi
 		echo "${dirdeps% }"
 		;;
 	DIRDEPS_GRAPH)
+		#have_depfile=0
+		# XXX: Need variable name
+		#if [ -f ${SRCTOP}/${reldir}/Makefile.depend ]; then
+		#	have_depfile=1
+		#fi
 		# Show curdir if not already in DIRDEPS (which happens if
 		# there is already a Makefile.depend).
 		dirdeps="${dirdeps} "
@@ -88,38 +102,57 @@ list() {
 		for dirdep in ${dirdeps}; do
 			if [ -n "${dirdep%%*.${TARGET_SPEC}}" ] && \
 			    [ -n "${dirdep%%*.host}" ]; then
+			#if [ -n "${dirdep%%*.*}" ]; then
 				dirdep="${dirdep}.${TARGET_SPEC}"
 			fi
 			# Skip self-reference.
 			if [ -z "${dirdep##${reldir}.${TARGET_SPEC}}" ]; then
 				continue;
 			fi
+			# The dependency may not exist, skip it.
+			#[ -d "${SRCTOP}/${dirdep%.*}" ] || continue
+			# Add blank dependency in case it does not exist
+			#echo "${SRCTOP}/${dirdep}:" >> ${DIRDEPS_GRAPH}
 			dirdeps_qual="${dirdeps_qual}${dirdeps_qual:+ }${SRCTOP}/${dirdep}"
 		done
 		# Build the dependency graph.
+		# XXX: This needs an exists() check on each dependency
+		#[ ${have_depfile} -eq 1 ] ||
 		echo "${SRCTOP}/${reldir%.host}.${TARGET_SPEC}:${dirdeps_qual:+ }${dirdeps_qual}" \
 		    >> "${DIRDEPS_GRAPH}"
 		# The directory itself is sometimes prepended.
 		dirdeps="${dirdeps#${reldir}.${TARGET_SPEC}}"
+		#dirdeps="${dirdeps#${reldir}}"
 		dirdeps="${dirdeps# }"
 		export PROCESSED="${PROCESSED} ${reldir}"
 		echo "DIRDEPS+= ${reldir}" >> "${DIRDEPS_GRAPH}"
+		#XXX: Don't recurse or add my dirdeps if there is a Makefile.depend
 		for dirdep in ${dirdeps}; do
 			case " ${PROCESSED} " in
 			*\ ${dirdep}\ *) continue ;;
 			esac
 			target_spec="${TARGET_SPEC}"
 			case "${dirdep}" in
+			#*.host) target_spec="host,${TARGET_SPEC##*,}" ;;
 			*.host) target_spec="host" ;;
 			esac
 			export PROCESSED="${PROCESSED} ${dirdep}"
+			# XXX: The dirdep here may be .host, need to handle that properly
+			#echo "RECURSING ON ${dirdep}" >&2
 			if ! TARGET_SPEC="${target_spec}" RELDIR= \
 			    list "${mode}" "${dirdep}"; then
 				# It probably does not exist. Add a fake target
 				# for it.
 				echo "${SRCTOP}/${dirdep}:" >> "${DIRDEPS_GRAPH}"
 			fi
+			#echo "DIRDEPS+= ${dirdep}" \
+			#    >> "${DIRDEPS_GRAPH}"
 		done
+		#echo "RELDIR: ${reldir}" >&2
+		# XXX: This should probably be qualified since we built a qualified graph.
+		#[ ${have_depfile} -eq 1 ] ||
+		#echo "DIRDEPS+= ${reldir} ${dirdeps}" \
+		#    >> "${DIRDEPS_GRAPH}"
 		;;
 	SUBDIR)
 		# Don't print top-level directory, which is empty.
