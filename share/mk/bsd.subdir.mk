@@ -62,17 +62,24 @@ FIND_SUBDIR_ENV= \
 # Prevent the local Makefile.depend from being included.
 .MAKE.DEPENDFILE= /dev/null
 # Run helper script which recurses SUBDIR finding all DIRDEPS.
+# XXX: fuuuuuuuuuck this does not work.
+# - This loads all dirdeps in the current process, then goes off to create the
+#   graph (as noted below) WHICH DOES NOT INCLUDE THE BOOTSTRAPPING DEPS.
+#   I.e., libcasper builds while libpjdlog is building even though it depends
+#   on it.
 DIRDEPS_MK!= env ${FIND_SUBDIR_ENV} \
     sh ${.PARSEDIR}/find_subdirs.sh ${.CURDIR} DIRDEPS_GRAPH
 .if exists(${DIRDEPS_MK})
 .if defined(DEBUG_DIRDEPS)
 .endif
 .include "${DIRDEPS_MK}"
-.if !defined(DEBUG_DIRDEPS)
+.if !defined(DEBUG_DIRDEPS) && 0
 _remove_dirdeps_mk!= rm -f ${DIRDEPS_MK}
 .else
 .info dirdeps loaded from ${DIRDEPS_MK}
 .endif
+# We've got it covered
+#BUILD_DIRDEPS= no
 .include <dirdeps.mk>
 .else
 .error Error generating DIRDEPS from find_subdirs.sh.
