@@ -8,21 +8,21 @@ DIRDEPS = \
 	include/xlocale \
 	lib/${CSU_DIR} \
 	lib/libc \
+	lib/libcam \
 	lib/libcompiler_rt \
-	lib/libexpat \
-	lib/libsqlite3 \
-	lib/libthr \
-	lib/libz \
-	usr.bin/svn/lib/libapr \
-	usr.bin/svn/lib/libapr_util \
-	usr.bin/svn/lib/libsvn_delta \
-	usr.bin/svn/lib/libsvn_diff \
-	usr.bin/svn/lib/libsvn_subr \
-	usr.bin/svn/lib/libsvn_wc \
+	lib/libutil \
+	lib/libxo \
+	usr.bin/yacc.host \
 
 
 .include <dirdeps.mk>
 
 .if ${DEP_RELDIR} == ${_DEP_RELDIR}
 # local dependencies - needed for -jN in clean tree
+parse.o: parse.c
+parse.po: parse.c
+token.o: token.c
+token.o: y.tab.h
+token.po: token.c
+token.po: y.tab.h
 .endif

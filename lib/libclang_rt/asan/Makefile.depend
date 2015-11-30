@@ -3,7 +3,10 @@
 
 DIRDEPS = \
 	include \
+	include/arpa \
 	include/xlocale \
+	lib/libc++ \
+	lib/ncurses/ncursesw \
 
 
 .include <dirdeps.mk>

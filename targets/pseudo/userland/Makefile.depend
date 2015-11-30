@@ -211,6 +211,7 @@ DIRDEPS+= \
 	usr.bin/dig \
 	usr.bin/dirname \
 	usr.bin/dpv \
+	usr.bin/drill \
 	usr.bin/du \
 	usr.bin/ee \
 	usr.bin/elf2aout \
@@ -241,11 +242,13 @@ DIRDEPS+= \
 	usr.bin/head \
 	usr.bin/hexdump \
 	usr.bin/host \
+	usr.bin/iconv \
 	usr.bin/id \
 	usr.bin/ident \
 	usr.bin/indent \
 	usr.bin/ipcrm \
 	usr.bin/ipcs \
+	usr.bin/iscsictl \
 	usr.bin/join \
 	usr.bin/jot \
 	usr.bin/kdump \
@@ -257,6 +260,7 @@ DIRDEPS+= \
 	usr.bin/lam \
 	usr.bin/last \
 	usr.bin/lastcomm \
+	usr.bin/lex \
 	usr.bin/ldd \
 	usr.bin/leave \
 	usr.bin/less \
@@ -285,7 +289,9 @@ DIRDEPS+= \
 	usr.bin/mesg \
 	usr.bin/minigzip \
 	usr.bin/ministat \
+	usr.bin/mkcsmapper \
 	usr.bin/mkdep \
+	usr.bin/mkesdb \
 	usr.bin/mkfifo \
 	usr.bin/mkimg \
 	usr.bin/mklocale \
@@ -351,6 +357,17 @@ DIRDEPS+= \
 	usr.bin/stat \
 	usr.bin/stdbuf \
 	usr.bin/su \
+	usr.bin/svn/svn \
+	usr.bin/svn/svnadmin \
+	usr.bin/svn/svnbench \
+	usr.bin/svn/svndumpfilter \
+	usr.bin/svn/svnfsfs \
+	usr.bin/svn/svnlook \
+	usr.bin/svn/svnmucc \
+	usr.bin/svn/svnrdump \
+	usr.bin/svn/svnserve \
+	usr.bin/svn/svnsync \
+	usr.bin/svn/svnversion \
 	usr.bin/systat \
 	usr.bin/tabs \
 	usr.bin/tail \
@@ -389,6 +406,7 @@ DIRDEPS+= \
 	usr.bin/vacation \
 	usr.bin/vgrind \
 	usr.bin/vi \
+	usr.bin/vi/catalog \
 	usr.bin/vis \
 	usr.bin/vmstat \
 	usr.bin/vtfontcvt \
