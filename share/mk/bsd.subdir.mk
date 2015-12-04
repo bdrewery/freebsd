@@ -81,18 +81,6 @@ ${__target}:	build${__target} install${__target}
 .endif
 .endfor
 
-# Make 'install' supports a before and after target.  Actual install
-# hooks are placed in 'realinstall'.
-.if !target(install)
-.for __stage in before real after
-.if !target(${__stage}install)
-${__stage}install:
-.endif
-.endfor
-install:	beforeinstall realinstall afterinstall
-.ORDER:		beforeinstall realinstall afterinstall
-.endif
-
 # Subdir code shared among 'make <subdir>', 'make <target>' and SUBDIR_PARALLEL.
 _SUBDIR_SH=	\
 		if test -d ${.CURDIR}/$${dir}.${MACHINE_ARCH}; then \
@@ -173,5 +161,20 @@ ${__target}:
 .endfor	# __target in ${ALL_SUBDIR_TARGETS}
 
 .endif	# !target(_SUBDIR)
+
+# Make 'install' support a before and after target.  Actual install
+# hooks are placed in 'realinstall'.  Ensure that subdirs build between
+# 'beforeinstall' and 'afterinstall'.
+.if !commands(install) && make(install)
+.for __stage in before real after
+.if !target(${__stage}install)
+${__stage}install:
+.endif
+.endfor
+${__subdir_targets.install:N.WAIT}: beforeinstall
+realinstall:	${__subdir_targets.install:N.WAIT}
+install:	beforeinstall realinstall afterinstall
+.ORDER:		beforeinstall realinstall afterinstall
+.endif
 
 .endif
