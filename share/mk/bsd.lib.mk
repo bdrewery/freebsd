@@ -162,7 +162,7 @@ ${SHLIB_NAME_FULL}:	${VERSION_MAP}
 LDFLAGS+=	-Wl,--version-script=${VERSION_MAP}
 .endif
 
-.if defined(LIB) && !empty(LIB) || defined(SHLIB_NAME)
+.if (defined(LIB) && !empty(LIB)) || defined(SHLIB_NAME) || empty(OBJS)
 OBJS+=		${SRCS:N*.h:R:S/$/.o/}
 CLEANFILES+=	${OBJS} ${STATICOBJS}
 .endif
@@ -301,6 +301,8 @@ all:
 .if defined(_LIBS) && !empty(_LIBS)
 all: ${_LIBS}
 CLEANFILES+=	${_LIBS}
+.elif !empty(OBJS)
+all: ${OBJS}
 .endif
 
 .if ${MK_MAN} != "no" && !defined(LIBRARIES_ONLY)
@@ -427,6 +429,8 @@ ${OBJS} ${STATICOBJS} ${POBJS}: ${SRCS:M*.h}
 .for _S in ${SRCS:N*.[hly]}
 ${_S:R}.po: ${_S}
 .endfor
+.elif !empty(OBJS)
+${OBJS}: ${SRCS:M*.h}
 .endif
 .if defined(SHLIB_NAME) || \
     defined(INSTALL_PIC_ARCHIVE) && defined(LIB) && !empty(LIB)
