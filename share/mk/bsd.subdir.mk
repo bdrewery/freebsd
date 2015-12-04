@@ -113,8 +113,6 @@ ${SUBDIR:N.WAIT}: .PHONY .MAKE
 	    dir=${.TARGET}; \
 	    ${_SUBDIR_SH};
 
-# Work around parsing of .if nested in .for by putting .WAIT string into a var.
-__wait= .WAIT
 .for __target in ${ALL_SUBDIR_TARGETS}
 # Can ordering be skipped for this and SUBDIR_PARALLEL forced?
 .if make(${__target}) && ${STANDALONE_SUBDIR_TARGETS:M${__target}}
@@ -130,7 +128,7 @@ _is_standalone_target=	0
 .if defined(SUBDIR_PARALLEL) || ${_is_standalone_target} == 1
 __subdir_targets=
 .for __dir in ${SUBDIR}
-.if ${__wait} == ${__dir}
+.if ${__dir} == .WAIT
 __subdir_targets+= .WAIT
 .else
 __subdir_targets+= ${__target}_subdir_${__dir}
