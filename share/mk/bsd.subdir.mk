@@ -133,7 +133,10 @@ __subdir_targets.${__target}+= .WAIT
 .else
 __subdir_targets.${__target}+= ${__target}_subdir_${__dir}
 __deps=
-.if ${_is_standalone_target} == 0
+.if ${_subdir_parallel} == 0
+# For non-SUBDIR_PARALLEL builds just .WAIT between everything.
+__subdir_targets.${__target}+= .WAIT
+.elif ${_is_standalone_target} == 0
 # For normal SUBDIR_PARALLEL, enforce ordering according to SUBDIR_DEPEND_*
 .for __dep in ${SUBDIR_DEPEND_${__dir}}
 __deps+= ${__target}_subdir_${__dep}
@@ -150,10 +153,6 @@ ${__target}_subdir_${__dir}: .PHONY .MAKE ${__deps}
 .endfor	# __dir in ${SUBDIR}
 # Hook all subdir targets into the main target so they build first.
 ${__target}: ${__subdir_targets.${__target}}
-# Define ordering for non-SUBDIR_PARALLEL builds.
-.if ${_subdir_parallel} == 0
-.ORDER:	${__subdir_targets.${__target}}
-.endif
 .elif !target(${__target})
 # Ensure all targets exist.
 ${__target}:
