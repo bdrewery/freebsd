@@ -102,55 +102,72 @@ _SUBDIR_SH=	\
 		cd ${.CURDIR}/$${dir}; \
 		${MAKE} $${target} DIRPRFX=${DIRPRFX}$${dir}/
 
+# _SUBDIR is defined only for backwards-compatibility and is not used
+# by this file.
 _SUBDIR: .USEBEFORE
 .if defined(SUBDIR) && !empty(SUBDIR) && !defined(NO_SUBDIR)
 	@${_+_}target=${.TARGET}; \
 	    for dir in ${SUBDIR:N.WAIT}; do ( ${_SUBDIR_SH} ); done
 .endif
 
+# Support 'make directory'
 ${SUBDIR:N.WAIT}: .PHONY .MAKE
 	${_+_}@target=all; \
 	    dir=${.TARGET}; \
 	    ${_SUBDIR_SH};
 
+# Generate build targets for each subdir target combo.
 .for __target in ${ALL_SUBDIR_TARGETS}
-# Can ordering be skipped for this and SUBDIR_PARALLEL forced?
-.if make(${__target}) && ${STANDALONE_SUBDIR_TARGETS:M${__target}}
-_is_standalone_target=	1
-SUBDIR:=	${SUBDIR:N.WAIT}
-.else
-_is_standalone_target=	0
-.endif
 # Only recurse on directly-called targets.  I.e., don't recurse on dependencies
 # such as 'install' becoming {before,real,after}install, just recurse
 # 'install'.
 .if make(${__target})
+# Can ordering be skipped for this and SUBDIR_PARALLEL forced?
+_is_standalone_target=	0
+_subdir_parallel=	0
+_skip_wait=		0
+.if ${STANDALONE_SUBDIR_TARGETS:M${__target}}
+_is_standalone_target=	1
+.endif
 .if defined(SUBDIR_PARALLEL) || ${_is_standalone_target} == 1
-__subdir_targets=
+_subdir_parallel= 1
+.endif
+# Ignore .WAIT for standalone and non-SUBDIR_PARALLEL builds.
+.if ${_is_standalone_target} == 1 || ${_subdir_parallel} == 0
+_skip_wait=	1
+.endif
+
 .for __dir in ${SUBDIR}
 .if ${__dir} == .WAIT
-__subdir_targets+= .WAIT
+.if ${_skip_wait} == 0
+__subdir_targets.${__target}+= .WAIT
+.endif
 .else
-__subdir_targets+= ${__target}_subdir_${__dir}
+__subdir_targets.${__target}+= ${__target}_subdir_${__dir}
 __deps=
 .if ${_is_standalone_target} == 0
+# For normal SUBDIR_PARALLEL, enforce ordering according to SUBDIR_DEPEND_*
 .for __dep in ${SUBDIR_DEPEND_${__dir}}
 __deps+= ${__target}_subdir_${__dep}
 .endfor
 .endif
+# The actual _SUBDIR target
 ${__target}_subdir_${__dir}: .PHONY .MAKE ${__deps}
 .if !defined(NO_SUBDIR)
 	@${_+_}target=${__target}; \
 	    dir=${__dir}; \
 	    ${_SUBDIR_SH};
 .endif
-.endif
+.endif	# __dir == .WAIT
 .endfor	# __dir in ${SUBDIR}
-${__target}: ${__subdir_targets}
-.else
-${__target}: _SUBDIR
-.endif	# SUBDIR_PARALLEL || _is_standalone_target
+# Hook all subdir targets into the main target so they build first.
+${__target}: ${__subdir_targets.${__target}}
+# Define ordering for non-SUBDIR_PARALLEL builds.
+.if ${_subdir_parallel} == 0
+.ORDER:	${__subdir_targets.${__target}}
+.endif
 .elif !target(${__target})
+# Ensure all targets exist.
 ${__target}:
 .endif	# make(${__target})
 .endfor	# __target in ${ALL_SUBDIR_TARGETS}
