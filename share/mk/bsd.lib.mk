@@ -308,6 +308,23 @@ all: _manpages
 .endif
 .endif
 
+.for _lib in ${_LIBS}
+.if ${_lib:M*_p.a}
+.elif ${_lib:M*.a}
+.elif ${_lib:M*.so*}
+.else # It is probably just some object file like gnu/lib/csu generates.
+.endif
+.endfor
+
+.if !defined(NO_EXTRADEPEND)
+.if defined(SHLIB_NAME)
+.if defined(DPADD) && !empty(DPADD)
+_DPADD= ${DPADD}
+.endif
+.if empty(LDFLAGS:M-nostdlib)
+_DPADD+= ${_STD_DEPS_SHLIB}
+.endif
+.endif
 _EXTRADEPEND:
 .if ${MK_FAST_DEPEND} == "no"
 	@TMP=_depend$$$$; \
@@ -315,11 +332,21 @@ _EXTRADEPEND:
 	    > $$TMP; \
 	mv $$TMP ${DEPENDFILE}
 .endif
-.if !defined(NO_EXTRADEPEND) && defined(SHLIB_NAME)
-.if defined(DPADD) && !empty(DPADD)
-	echo ${SHLIB_NAME_FULL}: ${DPADD} >> ${DEPENDFILE}
+.if !empty(_DPADD)
+	echo ${SHLIB_NAME_FULL}: ${_DPADD} >> ${DEPENDFILE}
 .endif
+.if empty(LDFLAGS:M-nostdlib)
+.if defined(LIB) && !empty(LIB)
+	echo lib${LIB_PRIVATE}${LIB}.a: ${_STD_DEPS_STATIC} >> ${DEPENDFILE}
 .endif
+.if ${MK_PROFILE} != "no" && defined(LIB) && !empty(LIB)
+	echo lib${LIB_PRIVATE}${LIB}_p.a: ${_STD_DEPS_PROFLIB} >> ${DEPENDFILE}
+.endif
+.if defined(INSTALL_PIC_ARCHIVE) && defined(LIB) && !empty(LIB) && ${MK_TOOLCHAIN} != "no"
+	echo lib${LIB_PRIVATE}${LIB}_pic.a: ${_STD_DEPS_STATIC} >> ${DEPENDFILE}
+.endif
+.endif	# empty(LDFLAGS:M-nostdlib)
+.endif	# !defined(NO_EXTRADEPEND)
 
 .if !target(install)
 

@@ -168,23 +168,79 @@ CLEANFILES+= ${OBJS}
 
 .include <bsd.libnames.mk>
 
-.if defined(PROG)
-_EXTRADEPEND:
-.if defined(LDFLAGS) && !empty(LDFLAGS:M-nostdlib)
-.if defined(DPADD) && !empty(DPADD)
-	echo ${PROG_FULL}: ${DPADD} >> ${DEPENDFILE}
+.if defined(PROG) && !defined(NO_EXTRADEPEND)
+.if 0 && empty(LDFLAGS:M-nostdlib)
+_is_static=	0
+_is_shared_lib=	0
+_is_profiled=	0
+.if !empty(LDFLAGS:M-shared) || !empty(SOLINKOPTS:M-shared) || \
+    !empty(LDFLAGS:M-pie)
+# This is be used for both PIE and shared.
+_is_shared_lib=	1
+.elif !empty(LDFLAGS:M-static)
+_is_static=	1
 .endif
+# crt1
+.if ${_is_shared_lib} == 1
+_STD_DEPS+=	${LIBSCRT1}
+.elif ${_is_profiled} == 1
+_STD_DEPS+=	${LIBGCRT1}
 .else
-	echo ${PROG_FULL}: ${LIBC} ${DPADD} >> ${DEPENDFILE}
+_STD_DEPS+=	${LIBCRT1}
+.endif
+# crtbegin
+.if ${_is_static} == 1
+_STD_DEPS+=	${LIBCRTBEGINT}
+.elif ${_is_shared_lib} == 1
+_STD_DEPS+=	${LIBCRTBEGINS}
+.else
+_STD_DEPS+=	${LIBCRTBEGIN}
+.endif
+# libgcc
+.if ${_is_static} == 1
+_STD_DEPS+=	${LIBGCC_EH}
+.elif ${_is_profiled} == 1
+_STD_DEPS+=	${LIBGCC_EH_P}
+.else
+_STD_DEPS+=	${LIBGCC_S}
+.endif
+# libcompiler_rt
+.if ${_is_profiled} == 1
+_STD_DEPS+=	${LIBCOMPILER_RT_P}
+.else
+_STD_DEPS+=	${LIBCOMPILER_RT}
+.endif
+# crtend
+.if ${_is_shared_lib}
+_STD_DEPS+=	${LIBCRTENDS}
+.else
+_STD_DEPS+=	${LIBCRTEND}
+.endif
+# Common crt files.
+_STD_DEPS+=	${LIBCRTI} ${LIBCRTN}
+.endif	# empty(LDFLAGS:M-nostdlib)
+
+_DPADD=	${DPADD}
+.if empty(LDFLAGS:M-nostdlib)
+_DPADD+= ${LIBC}
+.if !empty(LDFLAGS:M-static)
+_DPADD+= ${_STD_DEPS_STATIC}
+.else
+_DPADD+= ${_STD_DEPS_PROG}
+.endif
 .if defined(PROG_CXX)
 .if ${COMPILER_TYPE} == "clang" && empty(CXXFLAGS:M-stdlib=libstdc++)
-	echo ${PROG_FULL}: ${LIBCPLUSPLUS} >> ${DEPENDFILE}
+_DPADD+= ${LIBCPLUSPLUS}
 .else
-	echo ${PROG_FULL}: ${LIBSTDCPLUSPLUS} >> ${DEPENDFILE}
+_DPADD+= ${LIBSTDCPLUSPLUS}
 .endif
+.endif	# defined(PROG_CXX)
+.endif	# empty(LDFLAGS:M-nostdlib)
+_EXTRADEPEND:
+.if !empty(_DPADD)
+	echo ${PROG_FULL}: ${_DPADD} >> ${DEPENDFILE}
 .endif
-.endif
-.endif
+.endif	# defined(PROG) && !defined(NO_EXTRADEPEND)
 
 .if !target(install)
 
