@@ -17,4 +17,7 @@ LIBADD= pthread
 
 VERSION_MAP= ${OPENSMDIR}/opensm/libopensm.map
 
+# Has cyclic dependency with osmvendor and osmcomp
+MK_LINKTEST=	no
+
 .include <bsd.lib.mk>

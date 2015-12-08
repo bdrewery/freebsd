@@ -13,4 +13,7 @@ CFLAGS+= -I${.CURDIR}
 # Avoid circular dependency, we only need the libproc.h header here.
 CFLAGS+= -I${.CURDIR:H}/libproc
 
+# Cyclic dependency with libproc
+MK_LINKTEST=	no
+
 .include <bsd.lib.mk>

@@ -559,4 +559,5 @@ _BADLIBADD+= ${_l}
 .endif
 .endif
 
+.include <src.linktests.mk>
 .endif	# !target(__<src.libnames.mk>__)
