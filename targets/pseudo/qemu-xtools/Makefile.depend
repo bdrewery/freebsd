@@ -76,6 +76,7 @@ x_DIRDEP_USE_ENV+= \
 		SSP_CFLAGS= \
 
 DIRDEP_MAKE=	${.MAKE} -DNO_PIC -DNO_SHARED -DNO_CPU_CFLAGS  ${x_DIRDEP_USE_ENV}
+DIRDEP_USE_ENV+= UPDATE_DEPENDFILE=no
 
 # We need all dependencies as we want to build from the source to have the
 # latest for the jail, so remove the skipping of host dependencies.
