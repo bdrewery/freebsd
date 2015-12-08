@@ -545,6 +545,10 @@ _BADLIBADD+= ${_l}
 .if ${_INTERNALLIBS:M${LIB}} != "" && !defined(LIB${LIB:tu})
 .error ${.CURDIR}: Missing value for LIB${LIB:tu} in ${_this:T}.  Likely should be: LIB${LIB:tu}?= $${LIB${LIB:tu}DIR}/lib${LIB}.a
 .endif
+.if ${MK_LINKTEST:Uno} == "yes"
+# Disallow creating broken libraries.
+SOLINKOPTS+= -Wl,--no-undefined -Wl,--warn-once
+.endif
 .endif
 
 .endif	# !target(__<src.libnames.mk>__)
