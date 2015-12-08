@@ -5,7 +5,7 @@
 DIRDEPS = \
 	targets/pseudo/toolchain \
 
-DIRDEPS += \
+HOST_DIRDEPS += \
 	bin/cat \
 	bin/chmod \
 	bin/cp \
@@ -57,9 +57,11 @@ DIRDEPS += \
 	usr.bin/yacc \
 	usr.sbin/chown \
 
-DIRDEP_USE_ENV+= TARGET=${TARGET} TARGET_ARCH=${TARGET_ARCH}
+DIRDEPS+= ${HOST_DIRDEPS:S/$/.amd64,amd64/}
+
+#DIRDEP_USE_ENV+= TARGET=${TARGET} TARGET_ARCH=${TARGET_ARCH}
 # From Makefile.inc1 NXBMAKE
-DIRDEP_USE_ENV+= \
+x_DIRDEP_USE_ENV+= \
 		MK_CLANG_EXTRAS=no \
 		MK_CLANG_FULL=no \
 		MK_CTF=no \
@@ -73,7 +75,7 @@ DIRDEP_USE_ENV+= \
 		NO_LINT=yes \
 		SSP_CFLAGS= \
 
-DIRDEP_MAKE=	${.MAKE} -DNO_PIC -DNO_SHARED -DNO_CPU_CFLAGS 
+DIRDEP_MAKE=	${.MAKE} -DNO_PIC -DNO_SHARED -DNO_CPU_CFLAGS  ${x_DIRDEP_USE_ENV}
 
 # We need all dependencies as we want to build from the source to have the
 # latest for the jail, so remove the skipping of host dependencies.
