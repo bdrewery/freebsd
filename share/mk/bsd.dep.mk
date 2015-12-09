@@ -324,6 +324,7 @@ cleandepend:
 .endif
 .endif
 .ORDER: cleandepend all
+.ORDER: cleandepend all-install
 .ORDER: cleandepend depend
 
 .if !target(checkdpadd) && (defined(DPADD) || defined(LDADD))

@@ -212,7 +212,8 @@ CXXFLAGS+=	${CXXFLAGS.${.IMPSRC:T}}
 
 .if defined(SRCTOP)
 # Prevent rebuilding during install to support read-only objdirs.
-.if ${.TARGETS:M*install*} == ${.TARGETS} && empty(.MAKE.MODE:Mmeta)
+.if ${.TARGETS:M*install*} == ${.TARGETS} && !make(all-install) && \
+    empty(.MAKE.MODE:Mmeta)
 CFLAGS+=	ERROR-tried-to-rebuild-during-make-install
 .endif
 .endif

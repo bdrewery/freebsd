@@ -181,6 +181,7 @@ clean:
 .endif
 .endif
 .ORDER: clean all
+.ORDER: clean all-install
 
 cleandir: cleanobj
 

@@ -148,7 +148,7 @@ $p.$t: .PHONY .MAKE
 
 # Depend main pseudo targets on all PROG.pseudo targets too.
 .for t in ${PROGS_TARGETS:O:u}
-.if make(${t})
+.if make(${t}) || (make(all-install) && ${t} == "install")
 $t: ${PROGS:%=%.$t}
 .endif
 .endfor

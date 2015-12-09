@@ -39,8 +39,8 @@
 __<bsd.subdir.mk>__:
 
 SUBDIR_TARGETS+= \
-		all all-man analyze buildconfig buildfiles buildincludes \
-		checkdpadd clean cleandepend cleandir cleanilinks \
+		all all-man all-install analyze buildconfig buildfiles \
+		buildincludes checkdpadd clean cleandepend cleandir cleanilinks \
 		cleanobj depend distribute files includes installconfig \
 		installfiles installincludes print-dir realinstall lint \
 		maninstall manlint obj objlink tags \
@@ -96,6 +96,10 @@ ${__target}:	build${__target} install${__target}
 .ORDER:		build${__target} install${__target}
 .endif
 .endfor
+
+# all-install is intended for library staging so that visiting a directory will
+# ensure it is available in the sysroot for later sub-directories to find.
+all-install:	all install .PHONY
 
 # Make 'install' supports a before and after target.  Actual install
 # hooks are placed in 'realinstall'.

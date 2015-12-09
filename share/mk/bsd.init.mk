@@ -49,7 +49,7 @@ $xGRP=	${_gid}
     ${BUILD_AT_LEVEL0:Uyes:tl} == "no" && !make(clean*)
 _SKIP_BUILD=	not building at level 0
 .elif !empty(.MAKEFLAGS:M-V${_V_DO_BUILD}) || \
-    ${.TARGETS:M*install*} == ${.TARGETS} || \
+    (${.TARGETS:M*install*} == ${.TARGETS} && !make(all-install)) || \
     ${.TARGETS:Mclean*} == ${.TARGETS} || \
     ${.TARGETS:Mdestroy*} == ${.TARGETS} || \
     make(obj) || make(analyze) || make(print-dir)
