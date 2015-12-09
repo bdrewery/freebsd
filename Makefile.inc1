@@ -1987,8 +1987,7 @@ ${_lib}__L: .PHONY .MAKE
 		cd ${.CURDIR}/${_lib}; \
 		${MAKE} MK_TESTS=no DIRPRFX=${_lib}/ obj; \
 		${MAKE} MK_TESTS=no DIRPRFX=${_lib}/ depend; \
-		${MAKE} MK_TESTS=no DIRPRFX=${_lib}/ all; \
-		${MAKE} MK_TESTS=no DIRPRFX=${_lib}/ install
+		${MAKE} MK_TESTS=no DIRPRFX=${_lib}/ all-install
 .endif
 .endfor
 
