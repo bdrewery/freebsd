@@ -11,6 +11,8 @@ SDPDIR=	${.CURDIR}/../../libsdp/src
 LIB=		ibsdp
 SHLIB_MAJOR=	1
 MK_PROFILE=	no
+# Has optional symbols program_invocation_short_name and __sdp_sockaddr_to_sdp
+MK_LINKTEST=	no
 MAN=
 
 SRCS=	log.c match.c port.c config_parser.c config_scanner.c

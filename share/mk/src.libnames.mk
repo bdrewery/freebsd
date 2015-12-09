@@ -185,6 +185,16 @@ _LIBRARIES+= \
 		osmvendor \
 		rdmacm \
 
+_DP_ibmad=	ibcommon ibumad
+_DP_ibumad=	ibcommon
+_DP_mlx4=	ibverbs pthread
+_DP_mthca=	ibverbs pthread
+_DP_cxgb4=	ibverbs pthread
+_DP_opensm=	pthread
+_DP_osmcomp=	pthread
+_DP_osmvendor=	ibumad opensm osmcomp pthread
+_DP_ibcm=	ibverbs
+_DP_rdmacm=	ibverbs
 .endif
 
 # Each library's LIBADD needs to be duplicated here for static linkage of
