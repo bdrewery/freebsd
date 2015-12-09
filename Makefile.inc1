@@ -2050,8 +2050,7 @@ ${_lib}__L: .PHONY .MAKE
 		cd ${.CURDIR}/${_lib}; \
 		${MAKE} MK_TESTS=no DIRPRFX=${_lib}/ obj; \
 		if [ -z "${NO_DEPEND}" ]; then ${MAKE} MK_TESTS=no DIRPRFX=${_lib}/ depend; fi; \
-		${MAKE} MK_TESTS=no DIRPRFX=${_lib}/ all; \
-		${MAKE} MK_TESTS=no DIRPRFX=${_lib}/ install
+		${MAKE} MK_TESTS=no DIRPRFX=${_lib}/ all install
 .endif
 .endfor
 
