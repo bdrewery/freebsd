@@ -456,9 +456,7 @@ cleandepend: cleanilinks
 cleanilinks:
 	rm -f ${_ILINKS}
 
-.if ${MK_FAST_DEPEND} == "yes" || !exists(${.OBJDIR}/${DEPENDFILE})
 ${OBJS}: ${SRCS:M*.h}
-.endif
 
 .include <bsd.obj.mk>
 .include "kern.mk"

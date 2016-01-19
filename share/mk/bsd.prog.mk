@@ -278,7 +278,7 @@ lint: ${SRCS:M*.c}
 
 .include <bsd.dep.mk>
 
-.if defined(PROG) && !exists(${.OBJDIR}/${DEPENDFILE})
+.if defined(PROG)
 ${OBJS}: ${SRCS:M*.h}
 .endif
 

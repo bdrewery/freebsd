@@ -422,11 +422,9 @@ lint: ${SRCS:M*.c}
 
 .include <bsd.dep.mk>
 
-.if ${MK_FAST_DEPEND} == "yes" || !exists(${.OBJDIR}/${DEPENDFILE})
 .if defined(LIB) && !empty(LIB)
-.if !exists(${.OBJDIR}/${DEPENDFILE})
 ${OBJS} ${STATICOBJS} ${POBJS}: ${SRCS:M*.h}
-.endif
+.if ${MK_FAST_DEPEND} == "yes" || !exists(${.OBJDIR}/${DEPENDFILE})
 .for _S in ${SRCS:N*.[hly]}
 ${_S:R}.po: ${_S}
 .endfor
@@ -434,6 +432,7 @@ ${_S:R}.po: ${_S}
 .if defined(SHLIB_NAME) || \
     defined(INSTALL_PIC_ARCHIVE) && defined(LIB) && !empty(LIB)
 ${SOBJS}: ${SRCS:M*.h}
+.if ${MK_FAST_DEPEND} == "yes" || !exists(${.OBJDIR}/${DEPENDFILE})
 .for _S in ${SRCS:N*.[hly]}
 ${_S:R}.So: ${_S}
 .endfor
