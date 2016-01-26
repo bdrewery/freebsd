@@ -156,6 +156,16 @@ ${_D}.po: ${_DSRC} ${POBJS:S/^${_D}.po$//}
 
 .if ${MK_FAST_DEPEND} == "yes" && \
     (${.MAKE.MODE:Mmeta} == "" || ${.MAKE.MODE:Mnofilemon} != "")
+# Force META MODE when building depend to rebuild .depend if the command to
+# build it changes.
+.if ${.MAKE.MODE:Mnormal} != "" && (make(depend) || make(${DEPENDFILE}))
+.MAKE.MODE= meta nofilemon
+# bmake won't create a .meta file for .MAKE.DEPENDFILE but we want one, so
+# trick it.  Since this is only in make(depend) it is safe since the file is
+# not needed to be included.
+.MAKE.DEPENDFILE=/dev/null
+${DEPENDFILE}: .META
+.endif
 DEPENDFILES+=	${DEPENDFILE}.*
 DEPEND_MP?=	-MP
 # Handle OBJS=../somefile.o hacks.  Just replace '/' rather than use :T to
@@ -176,11 +186,37 @@ DEPENDSRCS=	${SRCS:M*.[cSC]} ${SRCS:M*.cxx} ${SRCS:M*.cpp} ${SRCS:M*.cc}
 DEPENDOBJS+=	${DEPENDSRCS:R:S,$,.o,}
 .endif
 DEPENDFILES_OBJS=	${DEPENDOBJS:O:u:${DEPEND_FILTER}:C/^/${DEPENDFILE}./}
-.if ${.MAKEFLAGS:M-V} == ""
+# Ensure .depend is built if 'make depend' was skipped.  This is needed
+# to ensure .depend.* files are included via .depend.
+# This is simplist in 'all' due to OBJDIR creation issues.
+.if !exists(${.OBJDIR}/${DEPENDFILE})
+.if make(all)
+.END: _make_depend
+.elif !make(depend) && !make(${DEPENDFILE}) && !make(clean*) && !make(obj)
+# With AUTO_OBJ it should be safe to generate the .depend now.
+.if ${MK_AUTO_OBJ} == "yes"
+.END: _make_depend
+.else
+# Check if the target given was built, then it is safe to create .depend.
+.END: _check-built
+_check-built: .PHONY
+	@for f in ${.TARGETS}; do \
+	    if [ -e "$${f}" ]; then \
+	      cd ${.CURDIR}; ${MAKE} ${DEPENDFILE}; \
+	    fi; \
+	done
+.endif	# ${MK_AUTO_OBJ} == "yes"
+# Fallback on including manually since it is not safe to auto create.  This
+# can create "don't know how to make" errors for stale dependencies.
+.elif ${.MAKEFLAGS:M-V} == ""
 .for __depend_obj in ${DEPENDFILES_OBJS}
 .sinclude "${__depend_obj}"
 .endfor
-.endif
+.endif	# make(all)
+.endif	# !exists(${.OBJDIR}/${DEPENDFILE})
+# This is redirected so make(depend) is true for the META MODE trick above.
+_make_depend: .PHONY .MAKE
+	@cd ${.CURDIR}; ${MAKE} ${DEPENDFILE}
 .endif	# ${MK_FAST_DEPEND} == "yes"
 .endif	# defined(SRCS)
 
@@ -239,7 +275,11 @@ ${DEPENDFILE}: ${DPSRCS}
 .else
 .endif
 .else
-	: > ${.TARGET}
+	{ \
+	  echo '.for __dependfile in $${DEPENDFILES_OBJS}'; \
+	  echo '.sinclude "$${__dependfile}"'; \
+	  echo '.endfor'; \
+	} > ${.TARGET}
 .endif	# ${MK_FAST_DEPEND} == "no"
 .if target(_EXTRADEPEND)
 _EXTRADEPEND: .USE
