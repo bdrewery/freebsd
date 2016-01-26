@@ -238,10 +238,10 @@ CFLAGS+=	${DEPEND_CFLAGS}
 .endif
 DEPENDOBJS+=	${SYSTEM_OBJS} genassym.o
 DEPENDFILES_OBJS=	${DEPENDOBJS:O:u:C/^/.depend./}
-.if !defined(_SKIP_READ_DEPEND)
-.for __depend_obj in ${DEPENDFILES_OBJS}
-.sinclude "${__depend_obj}"
-.endfor
+# Ensure .depend is built if 'make depend' was skipped.  This is needed
+# to ensure .depend.* files are included via .depend.
+.if !exists(${.OBJDIR}/.depend)
+kernel-all: .depend
 .endif
 .endif	# ${MK_FAST_DEPEND} == "yes"
 
@@ -269,7 +269,11 @@ DEPENDFILES_OBJS=	${DEPENDOBJS:O:u:C/^/.depend./}
 	    CC="${_MKDEPCC}" xargs mkdep -a -f ${.TARGET}.tmp ${ZFS_ASM_CFLAGS}
 	mv ${.TARGET}.tmp ${.TARGET}
 .else
-	: > ${.TARGET}
+	{ \
+	  echo '.for __dependfile in $${DEPENDFILES_OBJS}'; \
+	  echo '.sinclude "$${__dependfile}"'; \
+	  echo '.endfor'; \
+	} > ${.TARGET}
 .endif
 
 _ILINKS= machine
