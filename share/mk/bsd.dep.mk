@@ -176,10 +176,10 @@ DEPENDSRCS=	${SRCS:M*.[cSC]} ${SRCS:M*.cxx} ${SRCS:M*.cpp} ${SRCS:M*.cc}
 DEPENDOBJS+=	${DEPENDSRCS:R:S,$,.o,}
 .endif
 DEPENDFILES_OBJS=	${DEPENDOBJS:O:u:${DEPEND_FILTER}:C/^/${DEPENDFILE}./}
-.if ${.MAKEFLAGS:M-V} == ""
-.for __depend_obj in ${DEPENDFILES_OBJS}
-.sinclude "${__depend_obj}"
-.endfor
+# Ensure .depend is built if 'make depend' was skipped.  This is needed
+# to ensure .depend.* files are included via .depend.
+.if !exists(${.OBJDIR}/${DEPENDFILE})
+all: ${DEPENDFILE}
 .endif
 .endif	# ${MK_FAST_DEPEND} == "yes"
 .endif	# defined(SRCS)
@@ -239,7 +239,11 @@ ${DEPENDFILE}: ${DPSRCS}
 .else
 .endif
 .else
-	: > ${.TARGET}
+	{ \
+	  echo '.for __dependfile in $${DEPENDFILES_OBJS}'; \
+	  echo '.sinclude "$${__dependfile}"'; \
+	  echo '.endfor'; \
+	} > ${.TARGET}
 .endif	# ${MK_FAST_DEPEND} == "no"
 .if target(_EXTRADEPEND)
 _EXTRADEPEND: .USE
