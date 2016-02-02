@@ -188,7 +188,7 @@ authunix_create_default(void)
 	gid_t *gids;
 
 	ngids_max = sysconf(_SC_NGROUPS_MAX) + 1;
-	gids = malloc(sizeof(gid_t) * ngids_max);
+	gids = mem_alloc(sizeof(gid_t) * ngids_max);
 	if (gids == NULL)
 		return (NULL);
 
@@ -203,7 +203,7 @@ authunix_create_default(void)
 		ngids = NGRPS;
 	/* XXX: interface problem; we should translate from uid_t and gid_t */
 	auth = authunix_create(machname, uid, gid, ngids, gids);
-	free(gids);
+	mem_free(gids, sizeof(gid_t) * ngids_max);
 	return (auth);
 }
 
