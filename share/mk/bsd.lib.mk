@@ -390,6 +390,8 @@ _libinstall:
 .endif
 .endif # !defined(INTERNALLIB)
 
+${_LIBS} ${OBJS} ${STATICOBJS} ${POBJS} ${SOBJS}: beforebuild .WAIT
+
 .if !defined(LIBRARIES_ONLY)
 .include <bsd.nls.mk>
 .include <bsd.files.mk>

@@ -188,6 +188,7 @@ genassym.o: $S/$M/$M/genassym.c
 	${CC} -c ${CFLAGS:N-fno-common} $S/$M/$M/genassym.c
 
 ${SYSTEM_OBJS} genassym.o vers.o: opt_global.h
+${SYSTEM_OBJS} genassym.o vers.o: beforebuild .WAIT
 
 # Normal files first
 CFILES_NORMAL=	${CFILES:N*/cddl/*:N*fs/nfsclient/nfs_clkdtrace*:N*/compat/linuxkpi/common/*:N*/ofed/*:N*/dev/mlx5/*}

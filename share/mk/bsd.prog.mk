@@ -149,6 +149,7 @@ MAN1=	${MAN}
 all:
 .else
 all: ${PROG} ${SCRIPTS}
+${OBJS}: beforebuild .WAIT
 .if ${MK_MAN} != "no"
 all: _manpages
 .endif
