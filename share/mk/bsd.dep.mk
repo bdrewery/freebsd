@@ -224,8 +224,8 @@ MKDEP_CXXFLAGS=	${CXXFLAGS:M-nostdinc*} ${CXXFLAGS:M-[BIDU]*} \
 .endif	# ${MK_FAST_DEPEND} == "no"
 
 DPSRCS+= ${SRCS}
-${DEPENDFILE}: ${DPSRCS}
 .if ${MK_FAST_DEPEND} == "no"
+${DEPENDFILE}: ${DPSRCS}
 	rm -f ${DEPENDFILE}
 .if !empty(DPSRCS:M*.[cS])
 	${MKDEPCMD} -f ${DEPENDFILE} -a ${MKDEP} \
@@ -239,6 +239,7 @@ ${DEPENDFILE}: ${DPSRCS}
 .else
 .endif
 .else
+${DEPENDFILE}:
 	{ \
 	  echo '.for __dependfile in $${DEPENDFILES_OBJS}'; \
 	  echo '.sinclude "$${__dependfile}"'; \
