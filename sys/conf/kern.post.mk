@@ -86,7 +86,8 @@ ports-${__target}:
 
 .ORDER: kernel-install modules-install
 
-kernel-all: beforebuild .WAIT ${KERNEL_KO} ${KERNEL_EXTRA}
+kernel-all: ${KERNEL_KO} ${KERNEL_EXTRA}
+BUILDOBJ_TARGETS+=	${KERNEL_KO} ${KERNEL_EXTRA}
 
 kernel-cleandir: kernel-clean kernel-cleandepend
 
@@ -187,8 +188,8 @@ assym.s: $S/kern/genassym.sh genassym.o
 genassym.o: $S/$M/$M/genassym.c
 	${CC} -c ${CFLAGS:N-fno-common} $S/$M/$M/genassym.c
 
+BUILDOBJ_TARGETS+=	${SYSTEM_OBJS} genassym.o vers.o
 ${SYSTEM_OBJS} genassym.o vers.o: opt_global.h
-${SYSTEM_OBJS} genassym.o vers.o: beforebuild .WAIT
 
 # Normal files first
 CFILES_NORMAL=	${CFILES:N*/cddl/*:N*fs/nfsclient/nfs_clkdtrace*:N*/compat/linuxkpi/common/*:N*/ofed/*:N*/dev/mlx5/*}
@@ -261,6 +262,10 @@ beforebuild: .depend
 	  echo '.endfor'; \
 	} > ${.TARGET}
 .endif
+
+.for __obj in ${BUILDOBJ_TARGETS}
+.ORDER: beforebuild ${__obj}
+.endfor
 
 _ILINKS= machine
 .if ${MACHINE} != ${MACHINE_CPUARCH} && ${MACHINE} != "arm64"

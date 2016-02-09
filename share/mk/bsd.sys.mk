@@ -189,6 +189,18 @@ PHONY_NOTMAIN = afterdepend afterinstall all beforedepend beforeinstall \
 .PHONY: ${PHONY_NOTMAIN:N${PROG:U}}
 .NOTMAIN: ${PHONY_NOTMAIN:Nall}
 
+#BUILDOBJ_TARGETS+=	${DPSRCS:U${SRCS}}
+#.ORDER: beforebuild all
+#.if !defined(_SKIP_BUILD)
+#all: beforebuild .WAIT
+#.endif
+beforebuild:
+	echo beforebuild;read n
+.for __obj in ${BUILDOBJ_TARGETS}
+.ORDER: beforebuild ${__obj}
+${__obj}: beforebuild .WAIT
+.endfor
+
 .if ${MK_STAGING} != "no"
 .if defined(_SKIP_BUILD) || (!make(all) && !make(clean*))
 _SKIP_STAGING?= yes

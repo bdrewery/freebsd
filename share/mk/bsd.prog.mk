@@ -149,11 +149,12 @@ MAN1=	${MAN}
 all:
 .else
 all: ${PROG} ${SCRIPTS}
-${OBJS}: beforebuild .WAIT
+BUILDOBJ_TARGETS+=	${OBJS}
 .if ${MK_MAN} != "no"
 all: _manpages
 .endif
 .endif
+.info here
 
 .if defined(PROG)
 CLEANFILES+= ${PROG}

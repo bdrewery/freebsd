@@ -15,7 +15,7 @@ __<bsd.init.mk>__:
 .endif
 .include <bsd.own.mk>
 .MAIN: all
-beforebuild: .PHONY .NOTMAIN
+beforebuild: .EXEC .NOTMAIN
 .if !defined(_SKIP_BUILD)
 all: beforebuild .WAIT
 .endif
