@@ -225,10 +225,8 @@ DEPENDOBJS+=	${SYSTEM_OBJS} genassym.o
 DEPENDFILES_OBJS=	${DEPENDOBJS:O:u:C/^/.depend./}
 # Ensure .depend is built if 'make depend' was skipped.  This is needed
 # to ensure .depend.* files are included via .depend.
-# There are no OBJDIR concerns in the kernel build.  Always generate .depend
-# when not explicitly asked to.
-.if !make(depend) && !make(kernel-depend) && !make(.depend)
-.END: .depend
+.if !exists(${.OBJDIR}/.depend)
+beforebuild: .depend
 .endif
 .endif	# ${MK_FAST_DEPEND} == "yes"
 

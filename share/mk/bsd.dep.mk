@@ -188,32 +188,9 @@ DEPENDOBJS+=	${DEPENDSRCS:R:S,$,.o,}
 DEPENDFILES_OBJS=	${DEPENDOBJS:O:u:${DEPEND_FILTER}:C/^/${DEPENDFILE}./}
 # Ensure .depend is built if 'make depend' was skipped.  This is needed
 # to ensure .depend.* files are included via .depend.
-# This is simplist in 'all' due to OBJDIR creation issues.
 .if !exists(${.OBJDIR}/${DEPENDFILE})
-.if make(all)
-.END: _make_depend
-.elif !make(depend) && !make(${DEPENDFILE}) && !make(clean*) && !make(obj)
-# With AUTO_OBJ it should be safe to generate the .depend now.
-.if ${MK_AUTO_OBJ} == "yes"
-.END: _make_depend
-.else
-# Check if the target given was built, then it is safe to create .depend.
-.END: _check-built
-_check-built: .PHONY
-	@for f in ${.TARGETS}; do \
-	    if [ -e "$${f}" ]; then \
-	      cd ${.CURDIR}; ${MAKE} ${DEPENDFILE}; \
-	    fi; \
-	done
-.endif	# ${MK_AUTO_OBJ} == "yes"
-# Fallback on including manually since it is not safe to auto create.  This
-# can create "don't know how to make" errors for stale dependencies.
-.elif ${.MAKEFLAGS:M-V} == ""
-.for __depend_obj in ${DEPENDFILES_OBJS}
-.sinclude "${__depend_obj}"
-.endfor
-.endif	# make(all)
-.endif	# !exists(${.OBJDIR}/${DEPENDFILE})
+beforebuild: ${DEPENDFILE}
+.endif
 # This is redirected so make(depend) is true for the META MODE trick above.
 _make_depend: .PHONY .MAKE
 	@cd ${.CURDIR}; ${MAKE} ${DEPENDFILE}
