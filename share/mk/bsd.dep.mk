@@ -159,16 +159,6 @@ ${_D}.po: ${_DSRC} ${POBJS:S/^${_D}.po$//}
 
 .if ${MK_FAST_DEPEND} == "yes" && \
     (${.MAKE.MODE:Mmeta} == "" || ${.MAKE.MODE:Mnofilemon} != "")
-# Force META MODE when building depend to rebuild .depend if the command to
-# build it changes.
-.if ${.MAKE.MODE:Mnormal} != "" && (make(depend) || make(${DEPENDFILE}))
-.MAKE.MODE= meta nofilemon
-# bmake won't create a .meta file for .MAKE.DEPENDFILE but we want one, so
-# trick it.  Since this is only in make(depend) it is safe since the file is
-# not needed to be included.
-.MAKE.DEPENDFILE=/dev/null
-${DEPENDFILE}: .META
-.endif
 DEPENDFILES+=	${DEPENDFILE}.*
 DEPEND_MP?=	-MP
 # Handle OBJS=../somefile.o hacks.  Just replace '/' rather than use :T to
@@ -195,9 +185,6 @@ DEPENDFILES_OBJS=	${DEPENDOBJS_FILTERED:C/^/${DEPENDFILE}./}
 .if !exists(${.OBJDIR}/${DEPENDFILE})
 beforebuild: ${DEPENDFILE}
 .endif
-# This is redirected so make(depend) is true for the META MODE trick above.
-_make_depend: .PHONY .MAKE
-	@cd ${.CURDIR}; ${MAKE} ${DEPENDFILE}
 .endif	# ${MK_FAST_DEPEND} == "yes"
 .endif	# defined(SRCS)
 
