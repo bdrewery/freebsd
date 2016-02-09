@@ -143,8 +143,10 @@ ${FULLKERNEL}: ${SYSTEM_DEP} vers.o
 .endif
 	${SYSTEM_LD_TAIL}
 
+OBJS_DEPEND_GUESS+=	assym.s vnode_if.h ${BEFORE_DEPEND:M*.h} \
+			${MFILES:T:S/.m$/.h/}
 .if !exists(${.OBJDIR}/.depend)
-${SYSTEM_OBJS}: assym.s vnode_if.h ${BEFORE_DEPEND:M*.h} ${MFILES:T:S/.m$/.h/}
+${SYSTEM_OBJS}: ${OBJS_DEPEND_GUESS}
 .endif
 
 LNFILES=	${CFILES:T:S/.c$/.ln/}
@@ -255,9 +257,18 @@ kernel-all: .depend
 	mv ${.TARGET}.tmp ${.TARGET}
 .else
 .depend:
+	@echo "Generating .depend"; \
 	{ \
-	  echo '.for __dependfile in $${DEPENDFILES_OBJS}'; \
-	  echo '.sinclude "$${__dependfile}"'; \
+	  echo '.for __obj in $${DEPENDOBJS}'; \
+	  echo '.if exists($${.OBJDIR}/.depend.$${__obj})'; \
+	  echo '.include ".depend.$${__obj}"'; \
+	  echo '.else'; \
+	  echo '# Guess some dependencies for when no .depend.OBJ is generated yet.'; \
+	  echo '.if $${SYSTEM_OBJS:M$${__obj}}'; \
+	  echo '$${__obj}: $${OBJS_DEPEND_GUESS}'; \
+	  echo '.endif'; \
+	  echo '$${__obj}: $${OBJS_DEPEND_GUESS.$${__obj}}'; \
+	  echo '.endif'; \
 	  echo '.endfor'; \
 	} > ${.TARGET}
 .endif
