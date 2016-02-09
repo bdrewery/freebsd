@@ -86,7 +86,7 @@ ports-${__target}:
 
 .ORDER: kernel-install modules-install
 
-kernel-all: ${KERNEL_KO} ${KERNEL_EXTRA}
+kernel-all: beforebuild .WAIT ${KERNEL_KO} ${KERNEL_EXTRA}
 
 kernel-cleandir: kernel-clean kernel-cleandepend
 
