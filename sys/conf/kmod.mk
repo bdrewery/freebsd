@@ -457,8 +457,9 @@ cleandepend: cleanilinks
 cleanilinks:
 	rm -f ${_ILINKS}
 
+OBJS_DEPEND_GUESS+= ${SRCS:M*.h}
 .if !exists(${.OBJDIR}/${DEPENDFILE})
-${OBJS}: ${SRCS:M*.h}
+${OBJS}: ${OBJS_DEPEND_GUESS}
 .endif
 
 .include <bsd.obj.mk>

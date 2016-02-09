@@ -94,19 +94,21 @@ _SKIP_READ_DEPEND=	1
 .if defined(SRCS)
 CLEANFILES?=
 
-.if ${MK_FAST_DEPEND} == "yes" || !exists(${.OBJDIR}/${DEPENDFILE})
 .for _S in ${SRCS:N*.[dhly]}
-${_S:R}.o: ${_S}
-.endfor
+OBJS_DEPEND_GUESS.${_S:R}.o=	${_S}
+.if !exists(${.OBJDIR}/${DEPENDFILE})
+${_S:R}.o: ${OBJS_DEPEND_GUESS.${_S:R}.o}
 .endif
+.endfor
 
 # Lexical analyzers
 .for _LSRC in ${SRCS:M*.l:N*/*}
 .for _LC in ${_LSRC:R}.c
 ${_LC}: ${_LSRC}
 	${LEX} ${LFLAGS} -o${.TARGET} ${.ALLSRC}
-.if ${MK_FAST_DEPEND} == "yes" || !exists(${.OBJDIR}/${DEPENDFILE})
-${_LC:R}.o: ${_LC}
+OBJS_DEPEND_GUESS.${_LC:R}.o=	${_LC}
+.if !exists(${.OBJDIR}/${DEPENDFILE})
+${_LC:R}.o: ${OBJS_DEPEND_GUESS.${_LC:R}.o}
 .endif
 SRCS:=	${SRCS:S/${_LSRC}/${_LC}/}
 CLEANFILES+= ${_LC}
@@ -136,8 +138,9 @@ CLEANFILES+= ${_YH}
 ${_YC}: ${_YSRC}
 	${YACC} ${YFLAGS} -o ${_YC} ${.ALLSRC}
 .endif
-.if ${MK_FAST_DEPEND} == "yes" || !exists(${.OBJDIR}/${DEPENDFILE})
-${_YC:R}.o: ${_YC}
+OBJS_DEPEND_GUESS.${_YC:R}.o=	${_YC}
+.if !exists(${.OBJDIR}/${DEPENDFILE})
+${_YC:R}.o: ${OBJS_DEPEND_GUESS.${_YC:R}.o}
 .endif
 .endfor
 .endfor
@@ -190,7 +193,8 @@ DEPENDSRCS=	${SRCS:M*.[cSC]} ${SRCS:M*.cxx} ${SRCS:M*.cpp} ${SRCS:M*.cc}
 .if !empty(DEPENDSRCS)
 DEPENDOBJS+=	${DEPENDSRCS:R:S,$,.o,}
 .endif
-DEPENDFILES_OBJS=	${DEPENDOBJS:O:u:${DEPEND_FILTER}:C/^/${DEPENDFILE}./}
+DEPENDOBJS_FILTERED=	${DEPENDOBJS:O:u:${DEPEND_FILTER}}
+DEPENDFILES_OBJS=	${DEPENDOBJS_FILTERED:C/^/${DEPENDFILE}./}
 # Ensure .depend is built if 'make depend' was skipped.  This is needed
 # to ensure .depend.* files are included via .depend.
 .if !exists(${.OBJDIR}/${DEPENDFILE})
@@ -246,9 +250,16 @@ ${DEPENDFILE}: ${DPSRCS}
 .else
 .endif
 .else
+	@echo "Generating ${DEPENDFILE}"; \
 	{ \
-	  echo '.for __dependfile in $${DEPENDFILES_OBJS}'; \
-	  echo '.sinclude "$${__dependfile}"'; \
+	  echo '.for __obj in $${DEPENDOBJS_FILTERED}'; \
+	  echo '.if exists($${.OBJDIR}/$${DEPENDFILE}.$${__obj})'; \
+	  echo '.include "$${DEPENDFILE}.$${__obj}"'; \
+	  echo '.else'; \
+	  echo '# Guess some dependencies for when no $${DEPENDFILE}.OBJ is generated yet.'; \
+	  echo '$${__obj}: $${OBJS_DEPEND_GUESS}'; \
+	  echo '$${__obj}: $${OBJS_DEPEND_GUESS.$${__obj}}'; \
+	  echo '.endif'; \
 	  echo '.endfor'; \
 	} > ${.TARGET}
 .endif	# ${MK_FAST_DEPEND} == "no"
