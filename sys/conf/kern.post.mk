@@ -232,8 +232,8 @@ beforebuild: .depend
 
 .NOPATH: .depend ${DEPENDFILES_OBJS}
 
-.depend: .PRECIOUS ${SRCS}
 .if ${MK_FAST_DEPEND} == "no"
+.depend: .PRECIOUS ${SRCS}
 	rm -f ${.TARGET}.tmp
 # C files
 	${MAKE} -V CFILES_NORMAL -V SYSTEM_CFILES -V GEN_CFILES | \
@@ -254,6 +254,7 @@ beforebuild: .depend
 	    CC="${_MKDEPCC}" xargs mkdep -a -f ${.TARGET}.tmp ${ZFS_ASM_CFLAGS}
 	mv ${.TARGET}.tmp ${.TARGET}
 .else
+.depend:
 	{ \
 	  echo '.for __dependfile in $${DEPENDFILES_OBJS}'; \
 	  echo '.sinclude "$${__dependfile}"'; \
