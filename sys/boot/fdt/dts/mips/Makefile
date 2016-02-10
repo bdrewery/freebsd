@@ -1,6 +1,6 @@
 # $FreeBSD$
 
-DTS!=ls *.dts
+DTS=	${echo *.dts:L:sh}
 
 all: test-dts
 

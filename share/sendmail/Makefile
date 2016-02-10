@@ -4,8 +4,8 @@
 
 SENDMAIL_DIR=${.CURDIR}/../../contrib/sendmail
 CFDIR=	cf
-CFDIRS!=	(cd ${SENDMAIL_DIR}; find -L ${CFDIR} \( \( -name CVS -o -name .svn \) -prune \) -o -type d -print)
-CFFILES!=	(cd ${SENDMAIL_DIR}; find -L ${CFDIR} \( \( -name CVS -o -name .svn \) -prune \) -o -type f -print)
+CFDIRS=		${cd ${SENDMAIL_DIR}; find -L ${CFDIR} \( \( -name CVS -o -name .svn \) -prune \) -o -type d -print:L:sh}
+CFFILES=	${cd ${SENDMAIL_DIR}; find -L ${CFDIR} \( \( -name CVS -o -name .svn \) -prune \) -o -type f -print:L:sh}
 
 DDIR=	${DESTDIR}${SHAREDIR}/sendmail
 
@@ -17,6 +17,8 @@ all clean cleandir depend lint tags:
 
 beforeinstall: ${SHARED}
 
+# Avoid expanding CFDIRS and CFFILES during tree-walks unless needed.
+.if make(copies)
 copies::
 	if [ -L ${DDIR}/${CFDIR} ]; then rm -f ${DDIR}/${CFDIR}; fi
 .for dir in ${CFDIRS}
@@ -25,6 +27,7 @@ copies::
 .for file in ${CFFILES}
 	${INSTALL} -o ${BINOWN} -g ${BINGRP} -m 444 ${SENDMAIL_DIR}/${file} ${DDIR}/${file}
 .endfor
+.endif
 
 symlinks::
 	rm -rf ${DDIR}/${CFDIR}; ln -s ${SENDMAIL_DIR}/${CFDIR} ${DDIR}/${CFDIR}

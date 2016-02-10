@@ -16,9 +16,9 @@ SHLIB_MAJOR=	8
 
 NO_LINT=
 
-NCURSES_MAJOR!=	egrep 'NCURSES_MAJOR[ 	]*=' ${NCURSES_DIR}/dist.mk | sed -e 's%^[^0-9]*%%'
-NCURSES_MINOR!=	egrep 'NCURSES_MINOR[ 	]*=' ${NCURSES_DIR}/dist.mk | sed -e 's%^[^0-9]*%%'
-NCURSES_PATCH!=	egrep 'NCURSES_PATCH[ 	]*=' ${NCURSES_DIR}/dist.mk | sed -e 's%^[^0-9]*%%'
+NCURSES_MAJOR=	${egrep 'NCURSES_MAJOR[ 	]*=' ${NCURSES_DIR}/dist.mk | sed -e 's%^[^0-9]*%%':L:sh}
+NCURSES_MINOR=	${egrep 'NCURSES_MINOR[ 	]*=' ${NCURSES_DIR}/dist.mk | sed -e 's%^[^0-9]*%%':L:sh}
+NCURSES_PATCH=	${egrep 'NCURSES_PATCH[ 	]*=' ${NCURSES_DIR}/dist.mk | sed -e 's%^[^0-9]*%%':L:sh}
 
 # From autoconf (!)
 .if defined(ENABLE_WIDEC)

@@ -75,7 +75,7 @@ ${EPREFIX}${i:S/:/@/}.src: ${CODE}.src
 .endif
 
 .if exists(.tmpfiles)
-TMPFILES!= cat .tmpfiles
+TMPFILES= ${cat .tmpfiles:L:sh}
 CLEANFILES+= ${TMPFILES} .tmpfiles
 .endif
 

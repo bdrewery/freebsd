@@ -16,13 +16,13 @@ SRCS=	dtc.c checks.c fstree.c livetree.c treesource.c data.c \
 WARNS?=	2
 CFLAGS+= -I. -I${.CURDIR} -I${DTCDIR} -I${_LIBFDTDIR}
 
-VERSIONMAJ!= awk '/^VERSION =/ { print $$3 }' ${DTCDIR}/Makefile
-VERSIONMIN!= awk '/^PATCHLEVEL =/ { print $$3 }' ${DTCDIR}/Makefile
-VERSIONSUB!= awk '/^SUBLEVEL =/ { print $$3 }' ${DTCDIR}/Makefile
+VERSIONMAJ= awk '/^VERSION =/ { print $$3 }' ${DTCDIR}/Makefile
+VERSIONMIN= awk '/^PATCHLEVEL =/ { print $$3 }' ${DTCDIR}/Makefile
+VERSIONSUB= awk '/^SUBLEVEL =/ { print $$3 }' ${DTCDIR}/Makefile
 VERSIONEXTRA=
 
-DTCVERSION:=	${VERSIONMAJ}.${VERSIONMIN}.${VERSIONSUB}${VERSIONEXTRA}
-DTCVERSIONFILE:=	version_gen.h
+DTCVERSION=	${VERSIONMAJ:sh}.${VERSIONMIN:sh}.${VERSIONSUB:sh}${VERSIONEXTRA}
+DTCVERSIONFILE=	version_gen.h
 
 MAN=
 
@@ -35,7 +35,7 @@ CLEANFILES+= dtc-parser.tab.o dtc-lexer.lex.o dtc-parser.tab.c \
 		dtc-parser.tab.h dtc-lexer.lex.c ${DTCVERSIONFILE}
 
 ${DTCVERSIONFILE}:
-	@echo '#define DTC_VERSION "DTC ${DTCVERSION}"' > ${DTCVERSIONFILE}
+	echo '#define DTC_VERSION "DTC ${DTCVERSION}"' > ${DTCVERSIONFILE}
 
 dtc-parser.tab.o:	dtc-parser.tab.c dtc-parser.tab.h
 dtc-lexer.lex.o:	dtc-lexer.lex.c dtc-parser.tab.h

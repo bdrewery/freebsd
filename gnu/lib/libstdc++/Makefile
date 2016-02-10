@@ -605,7 +605,7 @@ unwind.h: .NOMETA
 SRCS+=		unwind.h
 CLEANFILES+=	unwind.h
 
-DATESTAMP!=	cat ${GCCDIR}/DATESTAMP
+DATESTAMP=	${cat ${GCCDIR}/DATESTAMP:L:sh}
 
 c++config.h: ${.CURDIR}/config.h ${SRCDIR}/include/bits/c++config
 	sed -e "s/\\(define __GLIBCXX__\\)/\1 ${DATESTAMP}/" \

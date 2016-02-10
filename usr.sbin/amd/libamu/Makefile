@@ -28,9 +28,9 @@ CFLAGS+= -I${.CURDIR}/../../../contrib/amd/libamu \
 nfs_prot_x.c: ${NFS_PROT_X}
 	${RPCCOM} -c -C -DWANT_NFS3 ${NFS_PROT_X} -o ${.TARGET}
 
-XDRDEFS!= grep 'ifndef.*HAVE_XDR' ${.CURDIR}/../../../contrib/amd/libamu/xdr_func.c | awk '{print "-D"$$2}'
+XDRDEFS= grep 'ifndef.*HAVE_XDR' ${.CURDIR}/../../../contrib/amd/libamu/xdr_func.c | awk '{print "-D"$$2}'
 
 xdr_func_%undef.c: xdr_func.c
-	-unifdef ${XDRDEFS} < ${.ALLSRC} > ${.TARGET}
+	-unifdef ${XDRDEFS:sh} < ${.ALLSRC} > ${.TARGET}
 
 .include <bsd.lib.mk>
