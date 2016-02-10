@@ -291,6 +291,14 @@ cleandepend:
 .endif
 .endif
 
+# Skip reading .depend when not needed to speed up tree-walks
+# and simple lookups.
+.if ${MK_DIRDEPS_BUILD} == "no"
+.if !empty(.MAKEFLAGS:M-V) || make(obj) || make(clean*) || make(install*)
+.MAKE.DEPENDFILE=	/dev/null
+.endif
+.endif
+
 .if !target(checkdpadd) && (defined(DPADD) || defined(LDADD))
 _LDADD_FROM_DPADD=	${DPADD:R:T:C;^lib(.*)$;-l\1;g}
 # Ignore -Wl,--start-group/-Wl,--end-group as it might be required in the
