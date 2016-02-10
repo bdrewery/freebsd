@@ -273,6 +273,12 @@ kernel-all: .depend
 	} > ${.TARGET}
 .endif
 
+# Skip reading .depend when not needed to speed up tree-walks
+# and simple lookups.
+.if !empty(.MAKEFLAGS:M-V) || make(obj) || make(clean*) || make(install*)
+.MAKE.DEPENDFILE=	/dev/null
+.endif
+
 _ILINKS= machine
 .if ${MACHINE} != ${MACHINE_CPUARCH} && ${MACHINE} != "arm64"
 _ILINKS+= ${MACHINE_CPUARCH}
