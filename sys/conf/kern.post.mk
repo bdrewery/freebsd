@@ -222,7 +222,10 @@ DEPENDFILES=	.depend
 DEPENDFILES+=	.depend.*
 DEPEND_CFLAGS+=	-MD -MP -MF.depend.${.TARGET}
 DEPEND_CFLAGS+=	-MT${.TARGET}
-CFLAGS+=	${DEPEND_CFLAGS}
+# Only add in DEPEND_CFLAGS for CFLAGS on files we expect from DEPENDOBJS
+# as those are the only ones we will include.
+DEPEND_CFLAGS_CONDITION= !empty(DEPENDOBJS:M${.TARGET})
+CFLAGS+=	${${DEPEND_CFLAGS_CONDITION}:?${DEPEND_CFLAGS}:}
 DEPENDOBJS+=	${SYSTEM_OBJS} genassym.o
 DEPENDFILES_OBJS=	${DEPENDOBJS:O:u:C/^/.depend./}
 # Ensure .depend is built if 'make depend' was skipped.  This is needed
