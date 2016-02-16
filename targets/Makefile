@@ -179,3 +179,6 @@ clean-error-logs: .NOMETA
 all:
 .endif					# .MAKE.LEVEL == 0
 
+.if defined(USE_SUBDIR)
+.include <bsd.subdir.mk>
+.endif

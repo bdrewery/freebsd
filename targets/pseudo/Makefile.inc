@@ -10,4 +10,6 @@ all:
 	@echo Done!
 .endif
 
-
+.if defined(USE_SUBDIR)
+.include <bsd.subdir.mk>
+.endif
