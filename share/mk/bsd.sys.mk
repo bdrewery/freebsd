@@ -255,10 +255,8 @@ stage_libs: ${SHLIB_NAME}.symbols
 .endif
 
 .if !empty(INCS) || !empty(INCSGROUPS) && target(buildincludes)
-.if !defined(NO_BEFOREBUILD_INCLUDES)
 stage_includes: buildincludes
 beforebuild: stage_includes
-.endif
 .endif
 
 .for t in stage_libs stage_files stage_as
