@@ -214,6 +214,8 @@ CFLAGS+=-I${KRB5DIR}/lib/wind
 CFLAGS+=-I${KRB5DIR}/lib/roken -I.
 
 GEN_OCSP= \
+	ocsp_asn1.hx \
+	ocsp_asn1-priv.hx \
 	asn1_OCSPBasicOCSPResponse.x \
 	asn1_OCSPCertID.x \
 	asn1_OCSPCertStatus.x \
@@ -231,17 +233,17 @@ GEN_OCSP= \
 	asn1_OCSPVersion.x \
 	asn1_id_pkix_ocsp.x \
 	asn1_id_pkix_ocsp_basic.x \
-	asn1_id_pkix_ocsp_nonce.x \
-	ocsp_asn1.hx \
-	ocsp_asn1-priv.hx
+	asn1_id_pkix_ocsp_nonce.x
 
 GEN_PKCS10= \
-	asn1_CertificationRequestInfo.x \
-	asn1_CertificationRequest.x \
 	pkcs10_asn1.hx \
-	pkcs10_asn1-priv.hx
+	pkcs10_asn1-priv.hx \
+	asn1_CertificationRequestInfo.x \
+	asn1_CertificationRequest.x
 
 GEN_CRMF= \
+	crmf_asn1.hx \
+	crmf_asn1-priv.hx \
 	asn1_CRMFRDNSequence.x \
 	asn1_CertReqMessages.x \
 	asn1_CertReqMsg.x \
@@ -254,9 +256,7 @@ GEN_CRMF= \
 	asn1_POPOSigningKey.x \
 	asn1_POPOSigningKeyInput.x \
 	asn1_ProofOfPossession.x \
-	asn1_SubsequentMessage.x \
-	crmf_asn1.hx \
-	crmf_asn1-priv.hx
+	asn1_SubsequentMessage.x
 
 GEN+=	${GEN_OCSP}
 GEN+=	${GEN_PKCS10}

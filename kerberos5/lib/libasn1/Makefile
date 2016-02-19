@@ -23,15 +23,15 @@ SRCS=	asn1_err.c \
 
 CFLAGS+=-I${KRB5DIR}/lib/asn1 -I${KRB5DIR}/lib/roken -I.
 
-GEN_RFC2459=	asn1_rfc2459_asn1.x rfc2459_asn1.hx rfc2459_asn1-priv.hx
-GEN_CMS= 	asn1_cms_asn1.x cms_asn1.hx cms_asn1-priv.hx
-GEN_K5=		asn1_krb5_asn1.x krb5_asn1.hx krb5_asn1-priv.hx
-GEN_PKINIT= 	asn1_pkinit_asn1.x pkinit_asn1.hx pkinit_asn1-priv.hx
-GEN_PKCS8=	asn1_pkcs8_asn1.x pkcs8_asn1.hx pkcs8_asn1-priv.hx
-GEN_PKCS9=	asn1_pkcs9_asn1.x pkcs9_asn1.hx pkcs9_asn1-priv.hx
-GEN_PKCS12=	asn1_pkcs12_asn1.x pkcs12_asn1.hx pkcs12_asn1-priv.hx
-GEN_DIGEST=	asn1_digest_asn1.x digest_asn1.hx digest_asn1-priv.hx
-GEN_KX509=	asn1_kx509_asn1.x kx509_asn1.hx kx509_asn1-priv.hx
+GEN_RFC2459=	rfc2459_asn1.hx rfc2459_asn1-priv.hx asn1_rfc2459_asn1.x
+GEN_CMS= 	cms_asn1.hx cms_asn1-priv.hx asn1_cms_asn1.x
+GEN_K5=		krb5_asn1.hx krb5_asn1-priv.hx asn1_krb5_asn1.x
+GEN_PKINIT= 	pkinit_asn1.hx pkinit_asn1-priv.hx asn1_pkinit_asn1.x
+GEN_PKCS8=	pkcs8_asn1.hx pkcs8_asn1-priv.hx asn1_pkcs8_asn1.x
+GEN_PKCS9=	pkcs9_asn1.hx pkcs9_asn1-priv.hx asn1_pkcs9_asn1.x
+GEN_PKCS12=	pkcs12_asn1.hx pkcs12_asn1-priv.hx asn1_pkcs12_asn1.x
+GEN_DIGEST=	digest_asn1.hx digest_asn1-priv.hx asn1_digest_asn1.x
+GEN_KX509=	kx509_asn1.hx kx509_asn1-priv.hx asn1_kx509_asn1.x
 
 GEN+=	${GEN_RFC2459}
 GEN+=	${GEN_CMS}
