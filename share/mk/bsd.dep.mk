@@ -202,6 +202,8 @@ DEPENDFILES_OBJS=	${DEPENDOBJS:O:u:${DEPEND_FILTER}:C/^/${DEPENDFILE}./}
 .endif	# defined(SRCS)
 
 .if ${MK_DIRDEPS_BUILD} == "yes"
+# Prevent meta.autodep.mk from tracking "local dependencies".
+.depend:
 .include <meta.autodep.mk>
 .endif
 
