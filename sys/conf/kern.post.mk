@@ -223,6 +223,8 @@ SRCS=	assym.s vnode_if.h ${BEFORE_DEPEND} ${CFILES} \
 	${SYSTEM_CFILES} ${GEN_CFILES} ${SFILES} \
 	${MFILES:T:S/.m$/.h/}
 DEPENDFILES=	.depend
+# Skip generating .depend.* files if in meta+filemon mode since it will
+# track dependencies itself.
 .if ${MK_FAST_DEPEND} == "yes" && \
     (${.MAKE.MODE:Unormal:Mmeta} == "" || ${.MAKE.MODE:Unormal:Mnofilemon} != "")
 DEPENDFILES+=	.depend.*

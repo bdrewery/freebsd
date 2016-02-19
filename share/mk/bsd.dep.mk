@@ -170,6 +170,8 @@ ${_D}.po: ${_DSRC} ${POBJS:S/^${_D}.po$//}
 .endfor
 
 
+# Skip generating .depend.* files if in meta+filemon mode since it will
+# track dependencies itself.
 .if ${MK_FAST_DEPEND} == "yes" && \
     (${.MAKE.MODE:Mmeta} == "" || ${.MAKE.MODE:Mnofilemon} != "")
 DEPEND_MP?=	-MP
