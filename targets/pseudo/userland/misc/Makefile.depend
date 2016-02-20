@@ -81,6 +81,5 @@ DIRDEPS.pc98= sys/boot/libstand32
 DIRDEPS.sparc64= sys/boot/ofw ${_sys_boot_zfs}
 .endif
 
-DIRDEPS+= ${DIRDEPS.${MACHINE}:U}
 
 .include <dirdeps.mk>

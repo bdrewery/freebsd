@@ -899,7 +899,6 @@ DIRDEPS+= usr.bin/dtc
 DIRDEPS+= sbin/casperd
 .endif
 
-DIRDEPS+= ${DIRDEPS.${MACHINE}:U}
 
 
 .include <dirdeps.mk>
