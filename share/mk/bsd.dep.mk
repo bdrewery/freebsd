@@ -221,6 +221,13 @@ ${__obj}: ${OBJS_DEPEND_GUESS}
 ${__obj}: ${OBJS_DEPEND_GUESS.${__obj}}
 .endif
 .endfor
+
+# Always run 'make depend' to generate dependencies early and to avoid the
+# need for manually running it.  The dirdeps build should only do this in
+# sub-makes though since MAKELEVEL0 is for dirdeps calculations.
+.if ${MK_DIRDEPS_BUILD} == "no" || ${.MAKE.LEVEL} > 0
+beforebuild: depend
+.endif
 .endif
 
 .if !target(depend)
