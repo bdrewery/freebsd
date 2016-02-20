@@ -199,13 +199,7 @@ DEPENDOBJS_FILTERED=	${DEPENDOBJS:O:u:${DEPEND_FILTER}}
 DEPENDFILES_OBJS=	${DEPENDOBJS_FILTERED:C/^/${DEPENDFILE}./}
 .if !defined(_SKIP_READ_DEPEND)
 .for __obj in ${DEPENDOBJS_FILTERED}
-.if exists(${.OBJDIR}/${DEPENDFILE}.${__obj})
-.include "${DEPENDFILE}.${__obj}"
-.else
-# Guess some dependencies for when no ${DEPENDFILE}.OBJ is generated yet.
-${__obj}: ${OBJS_DEPEND_GUESS}
-${__obj}: ${OBJS_DEPEND_GUESS.${__obj}}
-.endif
+.sinclude "${DEPENDFILE}.${__obj}"
 .endfor
 .endif	# !defined(_SKIP_READ_DEPEND)
 .endif	# ${MK_FAST_DEPEND} == "yes"
@@ -215,6 +209,18 @@ ${__obj}: ${OBJS_DEPEND_GUESS.${__obj}}
 # Prevent meta.autodep.mk from tracking "local dependencies".
 .depend:
 .include <meta.autodep.mk>
+.endif
+
+# Guess some dependencies for when no ${DEPENDFILE}.OBJ is generated yet.
+# Done here to support meta mode as well which does not always need
+# the CFLAGS modifications or .depend.* included.
+.if ${MK_FAST_DEPEND} == "yes"
+.for __obj in ${DEPENDOBJS_FILTERED}
+.if !exists(${.OBJDIR}/${DEPENDFILE}.${__obj})
+${__obj}: ${OBJS_DEPEND_GUESS}
+${__obj}: ${OBJS_DEPEND_GUESS.${__obj}}
+.endif
+.endfor
 .endif
 
 .if !target(depend)

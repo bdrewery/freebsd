@@ -415,8 +415,6 @@ lint: ${SRCS:M*.c}
 .include <bsd.man.mk>
 .endif
 
-.include <bsd.dep.mk>
-
 .if defined(LIB) && !empty(LIB)
 OBJS_DEPEND_GUESS+= ${SRCS:M*.h}
 .if ${MK_FAST_DEPEND} == "no" && !exists(${.OBJDIR}/${DEPENDFILE})
@@ -442,6 +440,8 @@ ${_S:R}.So: ${OBJS_DEPEND_GUESS.${_S:R}.So}
 .endif
 .endfor
 .endif
+
+.include <bsd.dep.mk>
 
 .include <bsd.obj.mk>
 
