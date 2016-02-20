@@ -203,11 +203,6 @@ DEPENDFILES_OBJS=	${DEPENDOBJS:O:u:${DEPEND_FILTER}:C/^/${DEPENDFILE}./}
 
 .if ${MK_DIRDEPS_BUILD} == "yes"
 .include <meta.autodep.mk>
-# this depend: bypasses that below
-# the dependency helps when bootstrapping
-depend: beforedepend ${DPSRCS} ${SRCS} afterdepend
-beforedepend:
-afterdepend: beforedepend
 .endif
 
 .if !target(depend)
