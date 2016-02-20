@@ -270,8 +270,6 @@ DEPENDFILES_OBJS=	${DEPENDOBJS:O:u:C/^/.depend./}
 	${MAKE} -V SFILES_CDDL | \
 	    CC="${_MKDEPCC}" xargs mkdep -a -f ${.TARGET}.tmp ${ZFS_ASM_CFLAGS}
 	mv ${.TARGET}.tmp ${.TARGET}
-.else
-	: > ${.TARGET}
 .endif
 
 _ILINKS= machine
