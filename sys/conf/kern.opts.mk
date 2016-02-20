@@ -50,7 +50,7 @@ __DEFAULT_NO_OPTIONS = \
     OFED
 
 # Enable FAST_DEPEND by default for the meta build.
-if !empty(.MAKE.MODE:Unormal:Mmeta)
+.if !empty(.MAKE.MODE:Unormal:Mmeta)
 __DEFAULT_YES_OPTIONS+=	FAST_DEPEND
 __DEFAULT_NO_OPTIONS:=	${__DEFAULT_NO_OPTIONS:NFAST_DEPEND}
 .endif
