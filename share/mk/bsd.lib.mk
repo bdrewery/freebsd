@@ -429,7 +429,6 @@ ${_S:R}.po: ${OBJS_DEPEND_GUESS.${_S:R}.po}
 .endif
 .if defined(SHLIB_NAME) || \
     defined(INSTALL_PIC_ARCHIVE) && defined(LIB) && !empty(LIB)
-OBJS_DEPEND_GUESS+= ${SRCS:M*.h}
 .if ${MK_FAST_DEPEND} == "no" && !exists(${.OBJDIR}/${DEPENDFILE})
 ${SOBJS}: ${OBJS_DEPEND_GUESS}
 .endif
