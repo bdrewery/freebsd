@@ -229,10 +229,6 @@ DPSRCS+= ${SRCS}
 # sub-makes though since MAKELEVEL0 is for dirdeps calculations.
 .if ${MK_DIRDEPS_BUILD} == "no" || ${.MAKE.LEVEL} > 0
 beforebuild: ${DPSRCS}
-# Ensure we generate if needed for _EXTRADEPEND
-.if commands(beforedepend) || commands(afterdepend) || target(_EXTRADEPEND)
-all: depend
-.endif
 # Don't let Makefile.inc1 build shit
 .if make(depend)
 depend:
