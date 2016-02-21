@@ -231,6 +231,10 @@ ${__obj}: ${OBJS_DEPEND_GUESS.${__obj}}
 .if commands(beforedepend) || commands(afterdepend) || target(_EXTRADEPEND)
 all: depend
 .endif
+# Don't let Makefile.inc1 build shit
+.if make(depend)
+depend:
+.endif
 .endif
 .endif
 
