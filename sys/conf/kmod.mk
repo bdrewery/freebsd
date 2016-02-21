@@ -450,7 +450,7 @@ lint: ${SRCS}
 ${OBJS}: opt_global.h
 .endif
 
-cleandepend: cleanilinks
+CLEANDEPENDFILES+=	${_ILINKS}
 # .depend needs include links so we remove them only together.
 cleanilinks:
 	rm -f ${_ILINKS}
