@@ -173,16 +173,22 @@ ${_D}.po: ${_DSRC} ${POBJS:S/^${_D}.po$//}
 .endfor
 
 
-# Skip generating .depend.* files if in meta+filemon mode since it will
-# track dependencies itself.
-.if ${MK_FAST_DEPEND} == "yes" && \
-    (${.MAKE.MODE:Mmeta} == "" || ${.MAKE.MODE:Mnofilemon} != "")
+.if ${MK_FAST_DEPEND} == "yes"
 DEPEND_MP?=	-MP
 # Handle OBJS=../somefile.o hacks.  Just replace '/' rather than use :T to
 # avoid collisions.
 DEPEND_FILTER=	C,/,_,g
+DEPENDSRCS=	${SRCS:M*.[cSC]} ${SRCS:M*.cxx} ${SRCS:M*.cpp} ${SRCS:M*.cc}
+.if !empty(DEPENDSRCS)
+DEPENDOBJS+=	${DEPENDSRCS:R:S,$,.o,}
+.endif
+DEPENDOBJS_FILTERED=	${DEPENDOBJS:O:u:${DEPEND_FILTER}}
+DEPENDFILES_OBJS=	${DEPENDOBJS_FILTERED:C/^/${DEPENDFILE}./}
 DEPEND_CFLAGS+=	-MD ${DEPEND_MP} -MF${DEPENDFILE}.${.TARGET:${DEPEND_FILTER}}
 DEPEND_CFLAGS+=	-MT${.TARGET}
+# Skip generating .depend.* files if in meta+filemon mode since it will
+# track dependencies itself.
+.if empty(.MAKE.MODE:Mmeta) || !empty(.MAKE.MODE:Mnofilemon)
 .if defined(.PARSEDIR)
 # Only add in DEPEND_CFLAGS for CFLAGS on files we expect from DEPENDOBJS
 # as those are the only ones we will include.
@@ -191,17 +197,12 @@ CFLAGS+=	${${DEPEND_CFLAGS_CONDITION}:?${DEPEND_CFLAGS}:}
 .else
 CFLAGS+=	${DEPEND_CFLAGS}
 .endif
-DEPENDSRCS=	${SRCS:M*.[cSC]} ${SRCS:M*.cxx} ${SRCS:M*.cpp} ${SRCS:M*.cc}
-.if !empty(DEPENDSRCS)
-DEPENDOBJS+=	${DEPENDSRCS:R:S,$,.o,}
-.endif
-DEPENDOBJS_FILTERED=	${DEPENDOBJS:O:u:${DEPEND_FILTER}}
-DEPENDFILES_OBJS=	${DEPENDOBJS_FILTERED:C/^/${DEPENDFILE}./}
 .if !defined(_SKIP_READ_DEPEND)
 .for __obj in ${DEPENDOBJS_FILTERED}
 .sinclude "${DEPENDFILE}.${__obj}"
 .endfor
 .endif	# !defined(_SKIP_READ_DEPEND)
+.endif	# !meta || nofilemon
 .endif	# ${MK_FAST_DEPEND} == "yes"
 .endif	# defined(SRCS)
 
