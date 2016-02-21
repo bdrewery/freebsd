@@ -442,7 +442,5 @@ ${_S:R}.So: ${OBJS_DEPEND_GUESS.${_S:R}.So}
 .endif
 
 .include <bsd.dep.mk>
-
 .include <bsd.obj.mk>
-
 .include <bsd.sys.mk>

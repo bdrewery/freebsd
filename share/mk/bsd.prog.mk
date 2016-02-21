@@ -283,7 +283,5 @@ ${OBJS}: ${OBJS_DEPEND_GUESS}
 .endif
 
 .include <bsd.dep.mk>
-
 .include <bsd.obj.mk>
-
 .include <bsd.sys.mk>
