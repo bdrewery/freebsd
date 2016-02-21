@@ -15,7 +15,7 @@ CFLAGS+=-I${KRB5DIR}/lib/roken -I${KRB5DIR}/lib/sl -I${KRB5DIR}/lib/vers -I.
 
 CLEANFILES= roken.h slc-gram.c slc-lex.c
 
-roken.h:
+roken.h: ${MAKE_ROKEN}
 	${MAKE_ROKEN} > ${.TARGET}
 
 #	${.OBJDIR}/../make-roken/make-roken > ${.TARGET}

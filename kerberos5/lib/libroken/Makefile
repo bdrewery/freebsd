@@ -81,7 +81,7 @@ CFLAGS+=-I${KRB5DIR}/lib/roken -I.
 
 CLEANFILES= roken.h
 
-roken.h:
+roken.h: ${MAKE_ROKEN}
 	${MAKE_ROKEN} > ${.TARGET}
 
 .include <bsd.lib.mk>
