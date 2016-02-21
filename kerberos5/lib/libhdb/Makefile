@@ -62,9 +62,7 @@ CFLAGS+=-I${KRB5DIR}/lib/hdb -I${KRB5DIR}/lib/asn1 \
 	-I. ${LDAPCFLAGS}
 CFLAGS+=-DHDB_DB_DIR="\"/var/heimdal\""
 
-GEN=	hdb_asn1.hx \
-	hdb_asn1-priv.hx \
-	asn1_Salt.x \
+GEN=	asn1_Salt.x \
 	asn1_Key.x \
 	asn1_Event.x \
 	asn1_HDBFlags.x \
@@ -80,7 +78,9 @@ GEN=	hdb_asn1.hx \
 	asn1_HDB_extensions.x \
 	asn1_hdb_entry.x \
 	asn1_hdb_entry_alias.x \
-	asn1_hdb_keyset.x
+	asn1_hdb_keyset.x \
+	hdb_asn1.hx \
+	hdb_asn1-priv.hx
 
 CLEANFILES=	${GEN} ${GEN:S/.x$/.c/:S/.hx$/.h/} hdb_asn1_files \
 		hdb_asn1-template.[ch]*
