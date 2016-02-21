@@ -226,7 +226,7 @@ ${__obj}: ${OBJS_DEPEND_GUESS.${__obj}}
 # need for manually running it.  The dirdeps build should only do this in
 # sub-makes though since MAKELEVEL0 is for dirdeps calculations.
 .if ${MK_DIRDEPS_BUILD} == "no" || ${.MAKE.LEVEL} > 0
-#beforebuild: ${SRCS:M*.h} ${DPSRCS}
+beforebuild: ${SRCS:M*.h} ${DPSRCS}
 # Ensure we generate if needed for _EXTRADEPEND
 .if commands(beforedepend) || commands(afterdepend) || target(_EXTRADEPEND)
 all: depend
