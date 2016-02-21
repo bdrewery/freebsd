@@ -450,8 +450,6 @@ lint: ${SRCS}
 ${OBJS}: opt_global.h
 .endif
 
-.include <bsd.dep.mk>
-
 cleandepend: cleanilinks
 # .depend needs include links so we remove them only together.
 cleanilinks:
@@ -462,5 +460,6 @@ OBJS_DEPEND_GUESS+= ${SRCS:M*.h}
 ${OBJS}: ${OBJS_DEPEND_GUESS}
 .endif
 
+.include <bsd.dep.mk>
 .include <bsd.obj.mk>
 .include "kern.mk"
