@@ -160,6 +160,7 @@ LDFLAGS+=	-Wl,--version-script=${VERSION_MAP}
 .if defined(LIB) && !empty(LIB) || defined(SHLIB_NAME)
 OBJS+=		${SRCS:N*.h:R:S/$/.o/}
 CLEANFILES+=	${OBJS} ${STATICOBJS}
+DEPENDOBJS+=	${STATICOBJS}
 .endif
 
 .if defined(LIB) && !empty(LIB)
