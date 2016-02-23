@@ -68,9 +68,6 @@ $v =
 .endfor
 .endif
 
-# handle being called [bsd.]progs.mk
-.include <bsd.prog.mk>
-
 .if !empty(PROGS) && !defined(_RECURSING_PROGS) && !defined(PROG)
 # tell progs.mk we might want to install things
 PROGS_TARGETS+= checkdpadd clean cleandepend cleandir depend install
@@ -94,6 +91,7 @@ _PROGS_COMMON_OBJS=	${_PROGS_COMMON_SRCS:M*.[dhly]}
 .if !empty(_PROGS_COMMON_SRCS:N*.[dhly])
 _PROGS_COMMON_OBJS+=	${_PROGS_COMMON_SRCS:N*.[dhly]:R:S/$/.o/g}
 .endif
+DPSRCS+= ${_PROGS_COMMON_SRCS}
 ${PROGS}: ${_PROGS_COMMON_OBJS}
 .endif
 
@@ -119,7 +117,13 @@ $p.$t: .PHONY .MAKE
 	    PROG=$p ${x.$p} ${@:E})
 .endfor
 .endfor
+.endif	# !empty(PROGS) && !defined(_RECURSING_PROGS) && !defined(PROG)
 
+# handle being called [bsd.]progs.mk
+.include <bsd.prog.mk>
+
+# Must be last to come after bsd.dep.mk
+.if !empty(PROGS) && !defined(_RECURSING_PROGS) && !defined(PROG)
 # Depend main pseudo targets on all PROG.pseudo targets too.
 .for t in ${PROGS_TARGETS:O:u}
 .if make(${t})
