@@ -81,6 +81,7 @@ beforelinking: ${OBJS}
 ${PROG_FULL}: beforelinking
 .endif
 ${PROG_FULL}: ${OBJS}
+	${_MKTARGET_LINK}
 .if defined(PROG_CXX)
 	${CXX:N${CCACHE_BIN}} ${CXXFLAGS:N-M*} ${LDFLAGS} -o ${.TARGET} \
 	    ${OBJS} ${LDADD}
@@ -113,6 +114,7 @@ beforelinking: ${OBJS}
 ${PROG_FULL}: beforelinking
 .endif
 ${PROG_FULL}: ${OBJS}
+	${_MKTARGET_LINK}
 .if defined(PROG_CXX)
 	${CXX:N${CCACHE_BIN}} ${CXXFLAGS:N-M*} ${LDFLAGS} -o ${.TARGET} \
 	    ${OBJS} ${LDADD}
@@ -129,10 +131,12 @@ ${PROG_FULL}: ${OBJS}
 
 .if ${MK_DEBUG_FILES} != "no"
 ${PROG}: ${PROG_FULL} ${PROGNAME}.debug
+	${_MKTARGET_CREATE}
 	${OBJCOPY} --strip-debug --add-gnu-debuglink=${PROGNAME}.debug \
 	    ${PROG_FULL} ${.TARGET}
 
 ${PROGNAME}.debug: ${PROG_FULL}
+	${_MKTARGET_CREATE}
 	${OBJCOPY} --only-keep-debug ${PROG_FULL} ${.TARGET}
 .endif
 
@@ -204,6 +208,7 @@ realinstall: _proginstall
 .ORDER: beforeinstall _proginstall
 _proginstall:
 .if defined(PROG)
+	${_MKTARGET_INSTALL}
 	${INSTALL} ${STRIP} -o ${BINOWN} -g ${BINGRP} -m ${BINMODE} \
 	    ${_INSTALLFLAGS} ${PROG} ${DESTDIR}${BINDIR}/${PROGNAME}
 .if ${MK_DEBUG_FILES} != "no"
@@ -242,6 +247,7 @@ SCRIPTSMODE_${script:T}?=	${SCRIPTSMODE}
 STAGE_AS_${script:T}=		${SCRIPTSDIR_${script:T}}/${SCRIPTSNAME_${script:T}}
 _scriptsinstall: _SCRIPTSINS_${script:T}
 _SCRIPTSINS_${script:T}: ${script}
+	${_MKTARGET_INSTALL}
 	${INSTALL} -o ${SCRIPTSOWN_${.ALLSRC:T}} \
 	    -g ${SCRIPTSGRP_${.ALLSRC:T}} -m ${SCRIPTSMODE_${.ALLSRC:T}} \
 	    ${.ALLSRC} \

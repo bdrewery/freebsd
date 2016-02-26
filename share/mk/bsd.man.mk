@@ -168,6 +168,11 @@ ${__target}: ${__page}
 
 .endif	# ${MK_MANCOMPRESS} == "no"
 
+.if commands(all-man)
+all-man:
+	${_MKTARGET_BUILD}
+.endif
+
 .if !defined(NO_MLINKS) && defined(MLINKS) && !empty(MLINKS)
 .for _oname _osect _dname _dsect in ${MLINKS:C/\.([^.]*)$/.\1 \1/}
 _MANLINKS+=	${MANDIR}${_osect}${MANSUBDIR}/${_oname} \
@@ -183,6 +188,7 @@ maninstall:
 .if defined(MAN) && !empty(MAN)
 maninstall: ${MAN}
 .if ${MK_MANCOMPRESS} == "no"
+	${_MKTARGET_INSTALL}
 .if defined(MANFILTER)
 .for __page in ${MAN}
 	${MINSTALL} ${__page:T:S/$/${FILTEXTENSION}/g} \

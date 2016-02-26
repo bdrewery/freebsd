@@ -259,6 +259,63 @@ TESTSBASE?= /usr/tests
 
 DEPENDFILE?=	.depend
 
+#
+# MAKEVERBOSE support.  Levels are:
+#	0	Minimal output ("quiet")
+#	1	Describe what is occurring
+#	2	Describe what is occurring and echo the actual command
+#	3	Ignore the effect of the "@" prefix in make commands
+#	4	Trace shell commands using the shell's -x flag
+#		
+MAKEVERBOSE?=		2
+
+.if ${MAKEVERBOSE} == 0
+_MKMSG?=	@\#
+_MKSHMSG?=	: echo
+_MKSHECHO?=	: echo
+.SILENT:
+.elif ${MAKEVERBOSE} == 1
+_MKMSG?=	@echo '   '
+_MKSHMSG?=	echo '   '
+_MKSHECHO?=	: echo
+.SILENT:
+.else	# MAKEVERBOSE >= 2
+_MKMSG?=	@echo '\#  '
+_MKSHMSG?=	echo '\#  '
+_MKSHECHO?=	echo
+.MAKE.JOB.PREFIX?=
+.SILENT: __makeverbose_dummy_target__
+.endif	# MAKEVERBOSE >= 2
+.if ${MAKEVERBOSE} >= 3
+.MAKEFLAGS:	-dl
+.endif	# ${MAKEVERBOSE} >= 3
+.if ${MAKEVERBOSE} >= 4
+.MAKEFLAGS:	-dx
+.endif	# ${MAKEVERBOSE} >= 4
+
+_MKMSG_BUILD?=		${_MKMSG} "  build "
+_MKMSG_CREATE?=		${_MKMSG} " create "
+_MKMSG_COMPILE?=	${_MKMSG} "compile "
+_MKMSG_FORMAT?=		${_MKMSG} " format "
+_MKMSG_INSTALL?=	${_MKMSG} "install "
+_MKMSG_LINK?=		${_MKMSG} "   link "
+_MKMSG_LEX?=		${_MKMSG} "    lex "
+_MKMSG_REMOVE?=		${_MKMSG} " remove "
+_MKMSG_YACC?=		${_MKMSG} "   yacc "
+
+_MKSHMSG_CREATE?=	${_MKSHMSG} " create "
+_MKSHMSG_INSTALL?=	${_MKSHMSG} "install "
+
+_MKTARGET_BUILD?=	${_MKMSG_BUILD} ${.CURDIR:T}/${.TARGET}
+_MKTARGET_CREATE?=	${_MKMSG_CREATE} ${.CURDIR:T}/${.TARGET}
+_MKTARGET_COMPILE?=	${_MKMSG_COMPILE} ${.CURDIR:T}/${.TARGET}
+_MKTARGET_FORMAT?=	${_MKMSG_FORMAT} ${.CURDIR:T}/${.TARGET}
+_MKTARGET_INSTALL?=	${_MKMSG_INSTALL} ${.TARGET}
+_MKTARGET_LINK?=	${_MKMSG_LINK} ${.CURDIR:T}/${.TARGET}
+_MKTARGET_LEX?=		${_MKMSG_LEX} ${.CURDIR:T}/${.TARGET}
+_MKTARGET_REMOVE?=	${_MKMSG_REMOVE} ${.TARGET}
+_MKTARGET_YACC?=	${_MKMSG_YACC} ${.CURDIR:T}/${.TARGET}
+
 # Compat for the moment -- old bsd.own.mk only included this when _WITHOUT_SRCCONF
 # wasn't defined. bsd.ports.mk and friends depend on this behavior. Remove in 12.
 .if !defined(_WITHOUT_SRCCONF)

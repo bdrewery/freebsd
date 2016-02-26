@@ -303,6 +303,7 @@ YFLAGS		?=	-d
 	${CTFCONVERT_CMD}
 
 .c.o:
+	${_MKTARGET_COMPILE}
 	${CC} ${CFLAGS} -c ${.IMPSRC} -o ${.TARGET}
 	${CTFCONVERT_CMD}
 
