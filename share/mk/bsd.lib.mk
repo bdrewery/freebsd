@@ -440,6 +440,7 @@ ${_S:R}.So: ${OBJS_DEPEND_GUESS.${_S:R}.So}
 .endfor
 .endif
 
+.include <bsd.clang-analyze.mk>
 .include <bsd.dep.mk>
 .include <bsd.obj.mk>
 .include <bsd.sys.mk>
