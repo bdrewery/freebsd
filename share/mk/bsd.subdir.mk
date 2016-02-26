@@ -140,6 +140,9 @@ SUBDIR:=	${SUBDIR:N.WAIT}
 _is_standalone_target=	0
 .endif
 .if defined(SUBDIR_PARALLEL) || ${_is_standalone_target} == 1
+.if !empty(.MAKE.JOBS)
+ECHODIR=	true
+.endif
 __subdir_targets=
 .for __dir in ${SUBDIR}
 .if ${__dir} == .WAIT
