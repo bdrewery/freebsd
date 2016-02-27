@@ -613,6 +613,14 @@ DIRDEPS =
 .info loading ${_m} for ${d:E}
 .endif
 .include <${_m}>
+.else
+.if ${_debug_reldir}
+.info bootstrapping from make -V DIRDEPS for ${d}
+.endif
+.info _bootstrapped_dirdeps != _DEP_TARGET_SPEC=${d:E} ${.MAKE} -C ${d:R} -V DIRDEPS
+_bootstrapped_dirdeps != MAKELEVEL=0 _DEP_TARGET_SPEC=${d:E} ${.MAKE} -C ${d:R} -V DIRDEPS
+DIRDEPS += ${_bootstrapped_dirdeps}
+.info GOT ${d} -> ${_bootstrapped_dirdeps}
 .endif
 .endif
 .endif

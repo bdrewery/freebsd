@@ -187,7 +187,7 @@ DIRDEPS+= lib/libnandfs
 .endif
 
 .if ${MK_CASPER} != "no"
-DIRDEPS+= \
+DIRDEPS= \
 	lib/libcasper/libcasper \
 	lib/libcasper/services/cap_dns \
 	lib/libcasper/services/cap_grp \

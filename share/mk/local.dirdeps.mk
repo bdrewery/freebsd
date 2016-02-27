@@ -90,6 +90,7 @@ DIRDEPS += \
 # used will be added in and handled via [local.]gendirdeps.mk.  This is not
 # done for MACHINE=host builds.
 # XXX: Include this in local.autodep.mk as well for gendirdeps without filemon.
+.info here ${RELDIR} ${DEP_RELDIR}
 .if ${RELDIR} == ${DEP_RELDIR} # Only do this for main build target
 .for _depfile in ${.MAKE.DEPENDFILE_PREFERENCE:T}
 .if !defined(_have_depfile) && exists(${.CURDIR}/${_depfile})
