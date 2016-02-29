@@ -69,26 +69,14 @@ filemon_pid_check(struct proc *p)
 {
 	struct filemon *filemon;
 
-	filemon_lock_read();
-	if (TAILQ_EMPTY(&filemons_inuse)) {
-		filemon_unlock_read();
+	PROC_LOCK(p);
+	filemon = p->p_filemon;
+	PROC_UNLOCK(p);
+
+	if (filemon == NULL)
 		return (NULL);
-	}
-	sx_slock(&proctree_lock);
-	while (p->p_pid != 0) {
-		TAILQ_FOREACH(filemon, &filemons_inuse, link) {
-			if (p == filemon->p) {
-				sx_sunlock(&proctree_lock);
-				sx_xlock(&filemon->lock);
-				filemon_unlock_read();
-				return (filemon);
-			}
-		}
-		p = proc_realparent(p);
-	}
-	sx_sunlock(&proctree_lock);
-	filemon_unlock_read();
-	return (NULL);
+	sx_xlock(&filemon->lock);
+	return (filemon);
 }
 
 static int
@@ -407,27 +395,21 @@ filemon_event_process_exit(void *arg __unused, struct proc *p)
 {
 	size_t len;
 	struct filemon *filemon;
-	struct timeval now;
 
-	/* Get timestamp before locking. */
-	getmicrotime(&now);
+	PROC_LOCK(p);
+	filemon = p->p_filemon;
+	p->p_filemon = NULL;
+	PROC_UNLOCK(p);
 
-	if ((filemon = filemon_pid_check(p)) != NULL) {
+	if (filemon != NULL) {
+		sx_xlock(&filemon->lock);
+
 		len = snprintf(filemon->msgbufr, sizeof(filemon->msgbufr),
 		    "X %d %d %d\n", p->p_pid, p->p_xexit, p->p_xsig);
 
 		filemon_output(filemon, filemon->msgbufr, len);
 
-		/* Check if the monitored process is about to exit. */
-		if (filemon->p == p) {
-			len = snprintf(filemon->msgbufr,
-			    sizeof(filemon->msgbufr),
-			    "# Stop %ju.%06ju\n# Bye bye\n",
-			    (uintmax_t)now.tv_sec, (uintmax_t)now.tv_usec);
-
-			filemon_output(filemon, filemon->msgbufr, len);
-			filemon->p = NULL;
-		}
+		--filemon->refcnt;
 
 		sx_xunlock(&filemon->lock);
 	}
@@ -472,6 +454,11 @@ filemon_event_process_fork(void *arg __unused, struct proc *p1,
 		    p1->p_pid, p2->p_pid);
 
 		filemon_output(filemon, filemon->msgbufr, len);
+
+		PROC_LOCK(p2);
+		++filemon->refcnt;
+		p2->p_filemon = filemon;
+		PROC_UNLOCK(p2);
 
 		sx_xunlock(&filemon->lock);
 	}

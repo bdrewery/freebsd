@@ -86,19 +86,17 @@ struct filemon {
 	TAILQ_ENTRY(filemon) link;	/* Link into the in-use list. */
 	struct sx	lock;		/* Lock mutex for this filemon. */
 	struct file	*fp;		/* Output file pointer. */
-	struct proc     *p;		/* The process being monitored. */
 	char		fname1[MAXPATHLEN]; /* Temporary filename buffer. */
 	char		fname2[MAXPATHLEN]; /* Temporary filename buffer. */
 	char		msgbufr[1024];	/* Output message buffer. */
+	int		refcnt;		/* In-use refcount. */
 };
-
-static TAILQ_HEAD(, filemon) filemons_inuse = TAILQ_HEAD_INITIALIZER(filemons_inuse);
-static TAILQ_HEAD(, filemon) filemons_free = TAILQ_HEAD_INITIALIZER(filemons_free);
-static struct sx access_lock;
 
 static struct cdev *filemon_dev;
 
-#include "filemon_lock.c"
+static void filemon_free(struct filemon *filemon);
+static void filemon_destroy(struct filemon *filemon);
+
 #include "filemon_wrapper.c"
 
 static void
@@ -118,34 +116,96 @@ filemon_comment(struct filemon *filemon)
 }
 
 static void
+filemon_free(struct filemon *filemon)
+{
+	size_t len;
+	struct timeval now;
+
+	if (filemon->fp != NULL) {
+		getmicrotime(&now);
+
+		len = snprintf(filemon->msgbufr,
+		    sizeof(filemon->msgbufr),
+		    "# Stop %ju.%06ju\n# Bye bye\n",
+		    (uintmax_t)now.tv_sec, (uintmax_t)now.tv_usec);
+
+		filemon_output(filemon, filemon->msgbufr, len);
+	} else
+		fdrop(filemon->fp, curthread);
+
+	sx_xunlock(&filemon->lock);
+	sx_destroy(&filemon->lock);
+	free(filemon, M_FILEMON);
+}
+
+static void
+filemon_destroy(struct filemon *filemon)
+{
+
+	sx_assert(&filemon->lock, SA_XLOCKED);
+	if (filemon->refcnt == 0)
+		filemon_free(filemon);
+	else
+		sx_xunlock(&filemon->lock);
+}
+
+/*
+ * Invalidate the passed filemon in all processes.
+ * A NULL filemon will invalidate all filemons for all processes.
+ */
+static int
+filemon_invalidate_procs(struct filemon *filemon)
+{
+	int error;
+	struct filemon *p_filemon;
+	struct proc *p;
+
+	error = 0;
+	if (filemon != NULL)
+		sx_assert(&filemon->lock, SA_XLOCKED);
+	sx_slock(&allproc_lock);
+	FOREACH_PROC_IN_SYSTEM(p) {
+		PROC_LOCK(p);
+		p_filemon = NULL;
+		if (filemon == NULL && p->p_filemon != NULL) {
+			/*
+			 * When invalidating all, consider immediate lock
+			 * failures to be EBUSY.
+			 */
+			if (sx_try_xlock(&p->p_filemon->lock))
+				p_filemon = p->p_filemon;
+			else
+				error = EBUSY;
+		} else if (filemon == p->p_filemon) {
+			/* filemon already locked. */
+			p_filemon = p->p_filemon;
+		}
+		if (p_filemon != NULL) {
+			--p_filemon->refcnt;
+			if (filemon == NULL)
+				filemon_destroy(p_filemon);
+			p->p_filemon = NULL;
+		}
+		PROC_UNLOCK(p);
+	}
+	sx_sunlock(&allproc_lock);
+
+	return (error);
+}
+
+
+static void
 filemon_dtr(void *data)
 {
 	struct filemon *filemon = data;
 
-	if (filemon != NULL) {
-		struct file *fp;
+	if (filemon == NULL)
+		return;
 
-		/* Follow same locking order as filemon_pid_check. */
-		filemon_lock_write();
-		sx_xlock(&filemon->lock);
-
-		/* Remove from the in-use list. */
-		TAILQ_REMOVE(&filemons_inuse, filemon, link);
-
-		fp = filemon->fp;
-		filemon->fp = NULL;
-		filemon->p = NULL;
-
-		/* Add to the free list. */
-		TAILQ_INSERT_TAIL(&filemons_free, filemon, link);
-
-		/* Give up write access. */
-		sx_xunlock(&filemon->lock);
-		filemon_unlock_write();
-
-		if (fp != NULL)
-			fdrop(fp, curthread);
-	}
+	sx_xlock(&filemon->lock);
+	filemon_invalidate_procs(filemon);
+	/* filemon_invalidate_procs decrements refcnt. */
+	filemon_destroy(filemon);
 }
 
 static int
@@ -178,10 +238,13 @@ filemon_ioctl(struct cdev *dev, u_long cmd, caddr_t data, int flag __unused,
 
 	/* Set the monitored process ID. */
 	case FILEMON_SET_PID:
+		/* Invalidate any existing processes already set. */
+		filemon_invalidate_procs(filemon);
+
 		error = pget(*((pid_t *)data), PGET_CANDEBUG | PGET_NOTWEXIT,
 		    &p);
 		if (error == 0) {
-			filemon->p = p;
+			p->p_filemon = filemon;
 			PROC_UNLOCK(p);
 		}
 		break;
@@ -199,35 +262,19 @@ static int
 filemon_open(struct cdev *dev, int oflags __unused, int devtype __unused,
     struct thread *td __unused)
 {
+	int error;
 	struct filemon *filemon;
 
-	/* Get exclusive write access. */
-	filemon_lock_write();
+	filemon = malloc(sizeof(struct filemon), M_FILEMON,
+	    M_WAITOK | M_ZERO);
+	sx_init(&filemon->lock, "filemon");
+	filemon->refcnt = 1;
 
-	if ((filemon = TAILQ_FIRST(&filemons_free)) != NULL)
-		TAILQ_REMOVE(&filemons_free, filemon, link);
+	error = devfs_set_cdevpriv(filemon, filemon_dtr);
+	if (error != 0)
+		filemon_free(filemon);
 
-	/* Give up write access. */
-	filemon_unlock_write();
-
-	if (filemon == NULL) {
-		filemon = malloc(sizeof(struct filemon), M_FILEMON,
-		    M_WAITOK | M_ZERO);
-		sx_init(&filemon->lock, "filemon");
-	}
-
-	devfs_set_cdevpriv(filemon, filemon_dtr);
-
-	/* Get exclusive write access. */
-	filemon_lock_write();
-
-	/* Add to the in-use list. */
-	TAILQ_INSERT_TAIL(&filemons_inuse, filemon, link);
-
-	/* Give up write access. */
-	filemon_unlock_write();
-
-	return (0);
+	return (error);
 }
 
 static int
@@ -241,7 +288,6 @@ filemon_close(struct cdev *dev __unused, int flag __unused, int fmt __unused,
 static void
 filemon_load(void *dummy __unused)
 {
-	sx_init(&access_lock, "filemons_inuse");
 
 	/* Install the syscall wrappers. */
 	filemon_wrapper_install();
@@ -253,38 +299,15 @@ filemon_load(void *dummy __unused)
 static int
 filemon_unload(void)
 {
- 	struct filemon *filemon;
-	int error = 0;
+	int error;
 
-	/* Get exclusive write access. */
-	filemon_lock_write();
+	error = filemon_invalidate_procs(NULL);
+	if (error != 0)
+		return (error);
+	destroy_dev(filemon_dev);
+	filemon_wrapper_deinstall();
 
-	if (TAILQ_FIRST(&filemons_inuse) != NULL)
-		error = EBUSY;
-	else {
-		destroy_dev(filemon_dev);
-
-		/* Deinstall the syscall wrappers. */
-		filemon_wrapper_deinstall();
-	}
-
-	/* Give up write access. */
-	filemon_unlock_write();
-
-	if (error == 0) {
-		/* free() filemon structs free list. */
-		filemon_lock_write();
-		while ((filemon = TAILQ_FIRST(&filemons_free)) != NULL) {
-			TAILQ_REMOVE(&filemons_free, filemon, link);
-			sx_destroy(&filemon->lock);
-			free(filemon, M_FILEMON);
-		}
-		filemon_unlock_write();
-
-		sx_destroy(&access_lock);
-	}
-
-	return (error);
+	return (0);
 }
 
 static int
@@ -299,6 +322,10 @@ filemon_modevent(module_t mod __unused, int type, void *data)
 
 	case MOD_UNLOAD:
 		error = filemon_unload();
+		break;
+
+	case MOD_QUIESCE:
+		error = filemon_invalidate_procs(NULL);
 		break;
 
 	case MOD_SHUTDOWN:

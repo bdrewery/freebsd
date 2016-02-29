@@ -166,6 +166,7 @@ struct kaioinfo;
 struct kaudit_record;
 struct kdtrace_proc;
 struct kdtrace_thread;
+struct filemon;
 struct mqueue_notifier;
 struct nlminfo;
 struct p_sched;
@@ -630,6 +631,7 @@ struct proc {
 	 */
 	LIST_ENTRY(proc) p_orphan;	/* (e) List of orphan processes. */
 	LIST_HEAD(, proc) p_orphans;	/* (e) Pointer to list of orphans. */
+	struct filemon	*p_filemon;	/* (c) filemon-specific data. */
 };
 
 #define	p_session	p_pgrp->pg_session
