@@ -82,8 +82,13 @@ static struct cdevsw filemon_cdevsw = {
 MALLOC_DECLARE(M_FILEMON);
 MALLOC_DEFINE(M_FILEMON, "filemon", "File access monitor");
 
+struct filemon_proc {
+	TAILQ_ENTRY(filemon_proc) proc; /* List of procs for this filemon. */
+	struct proc *p;
+};
+
 struct filemon {
-	TAILQ_ENTRY(filemon) link;	/* Link into the in-use list. */
+	TAILQ_HEAD(, filemon_proc) procs; /* Pointer to list of procs. */
 	struct sx	lock;		/* Lock mutex for this filemon. */
 	struct file	*fp;		/* Output file pointer. */
 	char		fname1[MAXPATHLEN]; /* Temporary filename buffer. */
@@ -94,8 +99,10 @@ struct filemon {
 
 static struct cdev *filemon_dev;
 
-static void filemon_free(struct filemon *filemon);
-static void filemon_destroy(struct filemon *filemon);
+static void filemon_free(struct filemon *);
+static void filemon_destroy(struct filemon *);
+static void filemon_track_process(struct filemon *, struct proc *);
+static void filemon_untrack_process(struct filemon *, struct proc *);
 
 #include "filemon_wrapper.c"
 
@@ -143,10 +150,46 @@ filemon_destroy(struct filemon *filemon)
 {
 
 	sx_assert(&filemon->lock, SA_XLOCKED);
+
 	if (filemon->refcnt == 0)
 		filemon_free(filemon);
 	else
 		sx_xunlock(&filemon->lock);
+}
+
+static void
+filemon_track_process(struct filemon *filemon, struct proc *p)
+{
+	struct filemon_proc *filemon_proc;
+
+	sx_assert(&filemon->lock, SA_XLOCKED);
+	PROC_LOCK_ASSERT(p, MA_OWNED);
+
+	filemon_proc = malloc(sizeof(struct filemon_proc), M_FILEMON,
+	    M_WAITOK | M_ZERO);
+	filemon_proc->p = p;
+	TAILQ_INSERT_TAIL(&filemon->procs, filemon_proc, proc);
+
+	p->p_filemon = filemon;
+}
+
+static void
+filemon_untrack_process(struct filemon *filemon, struct proc *p)
+{
+	struct filemon_proc *filemon_proc;
+
+	sx_assert(&filemon->lock, SA_XLOCKED);
+	PROC_LOCK_ASSERT(p, MA_OWNED);
+
+	TAILQ_FOREACH(filemon_proc, &filemon->procs, proc) {
+		if (filemon_proc->p == p) {
+			TAILQ_REMOVE(&filemon->procs, filemon_proc, proc);
+			free(filemon_proc, M_FILEMON);
+			break;
+		}
+	}
+
+	p->p_filemon = NULL;
 }
 
 /*
@@ -182,9 +225,9 @@ filemon_invalidate_procs(struct filemon *filemon)
 		}
 		if (p_filemon != NULL) {
 			--p_filemon->refcnt;
+			filemon_untrack_process(p_filemon, p);
 			if (filemon == NULL)
 				filemon_destroy(p_filemon);
-			p->p_filemon = NULL;
 		}
 		PROC_UNLOCK(p);
 	}
@@ -244,7 +287,7 @@ filemon_ioctl(struct cdev *dev, u_long cmd, caddr_t data, int flag __unused,
 		error = pget(*((pid_t *)data), PGET_CANDEBUG | PGET_NOTWEXIT,
 		    &p);
 		if (error == 0) {
-			p->p_filemon = filemon;
+			filemon_track_process(filemon, p);
 			PROC_UNLOCK(p);
 		}
 		break;
@@ -269,6 +312,7 @@ filemon_open(struct cdev *dev, int oflags __unused, int devtype __unused,
 	    M_WAITOK | M_ZERO);
 	sx_init(&filemon->lock, "filemon");
 	filemon->refcnt = 1;
+	TAILQ_INIT(&filemon->procs);
 
 	error = devfs_set_cdevpriv(filemon, filemon_dtr);
 	if (error != 0)
