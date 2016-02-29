@@ -102,7 +102,7 @@ static struct cdev *filemon_dev;
 static void filemon_free(struct filemon *);
 static void filemon_destroy(struct filemon *);
 static void filemon_track_process(struct filemon *, struct proc *);
-static void filemon_untrack_process(struct filemon *, struct proc *);
+static void filemon_untrack_process(struct filemon *, struct proc *, bool);
 
 #include "filemon_wrapper.c"
 
@@ -174,66 +174,90 @@ filemon_track_process(struct filemon *filemon, struct proc *p)
 }
 
 static void
-filemon_untrack_process(struct filemon *filemon, struct proc *p)
+filemon_free_filemon_proc(struct filemon *filemon,
+    struct filemon_proc *filemon_proc)
+{
+
+	TAILQ_REMOVE(&filemon->procs, filemon_proc, proc);
+	free(filemon_proc, M_FILEMON);
+}
+
+static void
+filemon_untrack_process(struct filemon *filemon, struct proc *p,
+    bool remove_proc)
 {
 	struct filemon_proc *filemon_proc;
 
 	sx_assert(&filemon->lock, SA_XLOCKED);
 	PROC_LOCK_ASSERT(p, MA_OWNED);
 
-	TAILQ_FOREACH(filemon_proc, &filemon->procs, proc) {
-		if (filemon_proc->p == p) {
-			TAILQ_REMOVE(&filemon->procs, filemon_proc, proc);
-			free(filemon_proc, M_FILEMON);
-			break;
+	if (remove_proc) {
+		TAILQ_FOREACH(filemon_proc, &filemon->procs, proc) {
+			if (filemon_proc->p == p) {
+				filemon_free_filemon_proc(filemon,
+				    filemon_proc);
+				break;
+			}
 		}
 	}
 
 	p->p_filemon = NULL;
 }
 
-/*
- * Invalidate the passed filemon in all processes.
- * A NULL filemon will invalidate all filemons for all processes.
- */
 static int
-filemon_invalidate_procs(struct filemon *filemon)
+filemon_untrack_all_processes(void)
 {
 	int error;
-	struct filemon *p_filemon;
+	struct filemon *filemon;
 	struct proc *p;
 
 	error = 0;
-	if (filemon != NULL)
-		sx_assert(&filemon->lock, SA_XLOCKED);
 	sx_slock(&allproc_lock);
 	FOREACH_PROC_IN_SYSTEM(p) {
 		PROC_LOCK(p);
-		p_filemon = NULL;
-		if (filemon == NULL && p->p_filemon != NULL) {
-			/*
-			 * When invalidating all, consider immediate lock
-			 * failures to be EBUSY.
-			 */
-			if (sx_try_xlock(&p->p_filemon->lock))
-				p_filemon = p->p_filemon;
-			else
+		if ((filemon = p->p_filemon) != NULL) {
+			if (sx_try_xlock(&filemon->lock)) {
+				--filemon->refcnt;
+				filemon_untrack_process(filemon, p, true);
+				filemon_destroy(filemon);
+			} else
 				error = EBUSY;
-		} else if (filemon == p->p_filemon) {
-			/* filemon already locked. */
-			p_filemon = p->p_filemon;
-		}
-		if (p_filemon != NULL) {
-			--p_filemon->refcnt;
-			filemon_untrack_process(p_filemon, p);
-			if (filemon == NULL)
-				filemon_destroy(p_filemon);
 		}
 		PROC_UNLOCK(p);
 	}
 	sx_sunlock(&allproc_lock);
 
 	return (error);
+}
+
+/*
+ * Invalidate the passed filemon in all processes.  Uses the filemon.procs
+ * list for efficiency.
+ */
+static void
+filemon_untrack_processes(struct filemon *filemon)
+{
+	struct filemon_proc *filemon_proc, *filemon_proc_tmp;
+	struct proc *p;
+
+	sx_assert(&filemon->lock, SA_XLOCKED);
+
+	/*
+	 * Processes in this list won't go away while here since
+	 * filemon_event_process_exit() will lock on filemon->lock
+	 * which we hold.
+	 */
+	TAILQ_FOREACH_SAFE(filemon_proc, &filemon->procs, proc,
+	    filemon_proc_tmp) {
+		p = filemon_proc->p;
+		PROC_LOCK(p);
+		--filemon->refcnt;
+		filemon_untrack_process(filemon, p, false);
+		filemon_free_filemon_proc(filemon, filemon_proc);
+		PROC_UNLOCK(p);
+	}
+
+	return;
 }
 
 
@@ -246,8 +270,8 @@ filemon_dtr(void *data)
 		return;
 
 	sx_xlock(&filemon->lock);
-	filemon_invalidate_procs(filemon);
-	/* filemon_invalidate_procs decrements refcnt. */
+	filemon_untrack_processes(filemon);
+	/* filemon_untrack_processes decrements refcnt. */
 	filemon_destroy(filemon);
 }
 
@@ -282,7 +306,7 @@ filemon_ioctl(struct cdev *dev, u_long cmd, caddr_t data, int flag __unused,
 	/* Set the monitored process ID. */
 	case FILEMON_SET_PID:
 		/* Invalidate any existing processes already set. */
-		filemon_invalidate_procs(filemon);
+		filemon_untrack_processes(filemon);
 
 		error = pget(*((pid_t *)data), PGET_CANDEBUG | PGET_NOTWEXIT,
 		    &p);
@@ -345,7 +369,7 @@ filemon_unload(void)
 {
 	int error;
 
-	error = filemon_invalidate_procs(NULL);
+	error = filemon_untrack_all_processes();
 	if (error != 0)
 		return (error);
 	destroy_dev(filemon_dev);
@@ -369,7 +393,7 @@ filemon_modevent(module_t mod __unused, int type, void *data)
 		break;
 
 	case MOD_QUIESCE:
-		error = filemon_invalidate_procs(NULL);
+		error = filemon_untrack_all_processes();
 		break;
 
 	case MOD_SHUTDOWN:
