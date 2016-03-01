@@ -413,7 +413,7 @@ filemon_event_process_exit(void *arg __unused, struct proc *p)
 		p->p_filemon = NULL;
 		PROC_UNLOCK(p);
 
-		filemon_untrack_process(filemon, p, true);
+		filemon_untrack_process(filemon, p);
 
 		sx_xunlock(&filemon->lock);
 	}
