@@ -410,8 +410,10 @@ filemon_event_process_exit(void *arg __unused, struct proc *p)
 		filemon_output(filemon, filemon->msgbufr, len);
 
 		PROC_LOCK(p);
-		filemon_untrack_process(filemon, p, true);
+		p->p_filemon = NULL;
 		PROC_UNLOCK(p);
+
+		filemon_untrack_process(filemon, p, true);
 
 		sx_xunlock(&filemon->lock);
 	}
@@ -458,8 +460,10 @@ filemon_event_process_fork(void *arg __unused, struct proc *p1,
 		filemon_output(filemon, filemon->msgbufr, len);
 
 		PROC_LOCK(p2);
-		filemon_track_process(filemon, p2);
+		p2->p_filemon = filemon;
 		PROC_UNLOCK(p2);
+
+		filemon_track_process(filemon, p2);
 
 		sx_xunlock(&filemon->lock);
 	}

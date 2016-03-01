@@ -163,18 +163,12 @@ filemon_track_process(struct filemon *filemon, struct proc *p)
 	struct filemon_proc *filemon_proc;
 
 	sx_assert(&filemon->lock, SA_XLOCKED);
-	PROC_LOCK_ASSERT(p, MA_OWNED);
 
-	_PHOLD(p);
-	PROC_UNLOCK(p);
 	filemon_proc = malloc(sizeof(struct filemon_proc), M_FILEMON,
 	    M_WAITOK | M_ZERO);
-	PROC_LOCK(p);
-	_PRELE(p);
 	filemon_proc->p = p;
 	TAILQ_INSERT_TAIL(&filemon->procs, filemon_proc, proc);
 
-	p->p_filemon = filemon;
 	++filemon->refcnt;
 }
 
@@ -194,7 +188,6 @@ filemon_untrack_process(struct filemon *filemon, struct proc *p,
 	struct filemon_proc *filemon_proc;
 
 	sx_assert(&filemon->lock, SA_XLOCKED);
-	PROC_LOCK_ASSERT(p, MA_OWNED);
 
 	if (remove_proc) {
 		TAILQ_FOREACH(filemon_proc, &filemon->procs, proc) {
@@ -206,7 +199,6 @@ filemon_untrack_process(struct filemon *filemon, struct proc *p,
 		}
 	}
 
-	p->p_filemon = NULL;
 	--filemon->refcnt;
 }
 
@@ -223,8 +215,9 @@ filemon_untrack_all_processes(void)
 		PROC_LOCK(p);
 		if ((filemon = p->p_filemon) != NULL) {
 			if (sx_try_xlock(&filemon->lock)) {
-				filemon_untrack_process(filemon, p, true);
+				p->p_filemon = NULL;
 				PROC_UNLOCK(p);
+				filemon_untrack_process(filemon, p, true);
 				filemon_destroy(filemon);
 			} else {
 				PROC_UNLOCK(p);
@@ -259,9 +252,10 @@ filemon_untrack_processes(struct filemon *filemon)
 	    filemon_proc_tmp) {
 		p = filemon_proc->p;
 		PROC_LOCK(p);
+		p->p_filemon = NULL;
+		PROC_UNLOCK(p);
 		filemon_untrack_process(filemon, p, false);
 		filemon_free_filemon_proc(filemon, filemon_proc);
-		PROC_UNLOCK(p);
 	}
 
 	return;
@@ -323,8 +317,10 @@ filemon_ioctl(struct cdev *dev, u_long cmd, caddr_t data, int flag __unused,
 			if (p->p_filemon != NULL)
 				error = EBUSY;
 			else
-				filemon_track_process(filemon, p);
+				p->p_filemon = filemon;
 			PROC_UNLOCK(p);
+			if (error == 0)
+				filemon_track_process(filemon, p);
 		}
 		break;
 
