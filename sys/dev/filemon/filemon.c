@@ -379,10 +379,10 @@ filemon_unload(void)
 {
 	int error;
 
+	destroy_dev(filemon_dev);
 	error = filemon_untrack_all_processes();
 	if (error != 0)
 		return (error);
-	destroy_dev(filemon_dev);
 	filemon_wrapper_deinstall();
 
 	return (0);
