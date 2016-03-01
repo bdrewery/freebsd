@@ -396,14 +396,7 @@ filemon_event_process_exit(void *arg __unused, struct proc *p)
 	size_t len;
 	struct filemon *filemon;
 
-	PROC_LOCK(p);
-	filemon = p->p_filemon;
-	PROC_UNLOCK(p);
-
-	if (filemon != NULL) {
-		/* Avoid deadlock with filemon_untrack_processes(). */
-		sx_xlock(&filemon->lock);
-
+	if ((filemon = filemon_pid_check(p)) != NULL) {
 		len = snprintf(filemon->msgbufr, sizeof(filemon->msgbufr),
 		    "X %d %d %d\n", p->p_pid, p->p_xexit, p->p_xsig);
 
