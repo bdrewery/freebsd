@@ -173,7 +173,7 @@ filemon_track_process(struct filemon *filemon, struct proc *p)
 }
 
 static void
-filemon_free_filemon_proc(struct filemon *filemon,
+filemon_proc_free(struct filemon *filemon,
     struct filemon_proc *filemon_proc)
 {
 
@@ -192,7 +192,7 @@ filemon_untrack_process(struct filemon *filemon, struct proc *p,
 	if (remove_proc) {
 		TAILQ_FOREACH(filemon_proc, &filemon->procs, proc) {
 			if (filemon_proc->p == p) {
-				filemon_free_filemon_proc(filemon,
+				filemon_proc_free(filemon,
 				    filemon_proc);
 				break;
 			}
@@ -255,7 +255,7 @@ filemon_untrack_processes(struct filemon *filemon)
 		p->p_filemon = NULL;
 		PROC_UNLOCK(p);
 		filemon_untrack_process(filemon, p, false);
-		filemon_free_filemon_proc(filemon, filemon_proc);
+		filemon_proc_free(filemon, filemon_proc);
 	}
 
 	return;
