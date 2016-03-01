@@ -311,7 +311,10 @@ filemon_ioctl(struct cdev *dev, u_long cmd, caddr_t data, int flag __unused,
 		error = pget(*((pid_t *)data), PGET_CANDEBUG | PGET_NOTWEXIT,
 		    &p);
 		if (error == 0) {
-			filemon_track_process(filemon, p);
+			if (p->p_filemon != NULL)
+				error = EBUSY;
+			else
+				filemon_track_process(filemon, p);
 			PROC_UNLOCK(p);
 		}
 		break;
