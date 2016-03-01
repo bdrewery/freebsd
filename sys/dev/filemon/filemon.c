@@ -175,6 +175,7 @@ filemon_track_process(struct filemon *filemon, struct proc *p)
 	TAILQ_INSERT_TAIL(&filemon->procs, filemon_proc, proc);
 
 	p->p_filemon = filemon;
+	++filemon->refcnt;
 }
 
 static void
@@ -206,6 +207,7 @@ filemon_untrack_process(struct filemon *filemon, struct proc *p,
 	}
 
 	p->p_filemon = NULL;
+	--filemon->refcnt;
 }
 
 static int
@@ -221,7 +223,6 @@ filemon_untrack_all_processes(void)
 		PROC_LOCK(p);
 		if ((filemon = p->p_filemon) != NULL) {
 			if (sx_try_xlock(&filemon->lock)) {
-				--filemon->refcnt;
 				filemon_untrack_process(filemon, p, true);
 				PROC_UNLOCK(p);
 				filemon_destroy(filemon);
@@ -258,7 +259,6 @@ filemon_untrack_processes(struct filemon *filemon)
 	    filemon_proc_tmp) {
 		p = filemon_proc->p;
 		PROC_LOCK(p);
-		--filemon->refcnt;
 		filemon_untrack_process(filemon, p, false);
 		filemon_free_filemon_proc(filemon, filemon_proc);
 		PROC_UNLOCK(p);
@@ -267,7 +267,7 @@ filemon_untrack_processes(struct filemon *filemon)
 	return;
 }
 
-
+/* The devfs file is being closed.  Untrace all processes and cleanup. */
 static void
 filemon_dtr(void *data)
 {
@@ -278,7 +278,9 @@ filemon_dtr(void *data)
 
 	sx_xlock(&filemon->lock);
 	filemon_untrack_processes(filemon);
-	/* filemon_untrack_processes decrements refcnt. */
+	/* The only refcnt left should be the one set by filemon_open. */
+	--filemon->refcnt;
+	KASSERT(filemon->refcnt == 0, ("filemon %p refcnt != 0", filemon));
 	filemon_destroy(filemon);
 }
 

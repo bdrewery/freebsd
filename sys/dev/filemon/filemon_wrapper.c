@@ -410,7 +410,6 @@ filemon_event_process_exit(void *arg __unused, struct proc *p)
 		filemon_output(filemon, filemon->msgbufr, len);
 
 		PROC_LOCK(p);
-		--filemon->refcnt;
 		filemon_untrack_process(filemon, p, true);
 		PROC_UNLOCK(p);
 
@@ -459,7 +458,6 @@ filemon_event_process_fork(void *arg __unused, struct proc *p1,
 		filemon_output(filemon, filemon->msgbufr, len);
 
 		PROC_LOCK(p2);
-		++filemon->refcnt;
 		filemon_track_process(filemon, p2);
 		PROC_UNLOCK(p2);
 
