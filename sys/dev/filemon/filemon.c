@@ -165,8 +165,12 @@ filemon_track_process(struct filemon *filemon, struct proc *p)
 	sx_assert(&filemon->lock, SA_XLOCKED);
 	PROC_LOCK_ASSERT(p, MA_OWNED);
 
+	_PHOLD(p);
+	PROC_UNLOCK(p);
 	filemon_proc = malloc(sizeof(struct filemon_proc), M_FILEMON,
 	    M_WAITOK | M_ZERO);
+	PROC_LOCK(p);
+	_PRELE(p);
 	filemon_proc->p = p;
 	TAILQ_INSERT_TAIL(&filemon->procs, filemon_proc, proc);
 
