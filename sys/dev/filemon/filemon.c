@@ -223,11 +223,14 @@ filemon_untrack_all_processes(void)
 			if (sx_try_xlock(&filemon->lock)) {
 				--filemon->refcnt;
 				filemon_untrack_process(filemon, p, true);
+				PROC_UNLOCK(p);
 				filemon_destroy(filemon);
-			} else
+			} else {
+				PROC_UNLOCK(p);
 				error = EBUSY;
-		}
-		PROC_UNLOCK(p);
+			}
+		} else
+			PROC_UNLOCK(p);
 	}
 	sx_sunlock(&allproc_lock);
 
