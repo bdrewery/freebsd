@@ -389,8 +389,6 @@ filemon_event_process_exit(void *arg __unused, struct proc *p)
 
 		filemon_proc_drop(p);
 
-		filemon_untrack_process(filemon, p);
-
 		filemon_drop(filemon);
 	}
 }
@@ -438,8 +436,6 @@ filemon_event_process_fork(void *arg __unused, struct proc *p1,
 		PROC_LOCK(p2);
 		p2->p_filemon = filemon_acquire(filemon);
 		PROC_UNLOCK(p2);
-
-		filemon_track_process(filemon, p2);
 
 		filemon_drop(filemon);
 	}

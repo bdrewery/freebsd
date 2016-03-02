@@ -46,7 +46,6 @@ __FBSDID("$FreeBSD$");
 #include <sys/module.h>
 #include <sys/poll.h>
 #include <sys/proc.h>
-#include <sys/queue.h>
 #include <sys/sx.h>
 #include <sys/syscall.h>
 #include <sys/sysent.h>
@@ -82,13 +81,7 @@ static struct cdevsw filemon_cdevsw = {
 MALLOC_DECLARE(M_FILEMON);
 MALLOC_DEFINE(M_FILEMON, "filemon", "File access monitor");
 
-struct filemon_proc {
-	TAILQ_ENTRY(filemon_proc) proc; /* List of procs for this filemon. */
-	struct proc *p;
-};
-
 struct filemon {
-	TAILQ_HEAD(, filemon_proc) procs; /* Pointer to list of procs. */
 	struct sx	lock;		/* Lock mutex for this filemon. */
 	struct file	*fp;		/* Output file pointer. */
 	char		fname1[MAXPATHLEN]; /* Temporary filename buffer. */
@@ -100,8 +93,6 @@ struct filemon {
 static struct cdev *filemon_dev;
 
 static void filemon_free(struct filemon *);
-static void filemon_track_process(struct filemon *, struct proc *);
-static void filemon_untrack_process(struct filemon *, struct proc *);
 
 static __inline struct filemon *
 filemon_acquire(struct filemon *filemon)
@@ -136,12 +127,21 @@ filemon_proc_get(struct proc *p)
 }
 
 static void
+filemon_proc_drop_locked(struct proc *p)
+{
+
+	PROC_LOCK_ASSERT(p, MA_OWNED);
+
+	filemon_release(p->p_filemon);
+	p->p_filemon = NULL;
+}
+
+static void
 filemon_proc_drop(struct proc *p)
 {
 
 	PROC_LOCK(p);
-	filemon_release(p->p_filemon);
-	p->p_filemon = NULL;
+	filemon_proc_drop_locked(p);
 	PROC_UNLOCK(p);
 }
 
@@ -200,35 +200,6 @@ filemon_free(struct filemon *filemon)
 	free(filemon, M_FILEMON);
 }
 
-static void
-filemon_track_process(struct filemon *filemon, struct proc *p)
-{
-	struct filemon_proc *filemon_proc;
-
-	sx_assert(&filemon->lock, SA_XLOCKED);
-
-	filemon_proc = malloc(sizeof(struct filemon_proc), M_FILEMON,
-	    M_WAITOK | M_ZERO);
-	filemon_proc->p = p;
-	TAILQ_INSERT_TAIL(&filemon->procs, filemon_proc, proc);
-}
-
-static void
-filemon_untrack_process(struct filemon *filemon, struct proc *p)
-{
-	struct filemon_proc *filemon_proc;
-
-	sx_assert(&filemon->lock, SA_XLOCKED);
-
-	TAILQ_FOREACH(filemon_proc, &filemon->procs, proc) {
-		if (filemon_proc->p == p) {
-			TAILQ_REMOVE(&filemon->procs, filemon_proc, proc);
-			free(filemon_proc, M_FILEMON);
-			break;
-		}
-	}
-}
-
 static int
 filemon_untrack_all_processes(void)
 {
@@ -245,7 +216,6 @@ filemon_untrack_all_processes(void)
 		if (filemon == NULL)
 			continue;
 		if (sx_try_xlock(&filemon->lock)) {
-			filemon_untrack_process(filemon, p);
 			sx_xunlock(&filemon->lock);
 			filemon_proc_drop(p);
 		} else
@@ -264,23 +234,27 @@ filemon_untrack_all_processes(void)
 static void
 filemon_untrack_processes(struct filemon *filemon)
 {
-	struct filemon_proc *filemon_proc, *filemon_proc_tmp;
+	struct proc *p;
 
 	sx_assert(&filemon->lock, SA_XLOCKED);
+
+	/* First reference is in the cdevpriv. */
+	if (filemon->refcnt == 1)
+		return;
 
 	/*
 	 * Processes in this list won't go away while here since
 	 * filemon_event_process_exit() will lock on filemon->lock
 	 * which we hold.
 	 */
-	TAILQ_FOREACH_SAFE(filemon_proc, &filemon->procs, proc,
-	    filemon_proc_tmp) {
-		filemon_proc_drop(filemon_proc->p);
-		TAILQ_REMOVE(&filemon->procs, filemon_proc, proc);
-		free(filemon_proc, M_FILEMON);
+	sx_slock(&allproc_lock);
+	FOREACH_PROC_IN_SYSTEM(p) {
+		PROC_LOCK(p);
+		if (p->p_filemon == filemon)
+			filemon_proc_drop_locked(p);
+		PROC_UNLOCK(p);
 	}
-
-	return;
+	sx_sunlock(&allproc_lock);
 }
 
 /* The devfs file is being closed.  Untrace all processes and cleanup. */
@@ -338,8 +312,6 @@ filemon_ioctl(struct cdev *dev, u_long cmd, caddr_t data, int flag __unused,
 			else
 				p->p_filemon = filemon_acquire(filemon);
 			PROC_UNLOCK(p);
-			if (error == 0)
-				filemon_track_process(filemon, p);
 		}
 		break;
 
@@ -362,7 +334,6 @@ filemon_open(struct cdev *dev, int oflags __unused, int devtype __unused,
 	filemon = malloc(sizeof(struct filemon), M_FILEMON,
 	    M_WAITOK | M_ZERO);
 	sx_init(&filemon->lock, "filemon");
-	TAILQ_INIT(&filemon->procs);
 	filemon->refcnt = 1;
 
 	error = devfs_set_cdevpriv(filemon, filemon_dtr);
