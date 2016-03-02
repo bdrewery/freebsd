@@ -67,8 +67,6 @@ extern struct sysentvec elf64_freebsd_sysvec;
 static d_close_t	filemon_close;
 static d_ioctl_t	filemon_ioctl;
 static d_open_t		filemon_open;
-static int		filemon_unload(void);
-static void		filemon_load(void *);
 
 static struct cdevsw filemon_cdevsw = {
 	.d_version	= D_VERSION,
@@ -337,14 +335,12 @@ filemon_load(void *dummy __unused)
 	    "filemon");
 }
 
-static int
+static void
 filemon_unload(void)
 {
 
 	destroy_dev(filemon_dev);
 	filemon_wrapper_deinstall();
-
-	return (0);
 }
 
 static int
@@ -358,8 +354,16 @@ filemon_modevent(module_t mod __unused, int type, void *data)
 		break;
 
 	case MOD_UNLOAD:
-		error = filemon_unload();
 		break;
+
+	case MOD_QUIESCE:
+		/*
+		 * The wrapper implementation is unsafe for reliable unload.
+		 * Require forcing an unload, but still deactivate everything
+		 * to improve the odds.
+		 */
+		filemon_unload();
+		error = EBUSY;
 
 	case MOD_SHUTDOWN:
 		break;
