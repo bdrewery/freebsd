@@ -176,8 +176,12 @@ filemon_free(struct filemon *filemon)
 	size_t len;
 	struct timeval now;
 
-	while (filemon->refcnt > 0)
-		sx_sleep(&filemon->refcnt, &filemon->lock, 0, "filemon", 0);
+	if (filemon->refcnt > 0) {
+		while (filemon->refcnt > 0)
+			sx_sleep(&filemon->refcnt, &filemon->lock, 0,
+			    "filemon", 0);
+		sx_xunlock(&filemon->lock);
+	}
 
 	if (filemon->fp != NULL) {
 		getmicrotime(&now);
@@ -191,7 +195,6 @@ filemon_free(struct filemon *filemon)
 		fdrop(filemon->fp, curthread);
 	}
 
-	sx_xunlock(&filemon->lock);
 	sx_destroy(&filemon->lock);
 	free(filemon, M_FILEMON);
 }
