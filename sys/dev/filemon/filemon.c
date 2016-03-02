@@ -94,6 +94,7 @@ struct filemon {
 	char		fname1[MAXPATHLEN]; /* Temporary filename buffer. */
 	char		fname2[MAXPATHLEN]; /* Temporary filename buffer. */
 	char		msgbufr[1024];	/* Output message buffer. */
+	u_int		refcnt;		/* Pointer reference count. */
 };
 
 static struct cdev *filemon_dev;
@@ -101,6 +102,55 @@ static struct cdev *filemon_dev;
 static void filemon_free(struct filemon *);
 static void filemon_track_process(struct filemon *, struct proc *);
 static void filemon_untrack_process(struct filemon *, struct proc *);
+
+static __inline struct filemon *
+filemon_acquire(struct filemon *filemon)
+{
+
+	if (filemon != NULL)
+		refcount_acquire(&filemon->refcnt);
+	return (filemon);
+}
+
+static __inline void
+filemon_release(struct filemon *filemon)
+{
+
+	refcount_release(&filemon->refcnt);
+}
+
+static struct filemon *
+filemon_proc_get(struct proc *p)
+{
+	struct filemon *filemon;
+
+	PROC_LOCK(p);
+	filemon = filemon_acquire(p->p_filemon);
+	PROC_UNLOCK(p);
+
+	if (filemon == NULL)
+		return (NULL);
+	sx_xlock(&filemon->lock);
+	return (filemon);
+}
+
+static void
+filemon_proc_drop(struct proc *p)
+{
+
+	PROC_LOCK(p);
+	filemon_release(p->p_filemon);
+	p->p_filemon = NULL;
+	PROC_UNLOCK(p);
+}
+
+static __inline void
+filemon_drop(struct filemon *filemon)
+{
+
+	sx_xunlock(&filemon->lock);
+	filemon_release(filemon);
+}
 
 #include "filemon_wrapper.c"
 
@@ -193,18 +243,17 @@ filemon_untrack_all_processes(void)
 	sx_slock(&allproc_lock);
 	FOREACH_PROC_IN_SYSTEM(p) {
 		PROC_LOCK(p);
-		if ((filemon = p->p_filemon) != NULL) {
-			if (sx_try_xlock(&filemon->lock)) {
-				p->p_filemon = NULL;
-				PROC_UNLOCK(p);
-				filemon_untrack_process(filemon, p);
-				sx_xunlock(&filemon->lock);
-			} else {
-				PROC_UNLOCK(p);
-				error = EBUSY;
-			}
+		filemon = filemon_acquire(p->p_filemon);
+		PROC_UNLOCK(p);
+		if (filemon == NULL)
+			continue;
+		if (sx_try_xlock(&filemon->lock)) {
+			filemon_untrack_process(filemon, p);
+			sx_xunlock(&filemon->lock);
+			filemon_proc_drop(p);
 		} else
-			PROC_UNLOCK(p);
+			error = EBUSY;
+		filemon_release(filemon);
 	}
 	sx_sunlock(&allproc_lock);
 
@@ -219,7 +268,6 @@ static void
 filemon_untrack_processes(struct filemon *filemon)
 {
 	struct filemon_proc *filemon_proc, *filemon_proc_tmp;
-	struct proc *p;
 
 	sx_assert(&filemon->lock, SA_XLOCKED);
 
@@ -230,10 +278,7 @@ filemon_untrack_processes(struct filemon *filemon)
 	 */
 	TAILQ_FOREACH_SAFE(filemon_proc, &filemon->procs, proc,
 	    filemon_proc_tmp) {
-		p = filemon_proc->p;
-		PROC_LOCK(p);
-		p->p_filemon = NULL;
-		PROC_UNLOCK(p);
+		filemon_proc_drop(filemon_proc->p);
 		filemon_proc_free(filemon, filemon_proc);
 	}
 
@@ -249,7 +294,9 @@ filemon_dtr(void *data)
 	if (filemon == NULL)
 		return;
 
-	sx_xlock(&filemon->lock);
+	while (filemon->refcnt > 0)
+		sx_sleep(&filemon->refcnt, &filemon->lock, 0, "filemon", 0);
+
 	filemon_untrack_processes(filemon);
 	filemon_free(filemon);
 }
@@ -293,7 +340,7 @@ filemon_ioctl(struct cdev *dev, u_long cmd, caddr_t data, int flag __unused,
 			if (p->p_filemon != NULL)
 				error = EBUSY;
 			else
-				p->p_filemon = filemon;
+				p->p_filemon = filemon_acquire(filemon);
 			PROC_UNLOCK(p);
 			if (error == 0)
 				filemon_track_process(filemon, p);
