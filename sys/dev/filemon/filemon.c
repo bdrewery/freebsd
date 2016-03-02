@@ -200,17 +200,6 @@ filemon_free(struct filemon *filemon)
 	free(filemon, M_FILEMON);
 }
 
-static void
-filemon_untrack_all_processes(void)
-{
-	struct proc *p;
-
-	sx_slock(&allproc_lock);
-	FOREACH_PROC_IN_SYSTEM(p)
-		filemon_proc_drop(p);
-	sx_sunlock(&allproc_lock);
-}
-
 /*
  * Invalidate the passed filemon in all processes.  Uses the filemon.procs
  * list for efficiency.
@@ -352,7 +341,6 @@ static int
 filemon_unload(void)
 {
 
-	filemon_untrack_all_processes();
 	destroy_dev(filemon_dev);
 	filemon_wrapper_deinstall();
 
@@ -371,10 +359,6 @@ filemon_modevent(module_t mod __unused, int type, void *data)
 
 	case MOD_UNLOAD:
 		error = filemon_unload();
-		break;
-
-	case MOD_QUIESCE:
-		filemon_untrack_all_processes();
 		break;
 
 	case MOD_SHUTDOWN:
