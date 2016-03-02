@@ -176,6 +176,9 @@ filemon_free(struct filemon *filemon)
 	size_t len;
 	struct timeval now;
 
+	while (filemon->refcnt > 0)
+		sx_sleep(&filemon->refcnt, &filemon->lock, 0, "filemon", 0);
+
 	if (filemon->fp != NULL) {
 		getmicrotime(&now);
 
@@ -284,9 +287,6 @@ filemon_dtr(void *data)
 
 	if (filemon == NULL)
 		return;
-
-	while (filemon->refcnt > 0)
-		sx_sleep(&filemon->refcnt, &filemon->lock, 0, "filemon", 0);
 
 	filemon_untrack_processes(filemon);
 	filemon_free(filemon);
