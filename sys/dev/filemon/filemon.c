@@ -207,17 +207,6 @@ filemon_track_process(struct filemon *filemon, struct proc *p)
 }
 
 static void
-filemon_proc_free(struct filemon *filemon,
-    struct filemon_proc *filemon_proc)
-{
-
-	sx_assert(&filemon->lock, SA_XLOCKED);
-
-	TAILQ_REMOVE(&filemon->procs, filemon_proc, proc);
-	free(filemon_proc, M_FILEMON);
-}
-
-static void
 filemon_untrack_process(struct filemon *filemon, struct proc *p)
 {
 	struct filemon_proc *filemon_proc;
@@ -226,7 +215,8 @@ filemon_untrack_process(struct filemon *filemon, struct proc *p)
 
 	TAILQ_FOREACH(filemon_proc, &filemon->procs, proc) {
 		if (filemon_proc->p == p) {
-			filemon_proc_free(filemon, filemon_proc);
+			TAILQ_REMOVE(&filemon->procs, filemon_proc, proc);
+			free(filemon_proc, M_FILEMON);
 			break;
 		}
 	}
@@ -279,7 +269,8 @@ filemon_untrack_processes(struct filemon *filemon)
 	TAILQ_FOREACH_SAFE(filemon_proc, &filemon->procs, proc,
 	    filemon_proc_tmp) {
 		filemon_proc_drop(filemon_proc->p);
-		filemon_proc_free(filemon, filemon_proc);
+		TAILQ_REMOVE(&filemon->procs, filemon_proc, proc);
+		free(filemon_proc, M_FILEMON);
 	}
 
 	return;
