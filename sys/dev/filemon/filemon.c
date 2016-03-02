@@ -116,7 +116,8 @@ static __inline void
 filemon_release(struct filemon *filemon)
 {
 
-	refcount_release(&filemon->refcnt);
+	if (refcount_release(&filemon->refcnt))
+		wakeup(&filemon->refcnt);
 }
 
 static struct filemon *
