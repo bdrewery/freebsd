@@ -161,6 +161,8 @@ filemon_proc_free(struct filemon *filemon,
     struct filemon_proc *filemon_proc)
 {
 
+	sx_assert(&filemon->lock, SA_XLOCKED);
+
 	TAILQ_REMOVE(&filemon->procs, filemon_proc, proc);
 	free(filemon_proc, M_FILEMON);
 }
