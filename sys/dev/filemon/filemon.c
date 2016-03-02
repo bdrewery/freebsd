@@ -200,31 +200,15 @@ filemon_free(struct filemon *filemon)
 	free(filemon, M_FILEMON);
 }
 
-static int
+static void
 filemon_untrack_all_processes(void)
 {
-	int error;
-	struct filemon *filemon;
 	struct proc *p;
 
-	error = 0;
 	sx_slock(&allproc_lock);
-	FOREACH_PROC_IN_SYSTEM(p) {
-		PROC_LOCK(p);
-		filemon = filemon_acquire(p->p_filemon);
-		PROC_UNLOCK(p);
-		if (filemon == NULL)
-			continue;
-		if (sx_try_xlock(&filemon->lock)) {
-			sx_xunlock(&filemon->lock);
-			filemon_proc_drop(p);
-		} else
-			error = EBUSY;
-		filemon_release(filemon);
-	}
+	FOREACH_PROC_IN_SYSTEM(p)
+		filemon_proc_drop(p);
 	sx_sunlock(&allproc_lock);
-
-	return (error);
 }
 
 /*
@@ -367,11 +351,8 @@ filemon_load(void *dummy __unused)
 static int
 filemon_unload(void)
 {
-	int error;
 
-	error = filemon_untrack_all_processes();
-	if (error != 0)
-		return (error);
+	filemon_untrack_all_processes();
 	destroy_dev(filemon_dev);
 	filemon_wrapper_deinstall();
 
@@ -393,7 +374,7 @@ filemon_modevent(module_t mod __unused, int type, void *data)
 		break;
 
 	case MOD_QUIESCE:
-		error = filemon_untrack_all_processes();
+		filemon_untrack_all_processes();
 		break;
 
 	case MOD_SHUTDOWN:
