@@ -292,6 +292,7 @@ filemon_dtr(void *data)
 		return;
 
 	filemon_untrack_processes(filemon);
+	filemon_release(filemon);
 	filemon_free(filemon);
 }
 
@@ -361,10 +362,13 @@ filemon_open(struct cdev *dev, int oflags __unused, int devtype __unused,
 	    M_WAITOK | M_ZERO);
 	sx_init(&filemon->lock, "filemon");
 	TAILQ_INIT(&filemon->procs);
+	filemon->refcnt = 1;
 
 	error = devfs_set_cdevpriv(filemon, filemon_dtr);
-	if (error != 0)
+	if (error != 0) {
+		filemon->refcnt = 0;
 		filemon_free(filemon);
+	}
 
 	return (error);
 }
