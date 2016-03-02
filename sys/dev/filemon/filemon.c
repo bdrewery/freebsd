@@ -135,8 +135,8 @@ filemon_free(struct filemon *filemon)
 		    (uintmax_t)now.tv_sec, (uintmax_t)now.tv_usec);
 
 		filemon_output(filemon, filemon->msgbufr, len);
-	} else
 		fdrop(filemon->fp, curthread);
+	}
 
 	sx_xunlock(&filemon->lock);
 	sx_destroy(&filemon->lock);
