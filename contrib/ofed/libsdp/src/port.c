@@ -353,7 +353,7 @@ static int replace_fd_with_its_shadow(int fd)
 	int shadow_fd = libsdp_fd_attributes[fd].shadow_fd;
 
 	if (shadow_fd == -1) {
-		__sdp_log(9, "Error replace_fd_with_its_shadow: no shadow for fd:%d\n",
+		__sdp_log(8, "Error replace_fd_with_its_shadow: no shadow for fd:%d\n",
 				  fd);
 		return EINVAL;
 	}
@@ -380,7 +380,7 @@ static sa_family_t get_sdp_domain(int domain)
 	else if (AF_INET6 == domain)
 		return AF_INET6_SDP;
 
-	__sdp_log(9, "Error %s: unknown TCP domain: %d\n", __func__, domain);
+	__sdp_log(8, "Error %s: unknown TCP domain: %d\n", __func__, domain);
 
 	return -1;
 }
@@ -391,7 +391,7 @@ static int get_sock_domain(int sd)
 	socklen_t tmp_sinlen = sizeof(tmp_sin);
 
 	if (_socket_funcs.getsockname(sd, (struct sockaddr *) &tmp_sin, &tmp_sinlen) < 0) {
-		__sdp_log(9, "Error %s: getsockname return <%d> for socket\n", __func__, errno);
+		__sdp_log(8, "Error %s: getsockname return <%d> for socket\n", __func__, errno);
 		return -1;
 	}
 
@@ -511,7 +511,7 @@ ioctl(int fd,
 		}
 
 		if (sret < 0) {
-			__sdp_log(9, "Error ioctl: "
+			__sdp_log(8, "Error ioctl: "
 					  "<%d> calling ioctl for SDP socket, closing it.\n",
 					  errno);
 			cleanup_shadow(fd);
@@ -557,7 +557,7 @@ int fcntl(int fd, int cmd, ...)
 	if ((ret >= 0) && (-1 != shadow_fd)) {
 		sret = _socket_funcs.fcntl(shadow_fd, cmd, arg);
 		if (sret < 0) {
-			__sdp_log(9, "Error fcntl:"
+			__sdp_log(8, "Error fcntl:"
 					  " <%d> calling fcntl(%d, %d, %p) for SDP socket. Closing it.\n",
 					  shadow_fd, cmd, arg, errno);
 			cleanup_shadow(fd);
@@ -614,7 +614,7 @@ setsockopt(int fd, int level, int optname, const void *optval, socklen_t optlen)
 					  " ignoring error on shadow SDP socket fd:<%d>\n", fd);
 			/* 
 			 * HACK: we should allow some errors as some sock opts are unsupported  
-			 * __sdp_log(9, "Error %d calling setsockopt for SDP socket, closing\n", errno); 
+			 * __sdp_log(8, "Error %d calling setsockopt for SDP socket, closing\n", errno); 
 			 * cleanup_shadow(fd); 
 			 */
 		}
@@ -668,6 +668,13 @@ static int __create_socket(int domain, int type, int protocol, int semantics)
 
 	__sdp_log(2, "SOCKET: <%s> domain <%d> type <%d> protocol <%d>\n",
 			  program_invocation_short_name, domain, type, protocol);
+
+	if (!(AF_INET == domain || AF_INET6 == domain ||
+			AF_INET_SDP == domain || AF_INET6_SDP == domain)) {
+		__sdp_log(1, "SOCKET: making other socket\n");
+		s = __create_socket_semantic(domain, type, protocol, semantics);
+		goto done;
+	}
 
 	sdp_domain = get_sdp_domain(domain);
 	if (sdp_domain < 0) {
@@ -734,7 +741,7 @@ static int __create_socket(int domain, int type, int protocol, int semantics)
 				set_is_sdp_socket(shadow_fd, 1);
 				set_shadow_for_fd(s, shadow_fd);
 			} else {
-				__sdp_log(9,
+				__sdp_log(8,
 						  "Error socket: <%d> calling socket for SDP socket\n",
 						  errno);
 				/* fail if we did not make the SDP socket */
@@ -744,7 +751,7 @@ static int __create_socket(int domain, int type, int protocol, int semantics)
 			}
 		}
 	} else {
-		__sdp_log(9, "Error socket: "
+		__sdp_log(8, "Error socket: "
 				  "ignoring SDP socket since TCP fd:%d out of range\n", s);
 	}
 
@@ -779,7 +786,7 @@ static int get_fd_addr_port_num(int sd)
 	ret = _socket_funcs.getsockname(sd, (struct sockaddr *) &addr, &addrlen);
 
 	if (ret) {
-		__sdp_log(9, "Error: in get_fd_addr_port_num - Failed to get getsockname\n");
+		__sdp_log(8, "Error: in get_fd_addr_port_num - Failed to get getsockname\n");
 		return -1;
 	}
 
@@ -922,7 +929,7 @@ find_free_port(const struct sockaddr *sin_addr,
 				ret = getsockopt(tmp_sd[1 - tmp_turn], SOL_TCP,
 								 SDP_LAST_BIND_ERR, &err, &len);
 				if (-1 == ret) {
-					__sdp_log(9, "Error %s:getsockopt: %s\n",
+					__sdp_log(8, "Error %s:getsockopt: %s\n",
 							  __func__, strerror(errno));
 					goto close_and_mark;
 				}
@@ -1000,7 +1007,7 @@ check_legal_bind(const struct sockaddr *sin_addr,
 	__sdp_log(2, "check_legal_bind: binding two temporary sockets\n");
 	*sdp_sd = _socket_funcs.socket(sdp_domain, SOCK_STREAM, IPPROTO_TCP);
 	if (*sdp_sd < 0) {
-		__sdp_log(9, "Error check_legal_bind: " "creating SDP socket failed\n");
+		__sdp_log(8, "Error check_legal_bind: " "creating SDP socket failed\n");
 		goto done;
 	}
 
@@ -1009,12 +1016,12 @@ check_legal_bind(const struct sockaddr *sin_addr,
 		_socket_funcs.setsockopt(*sdp_sd, SOL_SOCKET, SO_REUSEADDR, &yes,
 								 sizeof(yes));
 	if (sret < 0) {
-		__sdp_log(9, "Error bind: Could not setsockopt sdp_sd\n");
+		__sdp_log(8, "Error bind: Could not setsockopt sdp_sd\n");
 	}
 
 	*tcp_sd = _socket_funcs.socket(domain, SOCK_STREAM, IPPROTO_TCP);
 	if (*tcp_sd < 0) {
-		__sdp_log(9, "Error check_legal_bind: "
+		__sdp_log(8, "Error check_legal_bind: "
 				  "creating second socket failed:%s\n", strerror(errno));
 		_socket_funcs.close(*sdp_sd);
 		goto done;
@@ -1025,7 +1032,7 @@ check_legal_bind(const struct sockaddr *sin_addr,
 		_socket_funcs.setsockopt(*tcp_sd, SOL_SOCKET, SO_REUSEADDR, &yes,
 								 sizeof(yes));
 	if (sret < 0) {
-		__sdp_log(9, "Error bind: Could not setsockopt tcp_sd\n");
+		__sdp_log(8, "Error bind: Could not setsockopt tcp_sd\n");
 	}
 
 	__sdp_log(1, "check_legal_bind: binding SDP socket\n");
@@ -1040,7 +1047,7 @@ check_legal_bind(const struct sockaddr *sin_addr,
 			goto done;
 #ifdef __linux__
 		if (-1 == getsockopt(*sdp_sd, SOL_TCP, SDP_LAST_BIND_ERR, &err, &len)) {
-			__sdp_log(9, "Error check_legal_bind:getsockopt: %s\n",
+			__sdp_log(8, "Error check_legal_bind:getsockopt: %s\n",
 					  strerror(errno));
 			goto done;
 		}
@@ -1049,7 +1056,7 @@ check_legal_bind(const struct sockaddr *sin_addr,
 #endif
 		if (-ENOENT != err) {
 			/* bind() failed due to real error. Can't continue */
-			__sdp_log(9, "Error check_legal_bind: "
+			__sdp_log(8, "Error check_legal_bind: "
 					  "binding SDP socket failed:%s\n", strerror(errno));
 			_socket_funcs.close(*sdp_sd);
 			_socket_funcs.close(*tcp_sd);
@@ -1069,7 +1076,7 @@ check_legal_bind(const struct sockaddr *sin_addr,
 	__sdp_log(1, "check_legal_bind: binding TCP socket\n");
 	ret = __bind_semantics(*tcp_sd, sin_addr, addrlen, semantics);
 	if (ret < 0) {
-		__sdp_log(9, "Error check_legal_bind: "
+		__sdp_log(8, "Error check_legal_bind: "
 				  "binding TCP socket failed:%s\n", strerror(errno));
 		if (-1 != *sdp_sd)
 			_socket_funcs.close(*sdp_sd);
@@ -1094,13 +1101,13 @@ close_and_bind(int old_sd,
 	__sdp_log(2, "close_and_bind: closing <%d> binding <%d>\n", old_sd, new_sd);
 	ret = _socket_funcs.close(old_sd);
 	if (ret < 0) {
-		__sdp_log(9, "Error bind: Could not close old_sd\n");
+		__sdp_log(8, "Error bind: Could not close old_sd\n");
 		goto done;
 	}
 
 	ret = __bind_semantics(new_sd, addr, addrlen, semantics);
 	if (ret < 0)
-		__sdp_log(9, "Error bind: Could not bind new_sd\n");
+		__sdp_log(8, "Error bind: Could not bind new_sd\n");
 
 done:
 	__sdp_log(2, "close_and_bind: returning <%d>\n", ret);
@@ -1145,12 +1152,12 @@ __perform_bind(int fd,
 
 	if ((addr == NULL) || is_invalid_addr(addr)) {
 		errno = EFAULT;
-		__sdp_log(9, "Error bind: illegal address provided\n");
+		__sdp_log(8, "Error bind: illegal address provided\n");
 		return -1;
 	}
 
 	if (get_addr_str(addr, buf, MAX_ADDR_STR_LEN)) {
-		__sdp_log(9, "Error bind: provided illegal address: %s\n",
+		__sdp_log(8, "Error bind: provided illegal address: %s\n",
 				  strerror(errno));
 		return -1;
 	}
@@ -1192,7 +1199,7 @@ __perform_bind(int fd,
 			 * can actually bind the two addresses and then reuse */
 			ret = check_legal_bind(addr, addrlen, fd, &sdp_sd, &tcp_sd, semantics);
 			if (ret < 0) {
-				__sdp_log(9, "Error bind: "
+				__sdp_log(8, "Error bind: "
 						  "Provided address can not bind on the two sockets\n");
 			}
 		}
@@ -1212,7 +1219,7 @@ __perform_bind(int fd,
 		ret = close_and_bind(tcp_sd, fd, (struct sockaddr *) &tmp_addr,
 						   addrlen, semantics);
 		if (ret < 0) {
-			__sdp_log(9, "Error bind: " "Could not close_and_bind TCP side\n");
+			__sdp_log(8, "Error bind: " "Could not close_and_bind TCP side\n");
 			if (-1 != sdp_sd)
 				_socket_funcs.close(sdp_sd);
 			goto done;
@@ -1223,7 +1230,7 @@ __perform_bind(int fd,
 							   addrlen, semantics);
 
 			if (ret < 0) {
-				__sdp_log(9,
+				__sdp_log(8,
 						  "Error bind: " "Could not close_and_bind sdp side\n");
 				goto done;
 			}
@@ -1299,12 +1306,12 @@ __perform_connect(int fd, const struct sockaddr *serv_addr,
 
 	if ((serv_addr == NULL) || is_invalid_addr(serv_addr)) {
 		errno = EFAULT;
-		__sdp_log(9, "Error connect: illegal address provided\n");
+		__sdp_log(8, "Error connect: illegal address provided\n");
 		return -1;
 	}
 
 	if (get_addr_str(serv_addr, buf, MAX_ADDR_STR_LEN)) {
-		__sdp_log(9, "Error connect: provided illegal address: %s\n",
+		__sdp_log(8, "Error connect: provided illegal address: %s\n",
 				  strerror(errno));
 		return EADDRNOTAVAIL;
 	}
@@ -1344,7 +1351,7 @@ __perform_connect(int fd, const struct sockaddr *serv_addr,
 
 		ret = __connect_semantics(shadow_fd, serv_addr, addrlen, semantics);
 		if ((ret < 0) && (errno != EINPROGRESS)) {
-			__sdp_log(9, "Error connect: "
+			__sdp_log(7, "Error connect: "
 					  "failed for SDP fd:%d with error:%m\n", shadow_fd);
 		} else {
 			__sdp_log(7, "CONNECT: connected SDP fd:%d to:%s port %d\n",
@@ -1374,7 +1381,7 @@ __perform_connect(int fd, const struct sockaddr *serv_addr,
 		__sdp_log(1, "CONNECT: connecting TCP fd:%d\n", fd);
 		ret = __connect_semantics(fd, serv_addr, addrlen, semantics);
 		if ((ret < 0) && (errno != EINPROGRESS))
-			__sdp_log(9, "Error connect: for TCP fd:%d failed with error:%m\n",
+			__sdp_log(8, "Error connect: for TCP fd:%d failed with error:%m\n",
 					  fd);
 		else
 			__sdp_log(7, "CONNECT: connected TCP fd:%d to:%s port %d\n",
@@ -1382,7 +1389,7 @@ __perform_connect(int fd, const struct sockaddr *serv_addr,
 
 		if ((target_family == USE_TCP) || (ret >= 0) || (errno == EINPROGRESS)) {
 			if (cleanup_shadow(fd) < 0)
-				__sdp_log(9,
+				__sdp_log(8,
 						  "Error connect: failed to cleanup shadow for fd:%d\n",
 						  fd);
 		}
@@ -1457,7 +1464,7 @@ static int __perform_listen(int fd, int backlog, int semantics)
 	/* we need to obtain the address from the fd */
 	if (_socket_funcs.getsockname(fd, (struct sockaddr *) &tmp_sin, &tmp_sinlen)
 		< 0) {
-		__sdp_log(9, "Error listen: getsockname return <%d> for TCP socket\n",
+		__sdp_log(8, "Error listen: getsockname return <%d> for TCP socket\n",
 				  errno);
 		errno = EADDRNOTAVAIL;
 		sret = -1;
@@ -1465,7 +1472,7 @@ static int __perform_listen(int fd, int backlog, int semantics)
 	}
 
 	if (get_addr_str((struct sockaddr *) &tmp_sin, buf, MAX_ADDR_STR_LEN)) {
-		__sdp_log(9, "Error listen: provided illegal address: %s\n",
+		__sdp_log(8, "Error listen: provided illegal address: %s\n",
 				  strerror(errno));
 	}
 
@@ -1502,14 +1509,14 @@ static int __perform_listen(int fd, int backlog, int semantics)
 			ret = close_and_bind(tcp_sd, fd, (struct sockaddr *) sin4,
 					tmp_sinlen, semantics);
 			if (ret < 0) {
-				__sdp_log(9, "Error listen: "
+				__sdp_log(8, "Error listen: "
 						  "Could not close_and_bind TCP side\n");
 			}
 
 			ret = close_and_bind(sdp_sd, shadow_fd, (struct sockaddr *) sin4,
 					tmp_sinlen, semantics);
 			if (ret < 0) {
-				__sdp_log(9, "Error listen: "
+				__sdp_log(8, "Error listen: "
 						  "Could not close_and_bind SDP side\n");
 			}
 		}
@@ -1519,7 +1526,7 @@ static int __perform_listen(int fd, int backlog, int semantics)
 		__sdp_log(1, "LISTEN: calling listen on TCP fd:%d\n", fd);
 		ret = __listen_semantics(fd, backlog, semantics);
 		if (ret < 0) {
-			__sdp_log(9, "Error listen: failed with code <%d> on TCP fd:<%d>\n",
+			__sdp_log(8, "Error listen: failed with code <%d> on TCP fd:<%d>\n",
 					  errno, fd);
 		} else {
 			__sdp_log(7, "LISTEN: fd:%d listening on TCP bound to:%s port:%d\n",
@@ -1531,7 +1538,7 @@ static int __perform_listen(int fd, int backlog, int semantics)
 		__sdp_log(1, "LISTEN: calling listen on SDP fd:<%d>\n", shadow_fd);
 		sret = __listen_semantics(shadow_fd, backlog, semantics);
 		if (sret < 0) {
-			__sdp_log(9, "Error listen: failed with code <%d> SDP fd:<%d>\n",
+			__sdp_log(8, "Error listen: failed with code <%d> SDP fd:<%d>\n",
 					  errno, shadow_fd);
 		} else {
 			__sdp_log(7, "LISTEN: fd:%d listening on SDP bound to:%s port:%d\n",
@@ -1543,7 +1550,7 @@ static int __perform_listen(int fd, int backlog, int semantics)
 	if ((target_family == USE_TCP) && (ret >= 0)) {
 		__sdp_log(1, "LISTEN: cleaning up shadow SDP\n");
 		if (cleanup_shadow(fd) < 0)
-			__sdp_log(9, "Error listen: failed to cleanup shadow for fd:%d\n",
+			__sdp_log(8, "Error listen: failed to cleanup shadow for fd:%d\n",
 					  fd);
 	}
 
@@ -1601,7 +1608,7 @@ int close(int fd)
 	if (shadow_fd != -1) {
 		__sdp_log(1, "CLOSE: closing shadow fd:<%d>\n", shadow_fd);
 		if (cleanup_shadow(fd) < 0)
-			__sdp_log(9, "Error close: failed to cleanup shadow for fd:%d\n",
+			__sdp_log(8, "Error close: failed to cleanup shadow for fd:%d\n",
 					  fd);
 	}
 
@@ -1640,7 +1647,7 @@ int dup(int fd)
 		return (fd);
 
 	if (!is_valid_fd(newfd)) {
-		__sdp_log(9, "Error dup: new fd <%d> out of range.\n", newfd);
+		__sdp_log(8, "Error dup: new fd <%d> out of range.\n", newfd);
 	} else {
 		/* copy attributes from old fd */
 		libsdp_fd_attributes[newfd] = libsdp_fd_attributes[fd];
@@ -1650,7 +1657,7 @@ int dup(int fd)
 			__sdp_log(1, "DUP: duplication shadow fd:<%d>\n", shadow_fd);
 			new_shadow_fd = _socket_funcs.dup(shadow_fd);
 			if ((new_shadow_fd > max_file_descriptors) || (new_shadow_fd < 0)) {
-				__sdp_log(9, "Error dup: new shadow fd <%d> out of range.\n",
+				__sdp_log(8, "Error dup: new shadow fd <%d> out of range.\n",
 						  new_shadow_fd);
 			} else {
 				libsdp_fd_attributes[new_shadow_fd] =
@@ -1702,7 +1709,7 @@ int dup2(int fd, int newfd)
 				  shadow_newfd);
 		ret = _socket_funcs.close(shadow_newfd);
 		if (ret != 0) {
-			__sdp_log(9,
+			__sdp_log(8,
 					  "DUP2: fail to close newfd:<%d> shadow:<%d> with: %d %s\n",
 					  newfd, shadow_newfd, ret, strerror(errno));
 		}
@@ -1711,7 +1718,7 @@ int dup2(int fd, int newfd)
 	__sdp_log(1, "DUP2: duplicating fd:<%d> into:<%d>\n", fd, newfd);
 	newfd = _socket_funcs.dup2(fd, newfd);
 	if ((newfd > max_file_descriptors) || (newfd < 0)) {
-		__sdp_log(9, "Error dup2: new fd <%d> out of range.\n", newfd);
+		__sdp_log(8, "Error dup2: new fd <%d> out of range.\n", newfd);
 	} else {
 		/* copy attributes from old fd */
 		libsdp_fd_attributes[fd].shadow_fd = -1;
@@ -1722,7 +1729,7 @@ int dup2(int fd, int newfd)
 			__sdp_log(1, "DUP2: duplication shadow fd:<%d>\n", shadow_fd);
 			new_shadow_fd = _socket_funcs.dup(shadow_fd);
 			if ((new_shadow_fd > max_file_descriptors) || (new_shadow_fd < 0)) {
-				__sdp_log(9, "Error dup2: new shadow fd <%d> out of range.\n",
+				__sdp_log(8, "Error dup2: new shadow fd <%d> out of range.\n",
 						  new_shadow_fd);
 			} else {
 				libsdp_fd_attributes[new_shadow_fd] =
@@ -1763,13 +1770,13 @@ int getsockname(int fd, struct sockaddr *name, socklen_t * namelen)
 	/* double check provided pointers */
 	if ((name == NULL) || is_invalid_addr(name)) {
 		errno = EFAULT;
-		__sdp_log(9, "Error getsockname: illegal address provided\n");
+		__sdp_log(8, "Error getsockname: illegal address provided\n");
 		return -1;
 	}
 
 	if ((namelen != NULL) && is_invalid_addr(namelen)) {
 		errno = EFAULT;
-		__sdp_log(9, "Error getsockname: illegal address length pointer provided\n");
+		__sdp_log(8, "Error getsockname: illegal address length pointer provided\n");
 		return -1;
 	}
 
@@ -1809,13 +1816,13 @@ int getpeername(int fd, struct sockaddr *name, socklen_t * namelen)
 	/* double check provided pointers */
 	if ((name == NULL) || is_invalid_addr(name)) {
 		errno = EFAULT;
-		__sdp_log(9, "Error getsockname: illegal address provided\n");
+		__sdp_log(8, "Error getsockname: illegal address provided\n");
 		return -1;
 	}
 
 	if ((namelen != NULL) && is_invalid_addr(namelen)) {
 		errno = EFAULT;
-		__sdp_log(9,
+		__sdp_log(8,
 				  "Error getsockname: illegal address length pointer provided\n");
 		return -1;
 	}
@@ -1866,13 +1873,13 @@ int accept(int fd, struct sockaddr *addr, socklen_t * addrlen)
 	/* double check provided pointers */
 	if ((addr != NULL) && is_invalid_addr(addr)) {
 		errno = EINVAL;
-		__sdp_log(9, "Error accept: illegal address provided\n");
+		__sdp_log(8, "Error accept: illegal address provided\n");
 		return -1;
 	}
 
 	if ((addrlen != NULL) && is_invalid_addr(addrlen)) {
 		errno = EINVAL;
-		__sdp_log(9, "Error accept: illegal address length pointer provided\n");
+		__sdp_log(8, "Error accept: illegal address length pointer provided\n");
 		return -1;
 	}
 
@@ -1889,7 +1896,7 @@ int accept(int fd, struct sockaddr *addr, socklen_t * addrlen)
 		ret = _socket_funcs.accept(fd, addr, addrlen);
 		if (ret < 0) {
 			if (!(fopts & O_NONBLOCK && errno == EWOULDBLOCK))
-				__sdp_log(9, "Error accept: accept returned :<%d> %s\n",
+				__sdp_log(8, "Error accept: accept returned :<%d> %s\n",
 						  ret, strerror(errno));
 		} else {
 			set_is_sdp_socket(ret, get_is_sdp_socket(fd));
@@ -1961,7 +1968,7 @@ int accept(int fd, struct sockaddr *addr, socklen_t * addrlen)
 				}
 			} else {
 				if (errno != EINTR) {
-					__sdp_log(9,
+					__sdp_log(8,
 							  "Error accept: select returned :<%d> (%d) %s\n",
 							  ret, errno, strerror(errno));
 				} else {
@@ -2325,7 +2332,7 @@ int epoll_ctl(int epfd, int op, int fd, struct epoll_event *event)
 	if (shadow_fd != -1) {
 		ret2 = _socket_funcs.epoll_ctl(epfd, op, shadow_fd, event);
 		if (ret2 < 0) {
-			__sdp_log(9, "Error epoll_ctl <%s:%d:%d>",
+			__sdp_log(8, "Error epoll_ctl <%s:%d:%d>",
 					  program_invocation_short_name, fd, shadow_fd);
 			return ret2;
 		}
