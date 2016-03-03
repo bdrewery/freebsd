@@ -217,7 +217,7 @@ volatile static int init_status = 0;	/* 0: idle, 1:during, 2:ready */
 
 /* glibc provides these symbols - for Solaris builds we fake them
  * until _init is called, at which point we quiz libdl.. */
-#ifdef SOLARIS_BUILD
+#if defined(SOLARIS_BUILD) || defined(__FreeBSD__)
 char *program_invocation_name = "[progname]", *program_invocation_short_name =
 	"[short_progname]";
 #else
