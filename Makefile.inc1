@@ -1907,7 +1907,7 @@ _lib_libradius=	lib/libradius
 .endif
 
 .if ${MK_OFED} != "no"
-_ofed_lib=	contrib/ofed/usr.lib/
+_ofed_lib=	contrib/ofed/usr.lib
 .endif
 
 .if ${MK_CASPER} != "no"
