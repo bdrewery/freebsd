@@ -293,3 +293,9 @@ STAGE_SYMLINKS.links= ${SYMLINKS}
 .endif
 .endif
 
+# The above is used in the DIRDEPS_BUILD.  The below is used in buildworld
+# for libraries.
+.if defined(STAGE_IN_ALL) && !empty(DESTDIR)
+stageinstall: .PHONY install
+all: .WAIT stageinstall
+.endif
