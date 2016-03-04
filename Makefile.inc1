@@ -1908,6 +1908,25 @@ _lib_libradius=	lib/libradius
 
 .if ${MK_OFED} != "no"
 _ofed_lib=	contrib/ofed/usr.lib
+_prebuild_libs+=	contrib/ofed/usr.lib/libcxgb4
+_prebuild_libs+=	contrib/ofed/usr.lib/libibcm
+_prebuild_libs+=	contrib/ofed/usr.lib/libibmad
+_prebuild_libs+=	contrib/ofed/usr.lib/libibumad
+_prebuild_libs+=	contrib/ofed/usr.lib/libmlx4
+_prebuild_libs+=	contrib/ofed/usr.lib/libmthca
+_prebuild_libs+=	contrib/ofed/usr.lib/libosmvendor
+_prebuild_libs+=	contrib/ofed/usr.lib/librdmacm
+
+contrib/ofed/usr.lib/libcxgb4__L: contrib/ofed/usr.lib/libibverbs__L
+contrib/ofed/usr.lib/libibcm__L: contrib/ofed/usr.lib/libibverbs__L
+contrib/ofed/usr.lib/libibmad__L: contrib/ofed/usr.lib/libibcommon__L \
+    contrib/ofed/usr.lib/libibumad__L
+contrib/ofed/usr.lib/libibumad__L: contrib/ofed/usr.lib/libibcommon__L
+contrib/ofed/usr.lib/libmlx4__L: contrib/ofed/usr.lib/libibverbs__L
+contrib/ofed/usr.lib/libmthca__L: contrib/ofed/usr.lib/libibverbs__L
+contrib/ofed/usr.lib/libosmvendor__L: contrib/ofed/usr.lib/libibumad__L \
+    contrib/ofed/usr.lib/libopensm__L contrib/ofed/usr.lib/libosmcomp__L
+contrib/ofed/usr.lib/librdmacm__L: contrib/ofed/usr.lib/libibverbs__L
 .endif
 
 .if ${MK_CASPER} != "no"
