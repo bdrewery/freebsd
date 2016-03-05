@@ -16,6 +16,7 @@ SUBDIR_ORDERED=	csu \
 	${_libclang_rt} \
 	${_libcplusplus} \
 	${_libcxxrt} \
+	libelf \
 	msun
 
 # The main list; please keep these sorted alphabetically.
@@ -45,7 +46,6 @@ SUBDIR=	${SUBDIR_ORDERED} \
 	libdpv \
 	libdwarf \
 	libedit \
-	libelf \
 	${_libelftc} \
 	libevent \
 	libexecinfo \
