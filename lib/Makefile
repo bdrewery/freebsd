@@ -10,8 +10,8 @@
 
 SUBDIR_ORDERED=	csu \
 	.WAIT \
-	libc \
 	libc_nonshared \
+	libc \
 	libcompiler_rt \
 	${_libclang_rt} \
 	${_libcplusplus} \
@@ -132,7 +132,7 @@ SUBDIR_DEPEND_libatm= libmd
 SUBDIR_DEPEND_libauditdm= libbsm
 SUBDIR_DEPEND_libbsnmp= ${_libnetgraph}
 SUBDIR_DEPEND_libc++:= libcxxrt
-SUBDIR_DEPEND_libc= libcompiler_rt
+SUBDIR_DEPEND_libc= libcompiler_rt libc_nonshared
 SUBDIR_DEPEND_libcam= libsbuf
 SUBDIR_DEPEND_libcasper= libnv
 SUBDIR_DEPEND_libdevstat= libkvm
