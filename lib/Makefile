@@ -16,7 +16,6 @@ SUBDIR_ORDERED=	csu \
 	${_libclang_rt} \
 	${_libcplusplus} \
 	${_libcxxrt} \
-	libelf \
 	msun
 
 # The main list; please keep these sorted alphabetically.
@@ -46,6 +45,7 @@ SUBDIR=	${SUBDIR_ORDERED} \
 	libdpv \
 	libdwarf \
 	libedit \
+	libelf \
 	${_libelftc} \
 	libevent \
 	libexecinfo \
@@ -137,15 +137,19 @@ SUBDIR_DEPEND_libcam= libsbuf
 SUBDIR_DEPEND_libcasper= libnv
 SUBDIR_DEPEND_libdevstat= libkvm
 SUBDIR_DEPEND_libdpv= libfigpar ncurses libutil
+SUBDIR_DEPEND_libdwarf= libelf
 SUBDIR_DEPEND_libedit= ncurses
+SUBDIR_DEPEND_libexecinfo= libelf
 SUBDIR_DEPEND_libgeom= libexpat libsbuf
+SUBDIR_DEPEND_libkvm= libelf
 SUBDIR_DEPEND_liblibrpcsec_gss= libgssapi
 SUBDIR_DEPEND_libmagic= libz
 SUBDIR_DEPEND_libmemstat= libkvm
 SUBDIR_DEPEND_libopie= libmd
 SUBDIR_DEPEND_libpam= libcrypt libopie ${_libradius} librpcsvc libtacplus libutil ${_libypclnt} ${_libcom_err} 
 SUBDIR_DEPEND_libpjdlog= libutil
-SUBDIR_DEPEND_libprocstat= libkvm libutil
+SUBDIR_DEPEND_libproc= libelf librtld_db libutil
+SUBDIR_DEPEND_libprocstat= libelf libkvm libutil
 SUBDIR_DEPEND_libradius= libmd
 SUBDIR_DEPEND_libsmb= libkiconv
 SUBDIR_DEPEND_libtacplus= libmd
