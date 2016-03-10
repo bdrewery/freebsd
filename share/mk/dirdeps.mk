@@ -308,7 +308,7 @@ NSkipDir = ${DEP_SKIP_DIR:${M_ListToSkip}}
 
 .if defined(NO_DIRDEPS) || defined(NODIRDEPS) || defined(WITHOUT_DIRDEPS)
 # confine ourselves to the original dir
-DIRDEPS_FILTER += M${_DEP_RELDIR}*
+DIRDEPS_FILTER += M${_DEP_RELDIR}* N${_DEP_RELDIR}*/*
 .endif
 
 # this is what we run below
