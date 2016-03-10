@@ -7,7 +7,7 @@ SUBDIR=	APPLE AST BIG5 CNS CP EBCDIC GB GEORGIAN ISO646 ISO-8859 JIS \
 	KAZAKH KOI KS MISC TCVN
 SUBDIR_PARALLEL=
 
-mapper.dir: ${SUBDIR}
+mapper.dir:
 	newfile=$$(for i in ${SUBDIR}; do \
 		cat $$i/mapper.dir.$$i; \
 	done); \
@@ -19,7 +19,7 @@ mapper.dir.db: mapper.dir
 FILES+=	mapper.dir mapper.dir.db
 CLEANFILES+= mapper.dir mapper.dir.db
 
-charset.pivot: ${SUBDIR}
+charset.pivot:
 	newfile=$$(for i in ${SUBDIR}; do \
 		cat $$i/charset.pivot.$$i; \
 	done); \

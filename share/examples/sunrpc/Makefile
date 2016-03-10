@@ -9,8 +9,6 @@ LIB=
 
 SUBDIR= dir msg sort
 
-all:	${SUBDIR}
-
 clean cleanup:
 	cd dir; $(MAKE) ${MFLAGS} cleanup
 	cd msg; $(MAKE) ${MFLAGS} cleanup

@@ -10,7 +10,7 @@ SUBDIR_PARALLEL=
 FILES+=	esdb.dir esdb.dir.db esdb.alias esdb.alias.db
 CLEANFILES= ${FILES}
 
-esdb.dir: ${SUBDIR}
+esdb.dir:
 	newfile=$$(for i in ${SUBDIR}; do \
 		cat $$i/esdb.dir.$$i; \
 	done); \
@@ -19,7 +19,7 @@ esdb.dir: ${SUBDIR}
 esdb.dir.db: esdb.dir
 	${MKESDB} -m -o ${.TARGET} ${.ALLSRC}
 
-esdb.alias: ${SUBDIR}
+esdb.alias:
 	newfile=$$(for i in ${SUBDIR}; do \
 		cat $$i/esdb.alias.$$i; \
 	done); \
