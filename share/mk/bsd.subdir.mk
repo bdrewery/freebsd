@@ -42,7 +42,7 @@ SUBDIR_TARGETS+= \
 		all all-man analyze buildconfig buildfiles buildincludes \
 		checkdpadd clean cleandepend cleandir cleanilinks \
 		cleanobj depend distribute files includes installconfig \
-		installfiles installincludes realinstall lint maninstall \
+		installfiles installincludes install lint maninstall \
 		manlint obj objlink tags \
 
 # Described above.
@@ -54,7 +54,7 @@ STANDALONE_SUBDIR_TARGETS+= \
 
 # It is safe to install in parallel when staging.
 .if defined(NO_ROOT)
-STANDALONE_SUBDIR_TARGETS+= realinstall
+STANDALONE_SUBDIR_TARGETS+= install
 .endif
 
 .include <bsd.init.mk>
@@ -93,8 +93,10 @@ ${__target}:	build${__target} install${__target}
 ${__stage}install:
 .endif
 .endfor
-install:	beforeinstall realinstall afterinstall
-.ORDER:		beforeinstall realinstall afterinstall
+subdir-install:	.PHONY
+install:	beforeinstall .WAIT subdir-install .WAIT realinstall .WAIT \
+		afterinstall
+.ORDER:		beforeinstall subdir-install realinstall afterinstall
 .endif
 .ORDER: all install
 
@@ -117,7 +119,7 @@ _SUBDIR_SH=	\
 
 _SUBDIR: .USEBEFORE
 .if defined(SUBDIR) && !empty(SUBDIR) && !defined(NO_SUBDIR)
-	@${_+_}target=${.TARGET:C/^subdir-//:realinstall=install}; \
+	@${_+_}target=${.TARGET:C/^subdir-//}; \
 	    for dir in ${SUBDIR:N.WAIT}; do ( ${_SUBDIR_SH} ); done
 .endif
 
@@ -129,10 +131,8 @@ ${SUBDIR:N.WAIT}: .PHONY .MAKE
 .for __target in ${SUBDIR_TARGETS}
 # Only recurse on directly-called targets.  I.e., don't recurse on dependencies
 # such as 'install' becoming {before,real,after}install, just recurse
-# 'install'.  Despite that, 'realinstall' is special due to ordering issues
-# with 'afterinstall'.
-.if !defined(NO_SUBDIR) && (make(${__target}) || \
-    (${__target} == realinstall && make(install)))
+# 'install'.
+.if !defined(NO_SUBDIR) && make(${__target})
 .if target(subdir-${__target})
 __attach_target=	subdir-${__target}
 .else
@@ -159,7 +159,7 @@ __deps+= ${__target}_subdir_${DIRPRFX}${__dep}
 .endfor
 .endif
 ${__target}_subdir_${DIRPRFX}${__dir}: .PHONY .MAKE .SILENT ${__deps}
-	@${_+_}target=${__target:realinstall=install}; \
+	@${_+_}target=${__target}; \
 	    dir=${__dir}; \
 	    ${_SUBDIR_SH};
 .endif
