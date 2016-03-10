@@ -16,8 +16,9 @@ __<bsd.init.mk>__:
 .include <bsd.own.mk>
 .MAIN: all
 beforebuild: .PHONY .NOTMAIN
+subdir-all: .PHONY .NOTMAIN
 .if !defined(_SKIP_BUILD)
-all: beforebuild .WAIT
+all: beforebuild .WAIT subdir-all .WAIT
 .endif
 
 .if ${.MAKE.LEVEL:U1} == 0 && ${BUILD_AT_LEVEL0:Uyes:tl} == "no" && !make(clean*)

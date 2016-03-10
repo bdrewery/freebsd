@@ -117,7 +117,7 @@ _SUBDIR_SH=	\
 
 _SUBDIR: .USEBEFORE
 .if defined(SUBDIR) && !empty(SUBDIR) && !defined(NO_SUBDIR)
-	@${_+_}target=${.TARGET:realinstall=install}; \
+	@${_+_}target=${.TARGET:C/^subdir-//:realinstall=install}; \
 	    for dir in ${SUBDIR:N.WAIT}; do ( ${_SUBDIR_SH} ); done
 .endif
 
@@ -133,6 +133,11 @@ ${SUBDIR:N.WAIT}: .PHONY .MAKE
 # with 'afterinstall'.
 .if !defined(NO_SUBDIR) && (make(${__target}) || \
     (${__target} == realinstall && make(install)))
+.if target(subdir-${__target})
+__attach_target=	subdir-${__target}
+.else
+__attach_target=	${__target}
+.endif
 # Can ordering be skipped for this and SUBDIR_PARALLEL forced?
 .if ${STANDALONE_SUBDIR_TARGETS:M${__target}}
 _is_standalone_target=	1
@@ -159,9 +164,9 @@ ${__target}_subdir_${DIRPRFX}${__dir}: .PHONY .MAKE .SILENT ${__deps}
 	    ${_SUBDIR_SH};
 .endif
 .endfor	# __dir in ${SUBDIR}
-${__target}: ${__subdir_targets}
+${__attach_target}: ${__subdir_targets}
 .else
-${__target}: _SUBDIR
+${__attach_target}: _SUBDIR
 .endif	# SUBDIR_PARALLEL || _is_standalone_target
 .endif	# make(${__target})
 .endfor	# __target in ${SUBDIR_TARGETS}
