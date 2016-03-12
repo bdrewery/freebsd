@@ -6,6 +6,7 @@ __<${_this:T}>__:
 # Makefile for the compatibility libraries.
 # - 32-bit compat libraries on PowerPC and AMD64.
 #   could also be for mips, but that doesn't work today.
+# - softfloat libraries
 
 # -------------------------------------------------------------------
 # 32 bit world
@@ -38,6 +39,13 @@ LIB32WMAKEFLAGS=	\
 LIB32CFLAGS=	-m32 -DCOMPAT_32BIT
 LIB32DTRACE=	${DTRACE} -32
 LIB32WMAKEFLAGS+=	-DCOMPAT_32BIT
+
+# -------------------------------------------------------------------
+# soft-fp world
+LIBSOFTCFLAGS=	-DCOMPAT_SOFTFP
+LIBSOFTCPUFLAGS=
+LIBSOFTWMAKEENV= CPUTYPE=soft MACHINE=arm MACHINE_ARCH=armv6
+LIBSOFTWMAKEFLAGS=	-DCOMPAT_SOFTFP
 
 # -------------------------------------------------------------------
 # Generic code for each type.
