@@ -117,6 +117,10 @@ _SUBDIR_SH=	\
 		cd ${.CURDIR}/$${dir}; \
 		${MAKE} $${target} DIRPRFX=${DIRPRFX}$${dir}/
 
+_subdir_print: .PHONY
+	@echo here ${.CURDIR}
+	${ECHODIR} "===> ${DIRPRFX}$${dir} ($${target})"; \
+
 _SUBDIR: .USEBEFORE
 .if defined(SUBDIR) && !empty(SUBDIR) && !defined(NO_SUBDIR)
 	@${_+_}target=${.TARGET:C/^subdir-//}; \
@@ -164,9 +168,9 @@ ${__target}_subdir_${DIRPRFX}${__dir}: .PHONY .MAKE .SILENT ${__deps}
 	    ${_SUBDIR_SH};
 .endif
 .endfor	# __dir in ${SUBDIR}
-${__attach_target}: ${__subdir_targets}
+${__attach_target}: ${__subdir_targets} .WAIT _subdir_print
 .else
-${__attach_target}: _SUBDIR
+${__attach_target}: _SUBDIR .WAIT _subdir_print
 .endif	# SUBDIR_PARALLEL || _is_standalone_target
 .endif	# make(${__target})
 .endfor	# __target in ${SUBDIR_TARGETS}
