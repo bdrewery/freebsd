@@ -140,11 +140,17 @@ SUBDIR:=	${SUBDIR:N.WAIT}
 .else
 _is_standalone_target=	0
 .endif
-.if defined(SUBDIR_PARALLEL) || ${_is_standalone_target} == 1
+.if defined(SUBDIR_PARALLEL) || ${_is_standalone_target} == 1 || defined(SUBDIR_TEST)
 __subdir_targets=
 .for __dir in ${SUBDIR}
 .if ${__dir} == .WAIT
+.if defined(SUBDIR_TEST)
+__waitdeps:= ${__waitdeps} ${__subdir_targets}
+__waitdeps:= ${__subdir_targets}
+.info wait on ${__waitdeps}
+.else
 __subdir_targets+= .WAIT
+.endif
 .else
 __subdir_targets+= ${__target}_subdir_${DIRPRFX}${__dir}
 __deps=
@@ -153,12 +159,14 @@ __deps=
 __deps+= ${__target}_subdir_${DIRPRFX}${__dep}
 .endfor
 .endif
-${__target}_subdir_${DIRPRFX}${__dir}: .PHONY .MAKE .SILENT ${__deps}
+.info ${__target}_subdir_${DIRPRFX}${__dir}: .PHONY .MAKE .SILENT ${__deps} ${__waitdeps}
+${__target}_subdir_${DIRPRFX}${__dir}: .PHONY .MAKE .SILENT ${__deps} ${__waitdeps}
 	@${_+_}target=${__target:realinstall=install}; \
 	    dir=${__dir}; \
 	    ${_SUBDIR_SH};
 .endif
 .endfor	# __dir in ${SUBDIR}
+.info ${__target}: ${__subdir_targets}
 ${__target}: ${__subdir_targets}
 .else
 ${__target}: _SUBDIR
