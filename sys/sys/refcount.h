@@ -53,6 +53,13 @@ refcount_acquire(volatile u_int *count)
 	atomic_add_acq_int(count, 1);	
 }
 
+static __inline u_int
+refcount_read(volatile u_int *count)
+{
+
+	return *count;
+}
+
 static __inline int
 refcount_release(volatile u_int *count)
 {

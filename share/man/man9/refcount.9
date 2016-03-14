@@ -26,7 +26,7 @@
 .\"
 .\" $FreeBSD$
 .\"
-.Dd January 20, 2009
+.Dd March 14, 2016
 .Dt REFCOUNT 9
 .Os
 .Sh NAME
@@ -42,6 +42,8 @@
 .Fn refcount_init "volatile u_int *count" "u_int value"
 .Ft void
 .Fn refcount_acquire "volatile u_int *count"
+.Ft u_int
+.Fn refcount_read "volatile u_int *count"
 .Ft int
 .Fn refcount_release "volatile u_int *count"
 .Sh DESCRIPTION
@@ -69,6 +71,10 @@ For example,
 if an object is stored on a list and the list holds a reference on the
 object, then holding a lock that protects the list provides sufficient
 protection for acquiring a new reference.
+.Pp
+The
+.Fn refcount_read
+function is used to read the current reference count.
 .Pp
 The
 .Fn refcount_release
