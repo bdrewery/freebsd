@@ -30,6 +30,7 @@ __DEFAULT_YES_OPTIONS = \
     CDDL \
     CRYPT \
     CUSE \
+    DEPEND \
     FAST_DEPEND \
     FORMAT_EXTENSIONS \
     INET \

@@ -231,6 +231,7 @@ _meta_filemon=	1
 .if ${MK_FAST_DEPEND} == "yes"
 DEPENDOBJS+=	${SYSTEM_OBJS} genassym.o
 DEPENDFILES_OBJS=	${DEPENDOBJS:O:u:C/^/.depend./}
+.if ${MK_DEPEND} == "yes"
 .if ${MAKE_VERSION} < 20160220
 DEPEND_MP?=	-MP
 .endif
@@ -255,6 +256,7 @@ CFLAGS+=	${DEPEND_CFLAGS}
 .endfor
 .endif	# !defined(_SKIP_READ_DEPEND)
 .endif	# !defined(_meta_filemon)
+.endif	# ${MK_DEPEND} == "yes"
 
 # Always run 'make depend' to generate dependencies early and to avoid the
 # need for manually running it.  For the kernel this is mostly a NOP since
@@ -269,7 +271,8 @@ beforebuild: kernel-depend
 .if ${MK_FAST_DEPEND} == "yes"
 .for __obj in ${DEPENDOBJS:O:u}
 .if (defined(_meta_filemon) && !exists(${.OBJDIR}/${__obj}.meta)) || \
-    (!defined(_meta_filemon) && !exists(${.OBJDIR}/.depend.${__obj}))
+    (!defined(_meta_filemon) && \
+      (${MK_DEPEND} == "no" || !exists(${.OBJDIR}/.depend.${__obj})))
 .if ${SYSTEM_OBJS:M${__obj}}
 ${__obj}: ${OBJS_DEPEND_GUESS}
 .endif

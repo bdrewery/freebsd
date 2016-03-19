@@ -187,6 +187,7 @@ DEPENDSRCS=	${SRCS:M*.[cSC]} ${SRCS:M*.cxx} ${SRCS:M*.cpp} ${SRCS:M*.cc}
 DEPENDOBJS+=	${DEPENDSRCS:R:S,$,.o,}
 .endif
 DEPENDFILES_OBJS=	${DEPENDOBJS:O:u:${DEPEND_FILTER}:C/^/${DEPENDFILE}./}
+.if ${MK_DEPEND} == "yes"
 DEPEND_CFLAGS+=	-MD ${DEPEND_MP} -MF${DEPENDFILE}.${.TARGET:${DEPEND_FILTER}}
 DEPEND_CFLAGS+=	-MT${.TARGET}
 # Skip generating or including .depend.* files if in meta+filemon mode since
@@ -210,6 +211,7 @@ CFLAGS+=	${DEPEND_CFLAGS}
 .endfor
 .endif	# !defined(_SKIP_READ_DEPEND)
 .endif	# !defined(_meta_filemon)
+.endif	# ${MK_DEPEND} == "yes"
 .endif	# ${MK_FAST_DEPEND} == "yes"
 .endif	# defined(SRCS)
 
@@ -233,7 +235,8 @@ afterdepend: beforedepend
 .if ${MK_FAST_DEPEND} == "yes"
 .for __obj in ${DEPENDOBJS:O:u}
 .if (defined(_meta_filemon) && !exists(${.OBJDIR}/${__obj}.meta)) || \
-    (!defined(_meta_filemon) && !exists(${.OBJDIR}/${DEPENDFILE}.${__obj}))
+    (!defined(_meta_filemon) && \
+      (${MK_DEPEND} == "no" || !exists(${.OBJDIR}/${DEPENDFILE}.${__obj})))
 ${__obj}: ${OBJS_DEPEND_GUESS}
 ${__obj}: ${OBJS_DEPEND_GUESS.${__obj}}
 .endif
