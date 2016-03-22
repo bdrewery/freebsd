@@ -68,6 +68,9 @@ struct alq {
 					 * NB: Used as a wait channel so must
 					 * not be first field in the alq struct
 					 */
+	int	aq_error;		/* Any error from writing, returned
+					 * from alq_close().
+					 */
 	struct	ale	aq_getpost;	/* ALE for use by get/post */
 	struct mtx	aq_mtx;		/* Queue lock */
 	struct vnode	*aq_vp;		/* Open vnode handle */
@@ -239,6 +242,7 @@ ald_shutdown(void *arg, int howto)
 		LIST_REMOVE(alq, aq_link);
 		ALD_UNLOCK();
 		alq_shutdown(alq);
+		alq_destroy(alq);
 		ALD_LOCK();
 	}
 
@@ -259,6 +263,8 @@ ald_shutdown(void *arg, int howto)
 static void
 alq_shutdown(struct alq *alq)
 {
+	int error;
+
 	ALQ_LOCK(alq);
 
 	/* Stop any new writers. */
@@ -283,19 +289,22 @@ alq_shutdown(struct alq *alq)
 		alq->aq_flags |= AQ_WANTED;
 		msleep_spin(alq, &alq->aq_mtx, "aldclose", 0);
 	}
+	KASSERT(!HAS_PENDING_DATA(alq), ("%s: queue not empty!", __func__));
 	ALQ_UNLOCK(alq);
 
-	vn_close(alq->aq_vp, FWRITE, alq->aq_cred,
-	    curthread);
+	error = vn_close(alq->aq_vp, FWRITE, alq->aq_cred, curthread);
+	if (error != 0)
+		alq->aq_error = error;
 	crfree(alq->aq_cred);
 }
 
 void
 alq_destroy(struct alq *alq)
 {
-	/* Drain all pending IO. */
-	alq_shutdown(alq);
 
+	KASSERT(!HAS_PENDING_DATA(alq), ("%s: queue not empty!", __func__));
+	KASSERT((alq->aq_flags & AQ_SHUTDOWN) != 0, ("%s called without"
+	    " alq_shutdown()", __func__));
 	mtx_destroy(&alq->aq_mtx);
 	free(alq->aq_entbuf, M_ALD);
 	free(alq, M_ALD);
@@ -312,6 +321,7 @@ alq_doio(struct alq *alq)
 	struct vnode *vp;
 	struct uio auio;
 	struct iovec aiov[2];
+	int error;
 	int totlen;
 	int iov;
 	int wrapearly;
@@ -367,17 +377,17 @@ alq_doio(struct alq *alq)
 	 */
 	vn_start_write(vp, &mp, V_WAIT);
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-	/*
-	 * XXX: VOP_WRITE error checks are ignored.
-	 */
 #ifdef MAC
-	if (mac_vnode_check_write(alq->aq_cred, NOCRED, vp) == 0)
+	error = mac_vnode_check_write(alq->aq_cred, NOCRED, vp);
+	if (error == 0)
 #endif
-		VOP_WRITE(vp, &auio, IO_UNIT | IO_APPEND, alq->aq_cred);
+		error = VOP_WRITE(vp, &auio, IO_UNIT | IO_APPEND, alq->aq_cred);
 	VOP_UNLOCK(vp, 0);
 	vn_finished_write(mp);
 
 	ALQ_LOCK(alq);
+	if (error != 0)
+		alq->aq_error = error;
 	alq->aq_flags &= ~AQ_FLUSHING;
 
 	/* Adjust writetail as required, taking into account wrapping. */
@@ -470,6 +480,7 @@ alq_open_flags(struct alq **alqp, const char *file, struct ucred *cred, int cmod
 		alq->aq_flags |= AQ_ORDERED;
 
 	if ((error = ald_add(alq)) != 0) {
+		alq_shutdown(alq);
 		alq_destroy(alq);
 		return (error);
 	}
@@ -912,12 +923,24 @@ alq_flush(struct alq *alq)
 /*
  * Flush remaining data, close the file and free all resources.
  */
-void
+int
 alq_close(struct alq *alq)
 {
+	int error;
+
 	/* Only flush and destroy alq if not already shutting down. */
-	if (ald_rem(alq) == 0)
-		alq_destroy(alq);
+	error = ald_rem(alq);
+	if (error != 0)
+		return (error);
+	/*
+	 * Drain all pending IO and fetch the error to return before
+	 * destroying the alq.
+	 */
+	alq_shutdown(alq);
+	error = alq->aq_error;
+	alq_destroy(alq);
+
+	return (error);
 }
 
 static int

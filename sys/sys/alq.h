@@ -106,7 +106,7 @@ void alq_flush(struct alq *alq);
 /*
  * alq_close:  Flush the queue and free all resources.
  */
-void alq_close(struct alq *alq);
+int alq_close(struct alq *alq);
 
 /*
  * alq_getn:  Return an entry for direct access

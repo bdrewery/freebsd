@@ -31,7 +31,7 @@
 .\"
 .\" $FreeBSD$
 .\"
-.Dd April 26, 2010
+.Dd March 22, 2016
 .Dt ALQ 9
 .Os
 .Sh NAME
@@ -73,7 +73,7 @@
 .Fn alq_write "struct alq *alq" "void *data" "int flags"
 .Ft void
 .Fn alq_flush "struct alq *alq"
-.Ft void
+.Ft int
 .Fn alq_close "struct alq *alq"
 .Ft struct ale *
 .Fn alq_getn "struct alq *alq" "int len" "int flags"
@@ -413,6 +413,13 @@ if
 was set in
 .Fa flags
 and either the queue is full or the system is shutting down.
+.Pp
+The
+.Fn alq_close
+function will return any error encountered from
+.Xr VOP_WRITE 9
+or
+.Xr VOP_CLOSE 9 .
 .Pp
 NOTE: invalid arguments to non-void functions will result in
 undefined behaviour.
