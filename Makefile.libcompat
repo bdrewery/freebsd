@@ -75,11 +75,15 @@ LIBCOMPATCFLAGS+=	-B${LIBCOMPATTMP}/usr/lib${libcompat}
 # GCC requires -isystem when using a cross-compiler.
 LIBCOMPATCFLAGS+=	-isystem ${LIBCOMPATTMP}/usr/include
 
+.if ${XCC:N${CCACHE_BIN}:M/*} || ${MK_CROSS_COMPILER} == "no"
 .if defined(X_COMPILER_TYPE) && ${X_COMPILER_TYPE} == gcc
 # Force using libc++ for external GCC.
 LIBCOMPATCXXFLAGS+=	-isystem ${LIBCOMPATTMP}/usr/include/c++/v1 -std=c++11 \
 			-nostdinc++ -L${LIBCOMPAT_OBJTREE}${.CURDIR}/lib/libc++
+.elif !empty(TARGET_TRIPLE)
+LIBCOMPATCFLAGS+=	-target ${TARGET_TRIPLE}
 .endif
+.endif # ${XCC:M/*} || ${MK_CROSS_COMPILER} == "no"
 
 # Yes, the flags are redundant.
 LIBCOMPATWMAKEENV+= MAKEOBJDIRPREFIX=${LIBCOMPAT_OBJTREE} \
