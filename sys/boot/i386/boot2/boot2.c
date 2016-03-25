@@ -143,14 +143,13 @@ strcmp(const char *s1, const char *s2)
 #define	UFS_SMALL_CGBASE
 #include "ufsread.c"
 
-static inline int
+static inline const char *
 xfsread(ufs_ino_t inode, void *buf, size_t nbyte)
 {
     if ((size_t)fsread(inode, buf, nbyte) != nbyte) {
-	printf("Invalid %s\n", "format");
-	return -1;
+	    return "format";
     }
-    return 0;
+    return NULL;
 }
 
 static inline void
@@ -285,59 +284,60 @@ load(void)
     uint32_t addr;
     int k;
     uint8_t i, j;
+    const char *reason;
 
     if (!(ino = lookup(kname))) {
 	if (!ls)
 	    printf("No %s\n", kname);
 	return;
     }
-    if (xfsread(ino, &hdr, sizeof(hdr)))
-	return;
+    if ((reason = xfsread(ino, &hdr, sizeof(hdr))))
+	    goto error;
 
     if (N_GETMAGIC(hdr.ex) == ZMAGIC) {
 	addr = hdr.ex.a_entry & 0xffffff;
 	p = PTOV(addr);
 	fs_off = PAGE_SIZE;
-	if (xfsread(ino, p, hdr.ex.a_text))
-	    return;
+	if ((reason = xfsread(ino, p, hdr.ex.a_text)))
+		goto error;
 	p += roundup2(hdr.ex.a_text, PAGE_SIZE);
-	if (xfsread(ino, p, hdr.ex.a_data))
-	    return;
+	if ((reason = xfsread(ino, p, hdr.ex.a_data)))
+		goto error;
     } else if (IS_ELF(hdr.eh)) {
 	fs_off = hdr.eh.e_phoff;
 	for (j = k = 0; k < hdr.eh.e_phnum && j < 2; k++) {
-	    if (xfsread(ino, ep + j, sizeof(ep[0])))
-		return;
+	    if ((reason = xfsread(ino, ep + j, sizeof(ep[0]))))
+		    goto error;
 	    if (ep[j].p_type == PT_LOAD)
 		j++;
 	}
 	for (i = 0; i < 2; i++) {
 	    p = PTOV(ep[i].p_paddr & 0xffffff);
 	    fs_off = ep[i].p_offset;
-	    if (xfsread(ino, p, ep[i].p_filesz))
-		return;
+	    if ((reason = xfsread(ino, p, ep[i].p_filesz)))
+		    goto error;
 	}
 	p += roundup2(ep[1].p_memsz, PAGE_SIZE);
 	bootinfo.bi_symtab = VTOP(p);
 	if (hdr.eh.e_shnum == hdr.eh.e_shstrndx + 3) {
 	    fs_off = hdr.eh.e_shoff + sizeof(es[0]) *
 		(hdr.eh.e_shstrndx + 1);
-	    if (xfsread(ino, &es, sizeof(es)))
-		return;
+	    if ((reason = xfsread(ino, &es, sizeof(es))))
+		    goto error;
 	    for (i = 0; i < 2; i++) {
 		*(Elf32_Word *)p = es[i].sh_size;
 		p += sizeof(es[i].sh_size);
 		fs_off = es[i].sh_offset;
-		if (xfsread(ino, p, es[i].sh_size))
-		    return;
+		if ((reason = xfsread(ino, p, es[i].sh_size)))
+			goto error;
 		p += es[i].sh_size;
 	    }
 	}
 	addr = hdr.eh.e_entry & 0xffffff;
 	bootinfo.bi_esymtab = VTOP(p);
     } else {
-	printf("Invalid %s\n", "format");
-	return;
+	    reason = "format";
+	    goto error;
     }
 
     bootinfo.bi_kernelname = VTOP(kname);
@@ -345,6 +345,9 @@ load(void)
     __exec((caddr_t)addr, RB_BOOTINFO | (opts & RBX_MASK),
 	   MAKEBOOTDEV(dev_maj[dsk.type], dsk.slice, dsk.unit, dsk.part),
 	   0, 0, 0, VTOP(&bootinfo));
+    return;
+error:
+    printf("Invalid %s\n", reason);
 }
 
 static int
