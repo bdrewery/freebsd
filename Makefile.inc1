@@ -432,6 +432,12 @@ TARGET_ABI=	gnueabihf
 TARGET_ABI=	gnueabi
 .endif
 .endif
+# Force libc++ when using GCC.
+# There is a hidden assumption in the logic for using -target in that if you
+# use X_COMPILER_TYPE it is assumed to be a cross-compiler that will not
+# need -target.  However, if you use an external non-cross-compiler GCC then
+# you must set X_COMPILER_TYPE=gcc to build with libc++, but then -target
+# won't be used.
 .if defined(X_COMPILER_TYPE) && ${X_COMPILER_TYPE} == gcc
 # GCC requires -isystem when using a cross-compiler.
 XCFLAGS+=	-isystem ${WORLDTMP}/usr/include
