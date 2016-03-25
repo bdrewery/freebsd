@@ -448,7 +448,7 @@ XCXXFLAGS+=	-isystem ${WORLDTMP}/usr/include/c++/v1 -std=c++11 \
 # due to CXX="${XCXX} ${XCXXFLAGS}".  bsd.dep.mk does use CXXFLAGS when
 # building C++ files so this can come out if passing CXXFLAGS down is fixed.
 DEPFLAGS+=	-I${WORLDTMP}/usr/include/c++/v1
-.else
+.elif ${TARGET_ARCH} != ${MACHINE_ARCH}
 TARGET_ABI?=	unknown
 TARGET_TRIPLE?=	${TARGET_ARCH:C/amd64/x86_64/}-${TARGET_ABI}-freebsd11.0
 XCFLAGS+=	-target ${TARGET_TRIPLE}
