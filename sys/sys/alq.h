@@ -75,8 +75,11 @@ struct ale {
  *	error from open or 0 on success
  */
 struct ucred;
+struct vnode;
 int alq_open_flags(struct alq **alqp, const char *file, struct ucred *cred, int cmode,
 	    int size, int flags);
+int alq_open_vnode(struct alq **alqp, struct vnode *file, struct ucred *cred,
+	    int size, int count);
 int alq_open(struct alq **alqp, const char *file, struct ucred *cred, int cmode,
 	    int size, int count);
 

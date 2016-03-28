@@ -491,6 +491,53 @@ alq_open_flags(struct alq **alqp, const char *file, struct ucred *cred, int cmod
 }
 
 int
+alq_open_vnode(struct alq **alqp, struct vnode *vp, struct ucred *cred,
+    int size, int flags)
+{
+	struct thread *td;
+	struct alq *alq;
+	int error;
+
+	KASSERT((size > 0), ("%s: size <= 0", __func__));
+
+	*alqp = NULL;
+	td = curthread;
+
+	error = vn_lock(vp, LK_EXCLUSIVE);
+	if (error != 0)
+		return (error);
+	vref(vp);
+	VOP_ADD_WRITECOUNT(vp, 1);
+	VOP_UNLOCK(vp, 0);
+
+	alq = malloc(sizeof(*alq), M_ALD, M_WAITOK|M_ZERO);
+	alq->aq_vp = vp;
+	alq->aq_cred = crhold(cred);
+
+	mtx_init(&alq->aq_mtx, "ALD Queue", NULL, MTX_SPIN|MTX_QUIET);
+
+	alq->aq_buflen = size;
+	alq->aq_entmax = 0;
+	alq->aq_entlen = 0;
+
+	alq->aq_freebytes = alq->aq_buflen;
+	alq->aq_entbuf = malloc(alq->aq_buflen, M_ALD, M_WAITOK|M_ZERO);
+	alq->aq_writehead = alq->aq_writetail = 0;
+	if (flags & ALQ_ORDERED)
+		alq->aq_flags |= AQ_ORDERED;
+
+	if ((error = ald_add(alq)) != 0) {
+		alq_shutdown(alq);
+		alq_destroy(alq);
+		return (error);
+	}
+
+	*alqp = alq;
+
+	return (0);
+}
+
+int
 alq_open(struct alq **alqp, const char *file, struct ucred *cred, int cmode,
     int size, int count)
 {

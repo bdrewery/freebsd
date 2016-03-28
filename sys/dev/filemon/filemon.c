@@ -32,6 +32,7 @@ __FBSDID("$FreeBSD$");
 #include "opt_compat.h"
 
 #include <sys/param.h>
+#include <sys/alq.h>
 #include <sys/file.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
@@ -88,6 +89,7 @@ MALLOC_DEFINE(M_FILEMON, "filemon", "File access monitor");
  */
 struct filemon {
 	struct sx	lock;		/* Lock for this filemon. */
+	struct alq	*alq;		/* Output log. */
 	struct file	*fp;		/* Output file pointer. */
 	char		fname1[MAXPATHLEN]; /* Temporary filename buffer. */
 	char		fname2[MAXPATHLEN]; /* Temporary filename buffer. */
@@ -255,6 +257,7 @@ filemon_close_log(struct filemon *filemon)
 	struct file *fp;
 	struct timeval now;
 	size_t len;
+	int error;
 
 	sx_assert(&filemon->lock, SA_XLOCKED);
 	if (filemon->fp == NULL)
@@ -272,8 +275,11 @@ filemon_close_log(struct filemon *filemon)
 	filemon->fp = NULL;
 
 	sx_xunlock(&filemon->lock);
+	error = alq_close(filemon->alq);
 	fdrop(fp, curthread);
 	sx_xlock(&filemon->lock);
+	if (error != 0)
+		filemon->error = error;
 }
 
 /*
@@ -372,12 +378,24 @@ filemon_ioctl(struct cdev *dev, u_long cmd, caddr_t data, int flag __unused,
 			break;
 		}
 
+		/* XXX: fgetvp_write */
 		error = fget_write(td, *(int *)data,
 		    cap_rights_init(&rights, CAP_PWRITE),
 		    &filemon->fp);
-		if (error == 0)
+		if (error == 0) {
+			error = alq_open_vnode(&filemon->alq,
+			    filemon->fp->f_vnode,
+			    curthread->td_ucred,
+			    1000,
+			    ALQ_ORDERED);
 			/* Write the file header. */
-			filemon_comment(filemon);
+			if (error == 0)
+				filemon_comment(filemon);
+			else {
+				fdrop(filemon->fp, curthread);
+				filemon->fp = NULL;
+			}
+		}
 		break;
 
 	/* Set the monitored process ID. */
@@ -504,4 +522,5 @@ filemon_modevent(module_t mod __unused, int type, void *data)
 }
 
 DEV_MODULE(filemon, filemon_modevent, NULL);
+MODULE_DEPEND(filemon, alq, 1, 1, 1);
 MODULE_VERSION(filemon, 1);

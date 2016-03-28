@@ -44,29 +44,13 @@ static eventhandler_tag filemon_fork_tag;
 static void
 filemon_output(struct filemon *filemon, char *msg, size_t len)
 {
-	struct uio auio;
-	struct iovec aiov;
-	int error;
 
 	if (filemon->fp == NULL)
 		return;
 
-	aiov.iov_base = msg;
-	aiov.iov_len = len;
-	auio.uio_iov = &aiov;
-	auio.uio_iovcnt = 1;
-	auio.uio_resid = len;
-	auio.uio_segflg = UIO_SYSSPACE;
-	auio.uio_rw = UIO_WRITE;
-	auio.uio_td = curthread;
-	auio.uio_offset = (off_t) -1;
-
-	if (filemon->fp->f_type == DTYPE_VNODE)
-		bwillwrite();
-
-	error = fo_write(filemon->fp, &auio, curthread->td_ucred, 0, curthread);
-	if (error != 0)
-		filemon->error = error;
+	alq_writen(filemon->alq,
+	    msg, len,
+	    ALQ_WAITOK);
 }
 
 static int
