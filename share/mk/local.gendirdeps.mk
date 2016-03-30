@@ -14,7 +14,6 @@ GENDIRDEPS_FILTER+= \
 	Ntools/*
 
 # Exclude toolchain which is handled special.
-.if ${RELDIR:Mtargets*} == ""
 .if ${RELDIR:Nusr.bin/clang/*:Ngnu/usr.bin/cc/*:Nlib/clang*} != ""
 GENDIRDEPS_FILTER.host+= \
 	Nusr.bin/clang/* \
@@ -36,7 +35,6 @@ GENDIRDEPS_FILTER+= \
 	Ngnu/usr.bin/cc* \
 	Ngnu/usr.bin/binutils*.host \
 
-.endif
 
 GENDIRDEPS_FILTER+= ${GENDIRDEPS_FILTER.${MACHINE}:U}
 
