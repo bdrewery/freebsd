@@ -86,13 +86,13 @@ ${PROG_FULL}: beforelinking
 ${PROG_FULL}: ${OBJS}
 .if defined(PROG_CXX)
 	${CXX:N${CCACHE_BIN}} ${CXXFLAGS:N-M*} ${LDFLAGS} -o ${.TARGET} \
-	    ${OBJS} ${LDADD}
+	    ${.ALLSRC} ${LDADD}
 .else
-	${CC:N${CCACHE_BIN}} ${CFLAGS:N-M*} ${LDFLAGS} -o ${.TARGET} ${OBJS} \
+	${CC:N${CCACHE_BIN}} ${CFLAGS:N-M*} ${LDFLAGS} -o ${.TARGET} ${.ALLSRC} \
 	    ${LDADD}
 .endif
 .if ${MK_CTF} != "no"
-	${CTFMERGE} ${CTFFLAGS} -o ${.TARGET} ${OBJS}
+	${CTFMERGE} ${CTFFLAGS} -o ${.TARGET} ${.ALLSRC}
 .endif
 
 .else	# !defined(SRCS)
@@ -118,13 +118,13 @@ ${PROG_FULL}: beforelinking
 ${PROG_FULL}: ${OBJS}
 .if defined(PROG_CXX)
 	${CXX:N${CCACHE_BIN}} ${CXXFLAGS:N-M*} ${LDFLAGS} -o ${.TARGET} \
-	    ${OBJS} ${LDADD}
+	    ${.ALLSRC} ${LDADD}
 .else
-	${CC:N${CCACHE_BIN}} ${CFLAGS:N-M*} ${LDFLAGS} -o ${.TARGET} ${OBJS} \
+	${CC:N${CCACHE_BIN}} ${CFLAGS:N-M*} ${LDFLAGS} -o ${.TARGET} ${.ALLSRC} \
 	    ${LDADD}
 .endif
 .if ${MK_CTF} != "no"
-	${CTFMERGE} ${CTFFLAGS} -o ${.TARGET} ${OBJS}
+	${CTFMERGE} ${CTFFLAGS} -o ${.TARGET} ${.ALLSRC}
 .endif
 .endif # !target(${PROG})
 
