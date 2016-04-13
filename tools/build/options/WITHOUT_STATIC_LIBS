@@ -1,0 +1,6 @@
+.\" $FreeBSD$
+Set to avoid compiling or installing optional static libraries for libraries
+that build a shared library.
+This will still install some critical static libraries required for compiling.
+To avoid installing any static libraries see
+.Sy WITHOUT_INSTALLLIB .

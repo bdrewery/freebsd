@@ -24,6 +24,8 @@ LIB_PRIVATE=	${PRIVATELIB:Dprivate}
 .if defined(NO_PIC)
 .undef SHLIB_NAME
 .undef INSTALL_PIC_ARCHIVE
+# There will be no shared library so the static must be built/installed.
+MK_STATIC_LIBS=	yes
 .else
 .if !defined(SHLIB) && defined(LIB)
 SHLIB=		${LIB}
@@ -36,6 +38,12 @@ SHLIB_LINK?=	${SHLIB_NAME:R}
 .endif
 SONAME?=	${SHLIB_NAME}
 .endif
+.if ${MK_STATIC_LIBS} == "no"
+# Need to build static archive for internal libraries still.
+.if defined(INTERNALLIB)
+MK_STATIC_LIBS=	yes
+.endif
+.endif	# ${MK_STATIC_LIBS} == "no"
 
 .if defined(CRUNCH_CFLAGS)
 CFLAGS+=	${CRUNCH_CFLAGS}
@@ -175,12 +183,13 @@ ${SHLIB_NAME_FULL}:	${VERSION_MAP}
 LDFLAGS+=	-Wl,--version-script=${VERSION_MAP}
 .endif
 
-.if defined(LIB) && !empty(LIB) || defined(SHLIB_NAME)
+.if (${MK_STATIC_LIBS} == "yes" && defined(LIB) && !empty(LIB)) || \
+    defined(SHLIB_NAME)
 OBJS+=		${SRCS:N*.h:R:S/$/.o/}
 CLEANFILES+=	${OBJS} ${STATICOBJS}
 .endif
 
-.if defined(LIB) && !empty(LIB)
+.if ${MK_STATIC_LIBS} == "yes" && defined(LIB) && !empty(LIB)
 _LIBS=		lib${LIB_PRIVATE}${LIB}.a
 
 lib${LIB_PRIVATE}${LIB}.a: ${OBJS} ${STATICOBJS}
@@ -333,7 +342,8 @@ _SHLINSTALLFLAGS:=	${_SHLINSTALLFLAGS${ie}}
 realinstall: _libinstall
 .ORDER: beforeinstall _libinstall
 _libinstall:
-.if defined(LIB) && !empty(LIB) && ${MK_INSTALLLIB} != "no"
+.if ${MK_STATIC_LIBS} == "yes" && defined(LIB) && !empty(LIB) && \
+    ${MK_INSTALLLIB} != "no"
 	${INSTALL} ${TAG_ARGS:D${TAG_ARGS},development} -C -o ${LIBOWN} -g ${LIBGRP} -m ${LIBMODE} \
 	    ${_INSTALLFLAGS} lib${LIB_PRIVATE}${LIB}.a ${DESTDIR}${_LIBDIR}/
 .endif

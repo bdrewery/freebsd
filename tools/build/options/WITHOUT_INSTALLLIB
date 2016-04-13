@@ -1,8 +1,13 @@
 .\" $FreeBSD$
-Set this if you do not want to install optional libraries.
-For example when creating a
+Set this if you do not want to install any static libraries.
+This will create an installation that cannot compile since
+critical system libraries will be missing.
+For example, this can be useful when creating a
 .Xr nanobsd 8
 image.
 .Bf -symbolic
 The option does not work for build targets.
 .Ef
+.Sy WITHOUT_STATIC_LIBS
+can be used to avoid compiling static libraries and also still install
+critical libraries.

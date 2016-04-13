@@ -17,6 +17,8 @@ SHLIBDIR?=	/lib
 # from earlier libraries. Disable stack protection for this library.
 #
 MK_SSP=	no
+# Cannot build anything without libgcc.a.
+MK_STATIC_LIBS= yes
 
 .include "${CCDIR}/Makefile.tgt"
 .include "${CCDIR}/cc_tools/Makefile.hdrs"
