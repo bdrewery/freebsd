@@ -380,7 +380,9 @@ _BADLDADD+=	${_l}
 .endif
 
 .for _l in ${LIBADD}
+.if ${_INTERNALLIBS:M${_l}} || ${MK_STATIC_LIBS} == "yes"
 DPADD+=		${DPADD_${_l}}
+.endif
 LDADD+=		${LDADD_${_l}}
 .endfor
 

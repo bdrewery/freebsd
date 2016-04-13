@@ -62,6 +62,7 @@ __DEFAULT_YES_OPTIONS = \
     OPENSSH \
     PROFILE \
     SSP \
+    STATIC_LIBS \
     SYMVER \
     TOOLCHAIN \
     WARNS
@@ -101,6 +102,11 @@ MK_${var}:=no
 
 .if ${MK_STAGING} == "no"
 MK_STALE_STAGED= no
+.endif
+
+.if ${MK_STATIC_LIBS} == "no"
+MK_PROFILE=	no
+MK_INSTALLLIB=	no
 .endif
 
 .include <bsd.cpu.mk>
