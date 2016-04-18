@@ -1,6 +1,6 @@
 # $FreeBSD$
 
-.if ${MK_DIRDEPS_BUILD} == "yes"
+.if ${MK_DIRDEPS_BUILD} == "yes" || ${MK_META_MODE} == "yes"
 MAKE_PRINT_VAR_ON_ERROR+= \
 	.CURDIR \
 	.MAKE \
