@@ -24,11 +24,15 @@
 #
 # $FreeBSD$
 
+.include <src.opts.mk>
+
 # The modules link in libpam.  They build the static modules as well.
 SUBDIR+=	libpam modules
 SUBDIR_DEPEND_modules=	libpam
+.if ${MK_STATIC_LIBS} == "yes"
 SUBDIR+=	static_libpam
 SUBDIR_DEPEND_static_libpam= modules
+.endif
 SUBDIR_PARALLEL=
 
 .include <bsd.subdir.mk>

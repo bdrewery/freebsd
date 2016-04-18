@@ -3,6 +3,9 @@
 LIB=	roken
 LIBADD=	crypt
 VERSION_MAP=	${KRB5DIR}/lib/roken/version-script.map
+.if !make(install)
+MK_STATIC_LIBS=	yes
+.endif
 INCS=	roken.h \
 	roken-common.h \
 	base64.h \
