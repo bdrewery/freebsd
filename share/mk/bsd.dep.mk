@@ -211,6 +211,7 @@ afterdepend: beforedepend
 # Guess some dependencies for when no ${DEPENDFILE}.OBJ is generated yet.
 # For meta+filemon the .meta file is checked for since it is the dependency
 # file used.
+.if !defined(_SKIP_READ_DEPEND)
 .for __obj in ${DEPENDOBJS:O:u}
 .if (defined(_meta_filemon) && !exists(${.OBJDIR}/${__obj}.meta)) || \
     (!defined(_meta_filemon) && !exists(${.OBJDIR}/${DEPENDFILE}.${__obj}))
@@ -218,6 +219,7 @@ ${__obj}: ${OBJS_DEPEND_GUESS}
 ${__obj}: ${OBJS_DEPEND_GUESS.${__obj}}
 .endif
 .endfor
+.endif
 
 # Always run 'make depend' to generate dependencies early and to avoid the
 # need for manually running it.  The dirdeps build should only do this in
