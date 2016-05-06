@@ -1668,7 +1668,11 @@ nfs_remove(struct vop_remove_args *ap)
 	KASSERT(vrefcnt(vp) > 0, ("nfs_remove: bad v_usecount"));
 	if (vp->v_type == VDIR)
 		error = EPERM;
-	else if (vrefcnt(vp) == 1 || (np->n_sillyrename &&
+	/*
+	 * Send the remove RPC if not in-use, or in-use with >1 links, or it
+	 * has a silly rename with >1 links.
+	 */
+	else if (vrefcnt(vp) == 1 || ((vrefcnt(vp) > 1 || np->n_sillyrename) &&
 	    VOP_GETATTR(vp, &vattr, cnp->cn_cred) == 0 &&
 	    vattr.va_nlink > 1)) {
 		/*
