@@ -89,6 +89,7 @@ MALLOC_DEFINE(M_FILEMON, "filemon", "File access monitor");
 struct filemon {
 	struct sx	lock;		/* Lock for this filemon. */
 	struct file	*fp;		/* Output file pointer. */
+	struct ucred	*ucred;		/* Credentials of tracer. */
 	char		fname1[MAXPATHLEN]; /* Temporary filename buffer. */
 	char		fname2[MAXPATHLEN]; /* Temporary filename buffer. */
 	char		msgbufr[1024];	/* Output message buffer. */
@@ -125,6 +126,8 @@ filemon_release(struct filemon *filemon)
 	 */
 	sx_assert(&filemon->lock, SA_UNLOCKED);
 
+	if (filemon->ucred != NULL)
+		crfree(filemon->ucred);
 	sx_destroy(&filemon->lock);
 	free(filemon, M_FILEMON);
 }
@@ -407,7 +410,7 @@ filemon_ioctl(struct cdev *dev, u_long cmd, caddr_t data, int flag __unused,
 
 static int
 filemon_open(struct cdev *dev, int oflags __unused, int devtype __unused,
-    struct thread *td __unused)
+    struct thread *td)
 {
 	int error;
 	struct filemon *filemon;
@@ -416,6 +419,7 @@ filemon_open(struct cdev *dev, int oflags __unused, int devtype __unused,
 	    M_WAITOK | M_ZERO);
 	sx_init(&filemon->lock, "filemon");
 	refcount_init(&filemon->refcnt, 1);
+	filemon->ucred = crhold(td->td_ucred);
 
 	error = devfs_set_cdevpriv(filemon, filemon_dtr);
 	if (error != 0)
