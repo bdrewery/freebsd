@@ -42,6 +42,7 @@ BSARGS= 	DESTDIR= \
 		MK_CLANG_EXTRAS=no MK_CLANG_FULL=no \
 		MK_LLDB=no MK_TESTS=no \
 		MK_INCLUDES=yes
+BSARGS+=	-DMETA_IGNORE_ALL_HOST
 
 # Need to override these so OBJTOP uses are proper in the non-meta build.
 BSARGS+= OBJTOP=${BTOOLSDIR}${SRCTOP} OBJROOT='$${OBJTOP}/'
