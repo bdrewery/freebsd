@@ -531,7 +531,8 @@ BFLAGS+=	-B${CROSS_BINUTILS_PREFIX}
 
 # External compiler needs sysroot and target flags.
 .if ${MK_CROSS_COMPILER} == "no" || \
-    (${MK_CLANG_BOOTSTRAP} == "no" && ${MK_GCC_BOOTSTRAP} == "no")
+    (${MK_CLANG_BOOTSTRAP} == "no" && ${MK_GCC_BOOTSTRAP} == "no") || \
+    ${XLD:M/*}
 .if !defined(CROSS_BINUTILS_PREFIX) || !exists(${CROSS_BINUTILS_PREFIX})
 BFLAGS+=	-B${WORLDTMP}/usr/bin
 .endif
@@ -549,8 +550,8 @@ TARGET_ABI=	gnueabi
 XCFLAGS+=	-isystem ${WORLDTMP}/usr/include -L${WORLDTMP}/usr/lib
 # Force using libc++ for external GCC.
 # XXX: This should be checking MK_GNUCXX == no
-XCXXFLAGS+=	-isystem ${WORLDTMP}/usr/include/c++/v1 -std=c++11 \
-		-nostdinc++ -L${WORLDTMP}/../lib/libc++
+XCXXFLAGS+=	-isystem ${WORLDTMP}/usr/include/c++/v1 \
+		-nostdinc++
 .else
 TARGET_ABI?=	unknown
 TARGET_TRIPLE?=	${TARGET_ARCH:C/amd64/x86_64/}-${TARGET_ABI}-freebsd11.0
