@@ -78,6 +78,7 @@ MK_CLANG_BOOTSTRAP=	no
 MK_GCC_BOOTSTRAP=	no
 .endif
 
+# XXX: OBJTREE is kept for compatibility in some places
 MAKEOBJDIRPREFIX?=	/usr/obj
 .if ${MACHINE} == ${TARGET} && ${MACHINE_ARCH} == ${TARGET_ARCH} && !defined(CROSS_BUILD_TESTING)
 OBJTREE=	${MAKEOBJDIRPREFIX}
@@ -88,7 +89,7 @@ OBJTREE=	${MAKEOBJDIRPREFIX}/${TARGET}.${TARGET_ARCH}
 # Pull in compiler metadata from buildworld/toolchain if possible to avoid
 # running CC from bsd.compiler.mk.
 .if make(installworld) || make(install)
-.-include "${OBJTREE}${.CURDIR}/compiler-metadata.mk"
+.-include "${OBJTOP}/compiler-metadata.mk"
 .endif
 
 # Pull in COMPILER_TYPE and COMPILER_FREEBSD_VERSION early.
@@ -439,7 +440,7 @@ BUILD_ARCH!=	uname -p
 .error To cross-build, set TARGET_ARCH.
 .endif
 .endif
-WORLDTMP=	${OBJTREE}${.CURDIR}/tmp
+WORLDTMP?=	${OBJTOP}/tmp
 BPATH=		${WORLDTMP}/legacy/usr/sbin:${WORLDTMP}/legacy/usr/bin:${WORLDTMP}/legacy/bin
 XPATH=		${WORLDTMP}/usr/sbin:${WORLDTMP}/usr/bin
 STRICTTMPPATH=	${BPATH}:${XPATH}
@@ -497,7 +498,7 @@ MINIMUM_SUPPORTED_OSREL?= 900044
 MINIMUM_SUPPORTED_REL?= 9.1
 
 # Common environment for world related stages
-CROSSENV+=	MAKEOBJDIRPREFIX=${OBJTREE} \
+CROSSENV+=	\
 		MACHINE_ARCH=${TARGET_ARCH} \
 		MACHINE=${TARGET} \
 		CPUTYPE=${TARGET_CPUTYPE}
@@ -536,7 +537,7 @@ BMAKE=		MAKEOBJDIRPREFIX=${WORLDTMP} \
 		${BSARGS}
 
 # build-tools stage
-TMAKE=		MAKEOBJDIRPREFIX=${OBJTREE} \
+TMAKE=		\
 		${BMAKEENV} ${MAKE} ${WORLD_FLAGS} -f Makefile.inc1 \
 		TARGET=${TARGET} TARGET_ARCH=${TARGET_ARCH} \
 		DESTDIR= \
@@ -1211,7 +1212,7 @@ INSTKERNNAME?=	kernel
 
 KERNSRCDIR?=	${.CURDIR}/sys
 KRNLCONFDIR=	${KERNSRCDIR}/${TARGET}/conf
-KRNLOBJDIR=	${OBJTREE}${KERNSRCDIR}
+KRNLOBJDIR=	${OBJTOP}${KERNSRCDIR:C,^${.CURDIR},,}
 KERNCONFDIR?=	${KRNLCONFDIR}
 
 BUILDKERNELS=
@@ -1407,9 +1408,9 @@ stagekernel: .PHONY
 	${_+_}${MAKE} -C ${.CURDIR} ${.MAKEFLAGS} distributekernel
 
 PORTSDIR?=	/usr/ports
-WSTAGEDIR?=	${MAKEOBJDIRPREFIX}${.CURDIR}/${TARGET}.${TARGET_ARCH}/worldstage
-KSTAGEDIR?=	${MAKEOBJDIRPREFIX}${.CURDIR}/${TARGET}.${TARGET_ARCH}/kernelstage
-REPODIR?=	${MAKEOBJDIRPREFIX}${.CURDIR}/repo
+WSTAGEDIR?=	${OBJTOP}/worldstage
+KSTAGEDIR?=	${OBJTOP}/kernelstage
+REPODIR?=	${OBJROOT}/repo
 PKGSIGNKEY?=	# empty
 
 .ORDER:		stage-packages create-packages
@@ -1630,10 +1631,10 @@ legacy: .PHONY
 	${_+_}${ECHODIR} "===> ${_tool} (obj,includes,all,install)"; \
 	    cd ${.CURDIR}/${_tool}; \
 	    if [ -z "${NO_OBJ}" ]; then ${MAKE} DIRPRFX=${_tool}/ obj; fi; \
-	    ${MAKE} DIRPRFX=${_tool}/ DESTDIR=${MAKEOBJDIRPREFIX}/legacy includes; \
+	    ${MAKE} DIRPRFX=${_tool}/ DESTDIR=${WORLDTMP}/legacy includes; \
 	    ${MAKE} DIRPRFX=${_tool}/ MK_INCLUDES=no all; \
 	    ${MAKE} DIRPRFX=${_tool}/ MK_INCLUDES=no \
-	        DESTDIR=${MAKEOBJDIRPREFIX}/legacy install
+	        DESTDIR=${WORLDTMP}/legacy install
 .endfor
 
 #
@@ -1787,7 +1788,7 @@ ${_bt}-${_tool}: .PHONY .MAKE
 		cd ${.CURDIR}/${_tool}; \
 		if [ -z "${NO_OBJ}" ]; then ${MAKE} DIRPRFX=${_tool}/ obj; fi; \
 		${MAKE} DIRPRFX=${_tool}/ all; \
-		${MAKE} DIRPRFX=${_tool}/ DESTDIR=${MAKEOBJDIRPREFIX}/legacy install
+		${MAKE} DIRPRFX=${_tool}/ DESTDIR=${WORLDTMP}/legacy install
 
 bootstrap-tools: ${_bt}-${_tool}
 .endfor
@@ -1920,7 +1921,7 @@ cross-tools: .MAKE .PHONY
 		cd ${.CURDIR}/${_tool}; \
 		if [ -z "${NO_OBJ}" ]; then ${MAKE} DIRPRFX=${_tool}/ obj; fi; \
 		${MAKE} DIRPRFX=${_tool}/ all; \
-		${MAKE} DIRPRFX=${_tool}/ DESTDIR=${MAKEOBJDIRPREFIX} install
+		${MAKE} DIRPRFX=${_tool}/ DESTDIR=${WORLDTMP} install
 .endfor
 
 NXBDESTDIR=	${OBJTREE}/nxb-bin
@@ -2536,20 +2537,14 @@ builddtb: .PHONY
 # files without file flags set in the first 'rm' instance saves time,
 # because 'chflags' will need to operate on fewer files afterwards.
 #
-# It is expected that BW_CANONICALOBJDIR == the CANONICALOBJDIR as would be
-# created by bsd.obj.mk, except that we don't want to .include that file
-# in this makefile.
+# It is expected that WITH_AUTO_OBJ has already created and established
+# .OBJDIR to not be .CURDIR.
 #
-BW_CANONICALOBJDIR:=${OBJTREE}${.CURDIR}
 cleanworld: .PHONY
-.if exists(${BW_CANONICALOBJDIR}/)
-	-rm -rf ${BW_CANONICALOBJDIR}/*
-	-chflags -R 0 ${BW_CANONICALOBJDIR}
-	rm -rf ${BW_CANONICALOBJDIR}/*
-.endif
-.if ${.CURDIR} == ${.OBJDIR} || ${.CURDIR}/obj == ${.OBJDIR}
-	#   To be safe in this case, fall back to a 'make cleandir'
-	${_+_}@cd ${.CURDIR}; ${MAKE} cleandir
+.if ${.OBJDIR} != ${.CURDIR}
+	-rm -rf ${.OBJDIR}/*
+	-chflags -R 0 ${.OBJDIR}
+	rm -rf ${.OBJDIR}/*
 .endif
 
 .if defined(TARGET) && defined(TARGET_ARCH)

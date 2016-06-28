@@ -105,6 +105,10 @@ META_MODE?= normal
 # is not expected.
 .if !make(showconfig) && !make(print-dir)
 .sinclude <auto.obj.mk>
+.if !empty(_save_MAKEOBJDIRPREFIX)
+MAKEOBJDIRPREFIX:=	${_save_MAKEOBJDIRPREFIX}
+.undef _save_MAKEOBJDIRPREFIX
+.endif	# !empty(_save_MAKEOBJDIRPREFIX)
 .endif
 .endif
 .else # bmake

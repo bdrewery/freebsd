@@ -79,8 +79,8 @@ LIBCOMPAT${_var}?=	${LIB${LIBCOMPAT}${_var}}
 .endfor
 
 # Shared flags
-LIBCOMPAT_OBJTREE?=	${OBJTREE}${.CURDIR}/world${libcompat}
-LIBCOMPATTMP?=		${OBJTREE}${.CURDIR}/lib${libcompat}
+LIBCOMPAT_OBJTREE?=	${OBJTOP}/world${libcompat}
+LIBCOMPATTMP?=		${OBJTOP}/lib${libcompat}
 
 LIBCOMPATCFLAGS+=	${LIBCOMPATCPUFLAGS} \
 			-L${LIBCOMPATTMP}/usr/lib${libcompat} \
