@@ -28,6 +28,8 @@ __DEFAULT_DEPENDENT_OPTIONS= \
 	STAGING/DIRDEPS_BUILD \
 	SYSROOT/DIRDEPS_BUILD
 
+# Some __DEFAULT_YES_OPTIONS are listed in src.sys.env.mk.
+
 __ENV_ONLY_OPTIONS:= \
 	${__DEFAULT_NO_OPTIONS} \
 	${__DEFAULT_YES_OPTIONS} \
@@ -45,6 +47,10 @@ __ENV_ONLY_OPTIONS:= \
 # Disable MK_META_MODE with make -B
 .if ${MK_META_MODE} == "yes" && defined(.MAKEFLAGS) && ${.MAKEFLAGS:M-B}
 MK_META_MODE=	no
+.endif
+
+.if ${MK_AUTO_OBJ} == "yes" && !make(showconfig)
+.sinclude <src.sys.obj.mk>
 .endif
 
 .if ${MK_DIRDEPS_BUILD} == "yes"

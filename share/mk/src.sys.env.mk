@@ -26,6 +26,9 @@ MK_META_MODE=	no
 .export MK_META_MODE
 .endif
 
+# Default options for src builds
+__DEFAULT_YES_OPTIONS+=	AUTO_OBJ
+
 # If we were found via .../share/mk we need to replace that
 # with ${.PARSEDIR:tA} so that we can be found by
 # sub-makes launched from objdir.

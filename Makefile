@@ -212,6 +212,7 @@ SUB_MAKE= ${MAKE} -m ${.CURDIR}/share/mk
 
 _MAKE=	PATH=${PATH} MAKE_CMD=${MAKE} ${SUB_MAKE} -f Makefile.inc1 \
 	TARGET=${_TARGET} TARGET_ARCH=${_TARGET_ARCH}
+SUB_MAKE+=	MK_AUTO_OBJ=yes
 
 # Only allow meta mode for the whitelisted targets.  See META_TGT_WHITELIST
 # above.
