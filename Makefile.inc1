@@ -1627,7 +1627,7 @@ legacy: .PHONY
 .endif
 
 .for _tool in tools/build ${_elftoolchain_libs}
-	${_+_}@${ECHODIR} "===> ${_tool} (obj,includes,all,install)"; \
+	${_+_}${ECHODIR} "===> ${_tool} (obj,includes,all,install)"; \
 	    cd ${.CURDIR}/${_tool}; \
 	    if [ -z "${NO_OBJ}" ]; then ${MAKE} DIRPRFX=${_tool}/ obj; fi; \
 	    ${MAKE} DIRPRFX=${_tool}/ DESTDIR=${MAKEOBJDIRPREFIX}/legacy includes; \
@@ -1783,7 +1783,7 @@ bootstrap-tools: .PHONY
     ${_vtfontcvt} \
     usr.bin/localedef
 ${_bt}-${_tool}: .PHONY .MAKE
-	${_+_}@${ECHODIR} "===> ${_tool} (obj,all,install)"; \
+	${_+_}${ECHODIR} "===> ${_tool} (obj,all,install)"; \
 		cd ${.CURDIR}/${_tool}; \
 		if [ -z "${NO_OBJ}" ]; then ${MAKE} DIRPRFX=${_tool}/ obj; fi; \
 		${MAKE} DIRPRFX=${_tool}/ all; \
@@ -1822,7 +1822,7 @@ _rescue=rescue/rescue
     usr.bin/mkcsmapper_static \
     usr.bin/vi/catalog
 build-tools_${_tool}: .PHONY
-	${_+_}@${ECHODIR} "===> ${_tool} (obj,build-tools)"; \
+	${_+_}${ECHODIR} "===> ${_tool} (obj,build-tools)"; \
 		cd ${.CURDIR}/${_tool}; \
 		if [ -z "${NO_OBJ}" ]; then ${MAKE} DIRPRFX=${_tool}/ obj; fi; \
 		${MAKE} DIRPRFX=${_tool}/ build-tools
@@ -1831,7 +1831,7 @@ build-tools: build-tools_${_tool}
 .for _tool in \
     ${_gcc_tools}
 build-tools_${_tool}: .PHONY
-	${_+_}@${ECHODIR} "===> ${_tool} (obj,all)"; \
+	${_+_}${ECHODIR} "===> ${_tool} (obj,all)"; \
 		cd ${.CURDIR}/${_tool}; \
 		if [ -z "${NO_OBJ}" ]; then ${MAKE} DIRPRFX=${_tool}/ obj; fi; \
 		${MAKE} DIRPRFX=${_tool}/ all

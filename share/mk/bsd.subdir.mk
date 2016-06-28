@@ -43,7 +43,7 @@ SUBDIR_TARGETS+= \
 		checkdpadd clean cleandepend cleandir cleanilinks \
 		cleanobj depend distribute files includes installconfig \
 		installfiles installincludes print-dir realinstall lint \
-		maninstall manlint obj objlink tags \
+		maninstall manlint  objlink tags \
 
 # Described above.
 STANDALONE_SUBDIR_TARGETS+= \

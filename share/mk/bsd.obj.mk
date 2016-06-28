@@ -46,6 +46,7 @@ __<bsd.obj.mk>__:
 # it is done by now
 objwarn:
 obj:
+	@echo "make obj";false
 CANONICALOBJDIR= ${.OBJDIR}
 .if defined(NO_OBJ)
 # but this makefile does not want it!
