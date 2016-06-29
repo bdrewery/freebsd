@@ -85,7 +85,7 @@ objp=${MAKEOBJDIRPREFIX}
 [ -z "${objp}" ] && objp=/usr/obj
 legacydir=${objp}${SOURCEDIR}/tmp/legacy
 legacypath=${legacydir}/usr/sbin:${legacydir}/usr/bin:${legacydir}/bin
-MM_MAKE_ARGS="${MM_MAKE_ARGS} PATH=${legacypath}:${PATH}"
+MM_MAKE_ARGS="${MM_MAKE_ARGS} PATH=${legacypath}:${PATH} MK_UNIFIED_OBJDIR=no"
 MM_MAKE="make ${ARCHSTRING} ${MM_MAKE_ARGS} -m ${SOURCEDIR}/share/mk"
 
 delete_temproot () {

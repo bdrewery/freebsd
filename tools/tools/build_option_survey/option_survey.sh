@@ -28,6 +28,7 @@ bw ( ) (
 	fi
 	make -j 4 buildworld \
 		SRCCONF=${ODIR}/src.conf __MAKE_CONF=/dev/null \
+		MK_UNIFIED_OBJDIR=no \
 		> ${FDIR}/_.bw 2>&1
 	a=$?
 	echo retval $a
@@ -37,6 +38,7 @@ bw ( ) (
 	make -j 4 buildkernel \
 		KERNCONF=GENERIC \
 		SRCCONF=${ODIR}/src.conf __MAKE_CONF=/dev/null \
+		MK_UNIFIED_OBJDIR=no \
 		> ${FDIR}/_.bk 2>&1
 	a=$?
 	echo retval $a
@@ -55,6 +57,7 @@ iw ( ) (
 	cd ../../..
 	make installworld \
 		SRCCONF=${ODIR}/src.conf __MAKE_CONF=/dev/null \
+		MK_UNIFIED_OBJDIR=no \
 		DESTDIR=${MNT} \
 		> ${FDIR}/_.iw 2>&1
 	a=$?
@@ -65,6 +68,7 @@ iw ( ) (
 	cd etc
 	make distribution \
 		SRCCONF=${ODIR}/src.conf __MAKE_CONF=/dev/null \
+		MK_UNIFIED_OBJDIR=no \
 		DESTDIR=${MNT} \
 		> ${FDIR}/_.etc 2>&1
 	a=$?
@@ -77,6 +81,7 @@ iw ( ) (
 		KERNCONF=GENERIC \
 		DESTDIR=${MNT} \
 		SRCCONF=${ODIR}/src.conf __MAKE_CONF=/dev/null \
+		MK_UNIFIED_OBJDIR=no \
 		> ${FDIR}/_.ik 2>&1
 	a=$?
 	echo retval $a
