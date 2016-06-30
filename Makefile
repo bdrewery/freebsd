@@ -199,20 +199,22 @@ HAVE_MAKE=	fmake
     (defined(WANT_MAKE_VERSION) && ${MAKE_VERSION} < ${WANT_MAKE_VERSION})
 NEED_MAKE_UPGRADE= t
 .endif
+.if !make(showconfig)
+SUB_MAKE= MK_AUTO_OBJ=yes
+.endif
 .if exists(${MYMAKE})
-SUB_MAKE:= ${MYMAKE} -m ${.CURDIR}/share/mk
+SUB_MAKE+= ${MYMAKE} -m ${.CURDIR}/share/mk
 .elif defined(NEED_MAKE_UPGRADE)
 # It may not exist yet but we may cause it to.
 # In the case of fmake, upgrade_checks may cause a newer version to be built.
-SUB_MAKE= `test -x ${MYMAKE} && echo ${MYMAKE} || echo ${MAKE}` \
+SUB_MAKE+= `test -x ${MYMAKE} && echo ${MYMAKE} || echo ${MAKE}` \
 	-m ${.CURDIR}/share/mk
 .else
-SUB_MAKE= ${MAKE} -m ${.CURDIR}/share/mk
+SUB_MAKE+= ${MAKE} -m ${.CURDIR}/share/mk
 .endif
 
 _MAKE=	PATH=${PATH} MAKE_CMD=${MAKE} ${SUB_MAKE} -f Makefile.inc1 \
 	TARGET=${_TARGET} TARGET_ARCH=${_TARGET_ARCH}
-SUB_MAKE+=	MK_AUTO_OBJ=yes
 
 # Only allow meta mode for the whitelisted targets.  See META_TGT_WHITELIST
 # above.

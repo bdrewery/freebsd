@@ -27,6 +27,8 @@ MK_META_MODE=	no
 .endif
 
 # Default options for src builds
+# XXX: This causes problems for makeman
+# XXX: This causes problems for non-root
 __DEFAULT_YES_OPTIONS+=	AUTO_OBJ
 
 # If we were found via .../share/mk we need to replace that
