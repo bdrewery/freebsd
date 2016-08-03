@@ -185,15 +185,6 @@ CFLAGS+=	${${DEPEND_CFLAGS_CONDITION}:?${DEPEND_CFLAGS}:}
 .else
 CFLAGS+=	${DEPEND_CFLAGS}
 .endif
-.if !defined(_SKIP_READ_DEPEND)
-.for __depend_obj in ${DEPENDFILES_OBJS}
-.if ${MAKE_VERSION} < 20160220
-.sinclude "${.OBJDIR}/${__depend_obj}"
-.else
-.dinclude "${.OBJDIR}/${__depend_obj}"
-.endif
-.endfor
-.endif	# !defined(_SKIP_READ_DEPEND)
 .endif	# !defined(_meta_filemon)
 .endif	# defined(SRCS)
 
@@ -215,10 +206,13 @@ afterdepend: beforedepend
 # For meta+filemon the .meta file is checked for since it is the dependency
 # file used.
 .for __obj in ${DEPENDOBJS:O:u}
+# XXX: What is even in OBJS_DEPEND_GUESS:N*.h?
+#      It seems that this should always be :N*.h for both and not even care
+#      if there is a .depend file
+#      - Also fix sys/conf/kern.post.mk
 .if (defined(_meta_filemon) && !exists(${.OBJDIR}/${__obj}.meta)) || \
     (!defined(_meta_filemon) && !exists(${.OBJDIR}/${DEPENDFILE}.${__obj}))
 ${__obj}: ${OBJS_DEPEND_GUESS}
-${__obj}: ${OBJS_DEPEND_GUESS.${__obj}}
 .elif defined(_meta_filemon)
 # For meta mode we still need to know which file to depend on to avoid
 # ambiguous suffix transformation rules from .PATH.  Meta mode does not
@@ -226,8 +220,17 @@ ${__obj}: ${OBJS_DEPEND_GUESS.${__obj}}
 # they are typically in SRCS/beforebuild already.  For target-specific
 # guesses do include headers though since they may not be in SRCS.
 ${__obj}: ${OBJS_DEPEND_GUESS:N*.h}
-${__obj}: ${OBJS_DEPEND_GUESS.${__obj}}
 .endif
+${__obj}: ${OBJS_DEPEND_GUESS.${__obj}}
+.if !defined(_meta_filemon)
+.if !defined(_SKIP_READ_DEPEND)
+.if ${MAKE_VERSION} < 20160220
+.sinclude "${.OBJDIR}/${DEPENDFILE}.${__obj}"
+.else
+.dinclude "${.OBJDIR}/${DEPENDFILE}.${__obj}"
+.endif
+.endif	# !defined(_SKIP_READ_DEPEND)
+.endif	# !defined(_meta_filemon)
 .endfor
 
 # Always run 'make depend' to generate dependencies early and to avoid the

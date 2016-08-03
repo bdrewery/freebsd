@@ -224,15 +224,6 @@ CFLAGS+=	${${DEPEND_CFLAGS_CONDITION}:?${DEPEND_CFLAGS}:}
 .else
 CFLAGS+=	${DEPEND_CFLAGS}
 .endif
-.if !defined(_SKIP_READ_DEPEND)
-.for __depend_obj in ${DEPENDFILES_OBJS}
-.if ${MAKE_VERSION} < 20160220
-.sinclude "${.OBJDIR}/${__depend_obj}"
-.else
-.dinclude "${.OBJDIR}/${__depend_obj}"
-.endif
-.endfor
-.endif	# !defined(_SKIP_READ_DEPEND)
 .endif	# !defined(_meta_filemon)
 
 # Always run 'make depend' to generate dependencies early and to avoid the
@@ -245,12 +236,12 @@ beforebuild: kernel-depend
 # For meta+filemon the .meta file is checked for since it is the dependency
 # file used.
 .for __obj in ${DEPENDOBJS:O:u}
+# XXX: See bsd.dep.mk note
 .if (defined(_meta_filemon) && !exists(${.OBJDIR}/${__obj}.meta)) || \
     (!defined(_meta_filemon) && !exists(${.OBJDIR}/.depend.${__obj}))
 .if ${SYSTEM_OBJS:M${__obj}}
 ${__obj}: ${OBJS_DEPEND_GUESS}
 .endif
-${__obj}: ${OBJS_DEPEND_GUESS.${__obj}}
 .elif defined(_meta_filemon)
 # For meta mode we still need to know which file to depend on to avoid
 # ambiguous suffix transformation rules from .PATH.  Meta mode does not
@@ -260,8 +251,17 @@ ${__obj}: ${OBJS_DEPEND_GUESS.${__obj}}
 .if ${SYSTEM_OBJS:M${__obj}}
 ${__obj}: ${OBJS_DEPEND_GUESS:N*.h}
 .endif
-${__obj}: ${OBJS_DEPEND_GUESS.${__obj}}
 .endif
+${__obj}: ${OBJS_DEPEND_GUESS.${__obj}}
+.if !defined(_meta_filemon)
+.if !defined(_SKIP_READ_DEPEND)
+.if ${MAKE_VERSION} < 20160220
+.sinclude "${.OBJDIR}/${.OBJDIR}/.depend.${__obj}"
+.else
+.dinclude "${.OBJDIR}/${.OBJDIR}/.depend.${__obj}"
+.endif
+.endif	# !defined(_SKIP_READ_DEPEND)
+.endif	# !defined(_meta_filemon)
 .endfor
 
 .NOPATH: .depend ${DEPENDFILES_OBJS}
