@@ -382,7 +382,7 @@ enter_syscall(struct trussinfo *info, struct threadinfo *t,
 		fprintf(info->outfile, "-- UNKNOWN %s SYSCALL %d --\n",
 		    t->proc->abi->type, t->cs.number);
 
-	sc = get_syscall(t->cs.name, narg);
+	sc = get_syscall(t, narg);
 	t->cs.nargs = sc->nargs;
 	assert(sc->nargs <= nitems(t->cs.s_args));
 

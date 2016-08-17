@@ -70,11 +70,13 @@ struct syscall {
 			/* Hopefully, no syscalls with > 10 args */
 	struct syscall_args args[10];
 	struct timespec time; /* Time spent for this call */
+	enum sysdecode_abi abi;
 	int ncalls;	/* Number of calls */
 	int nerror;	/* Number of calls that returned with error */
+	int number;	/* Syscall number */
 };
 
-struct syscall *get_syscall(const char *, int nargs);
+struct syscall *get_syscall(const struct threadinfo *, int nargs);
 char *print_arg(struct syscall_args *, unsigned long*, long *, struct trussinfo *);
 
 /*

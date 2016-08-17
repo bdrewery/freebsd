@@ -925,27 +925,30 @@ init_syscalls(void)
  * as a hash table or binary search.
  */
 struct syscall *
-get_syscall(const char *name, int nargs)
+get_syscall(const struct threadinfo *t, int nargs)
 {
 	struct syscall *sc;
 	int i;
 
-	if (name == NULL)
+	if (t->cs.name == NULL)
 		return (NULL);
 	STAILQ_FOREACH(sc, &syscalls, entries)
-		if (strcmp(name, sc->name) == 0)
+		if (t->cs.number == sc->number &&
+		    t->proc->abi->abi == sc->abi)
 			return (sc);
 
 	/* It is unknown.  Add it into the list. */
 #if DEBUG
-	fprintf(stderr, "unknown syscall %s -- setting args to %d\n", name,
-	    nargs);
+	fprintf(stderr, "unknown syscall %s -- setting args to %d\n",
+	    t->cs.name, nargs);
 #endif
 
 	sc = calloc(1, sizeof(struct syscall));
-	sc->name = strdup(name);
+	sc->abi = t->proc->abi->abi;
+	sc->name = strdup(t->cs.name);
 	sc->ret_type = 1;
 	sc->nargs = nargs;
+	sc->number = t->cs.number;
 	for (i = 0; i < nargs; i++) {
 		sc->args[i].offset = i;
 		/* Treat all unknown arguments as LongHex. */
