@@ -54,6 +54,7 @@ __FBSDID("$FreeBSD$");
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
+#include <assert.h>
 #include <ctype.h>
 #include <err.h>
 #include <fcntl.h>
@@ -930,8 +931,7 @@ get_syscall(const struct threadinfo *t, int nargs)
 	struct syscall *sc;
 	int i;
 
-	if (t->cs.name == NULL)
-		return (NULL);
+	assert(t->cs.name != NULL);
 	STAILQ_FOREACH(sc, &syscalls, entries)
 		if (t->cs.number == sc->number &&
 		    t->proc->abi->abi == sc->abi)
