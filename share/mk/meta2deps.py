@@ -68,6 +68,20 @@ RCSid:
 
 import os, re, sys
 
+# Cache realpath(3) calls since it is quite expensive on FreeBSD.
+csys = {}
+def cached_syscall(func, path):
+    global csys
+
+    if func not in csys:
+        csys[func] = {}
+
+    if path not in csys[func]:
+        csys[func][path] = func(path)
+#    else:
+#        print("Found %s in cache" % path, file=sys.stderr)
+    return csys[func][path]
+
 def getv(dict, key, d=None):
     """Lookup key in dict and return value or the supplied default."""
     if key in dict:
@@ -94,7 +108,7 @@ def resolve(path, cwd, last_dir=None, debug=0, debug_out=sys.stderr):
         p = '/'.join([d,path])
         if debug > 2:
             print("looking for:", p, end=' ', file=debug_out)
-        if not os.path.exists(p):
+        if not cached_syscall(os.path.exists, p):
             if debug > 2:
                 print("nope", file=debug_out)
             p = None
@@ -116,8 +130,8 @@ def abspath(path, cwd, last_dir=None, debug=0, debug_out=sys.stderr):
     if (path.find('/') < 0 or
 	path.find('./') > 0 or
         path.endswith('/..') or
-        os.path.islink(path)):
-        return os.path.realpath(path)
+        cached_syscall(os.path.islink, path)):
+        return cached_syscall(os.path.realpath, path)
     return path
 
 def sort_unique(list, cmp=None, key=None, reverse=False):
@@ -183,6 +197,8 @@ class MetaFile:
 
 	EXCLUDES
 		A list of paths to ignore.
+                XXX: So this all works but /usr/ccache still shows up as being realpath'd
+                XXX: chdir into the objdir could save some realpath madness?
 		ccache(1) can otherwise be trouble.
 
         debug	desired debug level
@@ -212,7 +228,7 @@ class MetaFile:
                     srctop += '/'
                 if not srctop in self.srctops:
                     self.srctops.append(srctop)
-                _srctop = os.path.realpath(srctop)
+                _srctop = cached_syscall(os.path.realpath, srctop)
                 if _srctop[-1] != '/':
                     _srctop += '/'
                 if not _srctop in self.srctops:
@@ -233,7 +249,7 @@ class MetaFile:
                             objroot += '/'
                 if not objroot in self.objroots:
                     self.objroots.append(objroot)
-                    _objroot = os.path.realpath(objroot)
+                    _objroot = cached_syscall(os.path.realpath, objroot)
                     if objroot[-1] == '/':
                         _objroot += '/'
                     if not _objroot in self.objroots:
@@ -318,7 +334,7 @@ class MetaFile:
         """return path within objroot, taking care of .dirdep files"""
         ddep = None
         for ddepf in [path + '.dirdep', dir + '/.dirdep']:
-            if not ddep and os.path.exists(ddepf):
+            if not ddep and cached_syscall(os.path.exists, ddepf):
                 ddep = open(ddepf, 'r').readline().strip('# \n')
                 if self.debug > 1:
                     print("found %s: %s\n" % (ddepf, ddep), file=self.debug_out)
@@ -510,7 +526,7 @@ class MetaFile:
                 if self.debug > 1:
                     print("skipping:", path, file=self.debug_out)
                 return
-            if os.path.isdir(path):
+            if cached_syscall(os.path.isdir, path):
                 if op in 'RW':
                     self.last_dir = path;
                 if self.debug > 1:
@@ -682,14 +698,14 @@ def main(argv, klass=MetaFile, xopts='', xoptf=None):
     m = None
     for a in args:
         if a.endswith('.meta'):
-            if not os.path.exists(a):
+            if not cached_syscall(os.path.exists, a):
                 continue
             m = klass(a, conf)
         elif a.startswith('@'):
             # there can actually multiple files per line
             for line in open(a[1:]):
                 for f in line.strip().split():
-                    if not os.path.exists(f):
+                    if not cached_sysctll(os.path.exists, f):
                         continue
                     m = klass(f, conf)
 

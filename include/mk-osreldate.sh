@@ -1,4 +1,5 @@
 #!/bin/sh -
+set -x
 # Copyright (c) 2013 Garrett Cooper
 # All rights reserved.
 #

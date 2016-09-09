@@ -94,6 +94,8 @@ CCACHE_DIR!=	${CCACHE_BIN} -p | awk '$$2 == "cache_dir" {print $$4}'
 .if !empty(CCACHE_DIR) && empty(.MAKE.META.IGNORE_PATHS:M${CCACHE_DIR})
 CCACHE_DIR:=	${CCACHE_DIR:tA}
 .MAKE.META.IGNORE_PATHS+= ${CCACHE_DIR}
+M2D_EXCLUDES+=	${CCACHE_DIR}
+.export M2D_EXCLUDES
 .export CCACHE_DIR
 .endif
 # ccache doesn't affect build output so let it slide for meta mode
