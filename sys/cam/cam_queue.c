@@ -175,9 +175,14 @@ cam_pinfo *
 camq_remove(struct camq *queue, int index)
 {
 	cam_pinfo *removed_entry;
+	int inbounds;
 
-	if (index == 0 || index > queue->entries)
+	inbounds = (0 < index && index <= queue->entries);
+	KASSERT(inbounds, ("camq_remove: Attempt to remove out-of-bounds "
+	    "index %d from queue of size %d", index, queue->entries));
+	if (!inbounds)
 		return (NULL);
+
 	removed_entry = queue->queue_array[index];
 	if (queue->entries != index) {
 		queue->queue_array[index] = queue->queue_array[queue->entries];
