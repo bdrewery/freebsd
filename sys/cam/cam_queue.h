@@ -219,6 +219,7 @@ cam_ccbq_remove_ccb(struct cam_ccbq *ccbq, union ccb *ccb)
 {
 	struct ccb_hdr *cccb, *bccb;
 	struct camq *queue = &ccbq->queue;
+	cam_pinfo *removed_entry;
 
 	/* If the CCB is on the TAILQ, remove it from there. */
 	if (ccb->ccb_h.pinfo.index == CAM_EXTRAQ_INDEX) {
@@ -229,7 +230,11 @@ cam_ccbq_remove_ccb(struct cam_ccbq *ccbq, union ccb *ccb)
 		return;
 	}
 
-	camq_remove(queue, ccb->ccb_h.pinfo.index, /*transient*/TRUE);
+	removed_entry = camq_remove(queue, ccb->ccb_h.pinfo.index,
+	    /*transient*/TRUE);
+	KASSERT(removed_entry == &ccb->ccb_h.pinfo,
+	    ("%s: Removed wrong entry from queue (%p != %p)", __func__,
+	     removed_entry, &ccb->ccb_h.pinfo));
 
 	/*
 	 * If there are some CCBs on TAILQ, find the best one and move it
