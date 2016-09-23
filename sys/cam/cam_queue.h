@@ -136,7 +136,7 @@ void		camq_insert(struct camq *queue, cam_pinfo *new_entry);
  * camq_remove: Remove and arbitrary entry from the queue maintaining
  * queue order.
  */
-cam_pinfo	*camq_remove(struct camq *queue, int index);
+cam_pinfo	*camq_remove(struct camq *queue, int index, int transient);
 #define CAMQ_HEAD 1	/* Head of queue index */
 
 /* Index the first element in the heap */
@@ -203,7 +203,8 @@ cam_ccbq_insert_ccb(struct cam_ccbq *ccbq, union ccb *new_ccb)
 	 */
 	if (queue->entries == queue->array_size &&
 	    camq_resize(&ccbq->queue, queue->array_size * 2) != CAM_REQ_CMP) {
-		old_ccb = (struct ccb_hdr *)camq_remove(queue, queue->entries);
+		old_ccb = (struct ccb_hdr *)camq_remove(queue, queue->entries,
+		    /*transient*/TRUE);
 		TAILQ_INSERT_HEAD(&ccbq->queue_extra_head, old_ccb,
 		    xpt_links.tqe);
 		old_ccb->pinfo.index = CAM_EXTRAQ_INDEX;
@@ -223,12 +224,12 @@ cam_ccbq_remove_ccb(struct cam_ccbq *ccbq, union ccb *ccb)
 	if (ccb->ccb_h.pinfo.index == CAM_EXTRAQ_INDEX) {
 		TAILQ_REMOVE(&ccbq->queue_extra_head, &ccb->ccb_h,
 		    xpt_links.tqe);
-		ccb->ccb_h.pinfo.index = CAM_UNQUEUED_INDEX;
+		ccb->ccb_h.pinfo.index = CAM_TRANSIENT_INDEX;
 		ccbq->queue_extra_entries--;
 		return;
 	}
 
-	camq_remove(queue, ccb->ccb_h.pinfo.index);
+	camq_remove(queue, ccb->ccb_h.pinfo.index, /*transient*/TRUE);
 
 	/*
 	 * If there are some CCBs on TAILQ, find the best one and move it

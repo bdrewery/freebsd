@@ -170,9 +170,14 @@ camq_insert(struct camq *queue, cam_pinfo *new_entry)
  * Heap(1, num_elements) property and an index such that 1 <= index <=
  * num_elements, remove that entry and restore the Heap(1, num_elements-1)
  * property.
+ *
+ * If the index value of the removed entry must not glitch through
+ * CAM_UNQUEUED_INDEX (which is interpreted as "done" in some contexts) on its
+ * way to some other value, then the transient flag should be used to set it to
+ * CAM_TRANSIENT_INDEX instead.
  */
 cam_pinfo *
-camq_remove(struct camq *queue, int index)
+camq_remove(struct camq *queue, int index, int transient)
 {
 	cam_pinfo *removed_entry;
 
@@ -184,7 +189,8 @@ camq_remove(struct camq *queue, int index)
 		queue->queue_array[index]->index = index;
 		heap_down(queue->queue_array, index, queue->entries - 1);
 	}
-	removed_entry->index = CAM_UNQUEUED_INDEX;
+	removed_entry->index = transient ?
+	    CAM_TRANSIENT_INDEX : CAM_UNQUEUED_INDEX;
 	queue->entries--;
 	return (removed_entry);
 }

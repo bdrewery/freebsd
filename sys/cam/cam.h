@@ -92,8 +92,9 @@ typedef struct {
 	u_int32_t generation;
 	int       index;
 #define CAM_UNQUEUED_INDEX	-1
-#define CAM_ACTIVE_INDEX	-2	
-#define CAM_DONEQ_INDEX		-3	
+#define CAM_TRANSIENT_INDEX	-2
+#define CAM_ACTIVE_INDEX	-3
+#define CAM_DONEQ_INDEX		-4
 #define CAM_EXTRAQ_INDEX	INT_MAX
 } cam_pinfo;
 

@@ -3257,7 +3257,8 @@ xpt_run_devq(struct cam_devq *devq)
 		struct xpt_proto *proto;
 
 		device = (struct cam_ed *)camq_remove(&devq->send_queue,
-							   CAMQ_HEAD);
+						      CAMQ_HEAD,
+						      /*transient*/FALSE);
 		CAM_DEBUG_PRINT(CAM_DEBUG_XPT,
 				("running device %p\n", device));
 
@@ -4316,7 +4317,8 @@ xpt_freeze_devq_device(struct cam_ed *dev, u_int count)
 	freeze = (dev->ccbq.queue.qfrozen_cnt += count);
 	/* Remove frozen device from sendq. */
 	if (device_is_queued(dev))
-		camq_remove(&devq->send_queue, dev->devq_entry.index);
+		camq_remove(&devq->send_queue, dev->devq_entry.index,
+		    /*transient*/FALSE);
 	return (freeze);
 }
 
