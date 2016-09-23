@@ -77,8 +77,13 @@ extern "C" {
 /* Maximum length for the BE name. */
 #define	BE_NAME_MAX_LEN		64
 
+#ifndef MAX
 #define	MAX(a, b) ((a) > (b) ? (a) : (b))
+#endif
+
+#ifndef MIN
 #define	MIN(a, b) ((a) < (b) ? (a) : (b))
+#endif
 
 typedef struct be_transaction_data {
 	char		*obe_name;	/* Original BE name */

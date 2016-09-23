@@ -41,7 +41,7 @@
 #include <sys/varargs.h>
 #include <sys/fs/zfs.h>
 #include <sys/avl.h>
-#include <sys/zfs_ioctl.h>
+//#include <sys/zfs_ioctl.h>
 #include <libzfs_core.h>
 
 #ifdef	__cplusplus
