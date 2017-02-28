@@ -53,22 +53,8 @@ static void
 usage(void)
 {
 
-	fprintf(stderr, "usage: pwait [-v] pid ...\n");
+	fprintf(stderr, "usage: pwait [-t timeout] [-v] pid ...\n");
 	exit(EX_USAGE);
-}
-
-static double
-parse_duration(const char *duration)
-{
-	char *end;
-	double ret;
-
-	ret = strtod(duration, &end);
-	if (ret == 0 && end == duration)
-		errx(EX_DATAERR, "invalid duration");
-	if (end == NULL || *end == '\0')
-		return (ret);
-	errx(EX_DATAERR, "invalid duration");
 }
 
 /*
@@ -82,7 +68,7 @@ main(int argc, char *argv[])
 	struct kevent *e;
 	int tflag, verbose;
 	int opt, nleft, n, i, duplicate, status;
-	long pid;
+	long pid, timeout;
 	char *s, *end;
 
 	tflag = verbose = 0;
@@ -91,7 +77,26 @@ main(int argc, char *argv[])
 		switch (opt) {
 		case 't':
 			tflag = 1;
-			tspec.tv_sec = parse_duration(optarg);
+			timeout = strtol(optarg, &end, 10);
+			tspec.tv_sec = (time_t)timeout;
+			if (end == optarg || tspec.tv_sec != timeout ||
+			    timeout < 0)
+				errx(EX_DATAERR, "timeout value");
+			switch(*end) {
+			case 0:
+			case 's':
+				break;
+			case 'h':
+				tspec.tv_sec *= 60;
+				/* FALLTHROUGH */
+			case 'm':
+				tspec.tv_sec *= 60;
+				break;
+			default:
+				errx(EX_DATAERR, "timeot unit");
+			}
+			if (tspec.tv_spec > 100000000L)
+				errx(EX_DATAERR, "timeot value");
 			break;
 		case 'v':
 			verbose = 1;
@@ -111,6 +116,8 @@ main(int argc, char *argv[])
 	kq = kqueue();
 	if (kq == -1)
 		err(1, "kqueue");
+
+/* Need to use SIGALRM/alarm to detect proper timeout; kevent timeout likely not needed then */
 
 	e = malloc(argc * sizeof(struct kevent));
 	if (e == NULL)
