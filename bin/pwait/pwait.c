@@ -57,20 +57,6 @@ usage(void)
 	exit(EX_USAGE);
 }
 
-static double
-parse_duration(const char *duration)
-{
-	char *end;
-	double ret;
-
-	ret = strtod(duration, &end);
-	if (ret == 0 && end == duration)
-		errx(EX_DATAERR, "invalid duration");
-	if (end == NULL || *end == '\0')
-		return (ret);
-	errx(EX_DATAERR, "invalid duration");
-}
-
 /*
  * pwait - wait for processes to terminate
  */
@@ -90,8 +76,24 @@ main(int argc, char *argv[])
 	while ((opt = getopt(argc, argv, "t:v")) != -1) {
 		switch (opt) {
 		case 't':
+/* XXX: Taken from readcmd */
 			tflag = 1;
-			tspec.tv_sec = parse_duration(optarg);
+			tv.tv_sec = strtol(optarg, &tvptr, 0);
+			if (tvptr == optarg)
+				errx(EX_DATAERR, "timeout value");
+			switch(*tvptr) {
+			case 0:
+			case 's':
+				break;
+			case 'h':
+				tv.tv_sec *= 60;
+				/* FALLTHROUGH */
+			case 'm':
+				tv.tv_sec *= 60;
+				break;
+			default:
+				errx(EX_DATAERR, "timeot unit");
+			}
 			break;
 		case 'v':
 			verbose = 1;
@@ -111,6 +113,8 @@ main(int argc, char *argv[])
 	kq = kqueue();
 	if (kq == -1)
 		err(1, "kqueue");
+
+/* Need to use SIGALRM/alarm to detect proper timeout; kevent timeout likely not needed then */
 
 	e = malloc(argc * sizeof(struct kevent));
 	if (e == NULL)
