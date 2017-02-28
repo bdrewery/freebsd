@@ -726,21 +726,29 @@ forcealias(void)
 void
 fixredir(union node *n, const char *text, int err)
 {
+	char *end;
+	long fdtmp;
+
 	TRACE(("Fix redir %s %d\n", text, err));
 	if (!err)
 		n->ndup.vname = NULL;
 
-	if (is_digit(text[0]) && text[1] == '\0')
-		n->ndup.dupfd = digit_val(text[0]);
-	else if (text[0] == '-' && text[1] == '\0')
+	if (text[0] == '-' && text[1] == '\0')
 		n->ndup.dupfd = -1;
-	else {
+	else if (is_digit(text[0])) {
+		fdtmp = strtol(text, &end, 10);
+		if (fdtmp > INT_MAX || *end != '\0')
+			goto error;
+		n->ndup.dupfd = (int)fdtmp;
+	} else
+		goto error;
 
-		if (err)
-			synerror("Bad fd number");
-		else
-			n->ndup.vname = makename();
-	}
+	return;
+error:
+	if (err)
+		synerror("Bad fd number");
+	else
+		n->ndup.vname = makename();
 }
 
 
@@ -1025,8 +1033,17 @@ checkend(int c, const char *eofmark, int striptabs)
 static void
 parseredir(char *out, int c)
 {
-	char fd = *out;
+	char *end;
 	union node *np;
+	long fdtmp;
+
+	fdtmp = -1;
+
+	if (*out != '\0') {
+		fdtmp = strtol(out, &end, 10);
+		if (fdtmp > INT_MAX || *end != '\0')
+			synerror("Bad fd number");
+	}
 
 	np = (union node *)stalloc(sizeof (struct nfile));
 	if (c == '>') {
@@ -1068,8 +1085,8 @@ parseredir(char *out, int c)
 			pungetc();
 		}
 	}
-	if (fd != '\0')
-		np->nfile.fd = digit_val(fd);
+	if (fdtmp != -1)
+		np->nfile.fd = (int)fdtmp;
 	redirnode = np;
 }
 
@@ -1588,7 +1605,6 @@ endword:
 	if (eofmark == NULL) {
 		if ((c == '>' || c == '<')
 		 && quotef == 0
-		 && len <= 2
 		 && (*out == '\0' || is_digit(*out))) {
 			parseredir(out, c);
 			return lasttoken = TREDIR;

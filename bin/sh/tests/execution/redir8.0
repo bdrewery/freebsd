@@ -1,0 +1,23 @@
+# $FreeBSD$
+set -e
+
+T=$(mktemp -t sh-test.XXXXXX)
+
+fdin=30
+exec 30< $T
+fdout=31
+exec 31> $T
+
+echo "test" >&$fdout || exit 1
+read -t 1 line <&$fdin || :
+[ $? -eq 0 ] || exit 2
+[ "$line" = "test" ] || exit 3
+
+exec 30<&- 31>&-
+echo shouldfail >&$fdout 2>/dev/null && exit 4
+val=0
+read -t 1 shouldfail <&$fdin || val=$?
+[ $val -eq 2 ] || exit 5
+#{ echo | read shouldfail <&$fdin 2>/dev/null; } && exit 2
+
+rm -f $T

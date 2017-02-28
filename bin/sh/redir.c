@@ -65,10 +65,14 @@ __FBSDID("$FreeBSD$");
 #define EMPTY -2		/* marks an unused slot in redirtab */
 #define CLOSED -1		/* fd was not open before redir */
 
+/* XXX: Need to rework this entire file as we don't want to just bup this to
+ * 9999... this is all an efficient O(1) lookup for used fd to push/pop and
+ * close old ones.*/
+#define MAX_FD 10
 
 struct redirtab {
 	struct redirtab *next;
-	int renamed[10];
+	int renamed[MAX_FD];
 	int fd0_redirected;
 	unsigned int empty_redirs;
 };
@@ -86,7 +90,7 @@ static int fd0_redirected = 0;
 /* Number of redirtabs that have not been allocated. */
 static unsigned int empty_redirs = 0;
 
-static void openredirect(union node *, char[10 ]);
+static void openredirect(union node *, char[MAX_FD]);
 static int openhere(union node *);
 
 
@@ -112,17 +116,17 @@ redirect(union node *redir, int flags)
 	struct redirtab *sv = NULL;
 	int i;
 	int fd;
-	char memory[10];	/* file descriptors to write to memory */
+	char memory[MAX_FD];	/* file descriptors to write to memory */
 
 	INTOFF;
-	for (i = 10 ; --i >= 0 ; )
+	for (i = MAX_FD ; --i >= 0 ; )
 		memory[i] = 0;
 	memory[1] = flags & REDIR_BACKQ;
 	if (flags & REDIR_PUSH) {
 		empty_redirs++;
 		if (redir != NULL) {
 			sv = ckmalloc(sizeof (struct redirtab));
-			for (i = 0 ; i < 10 ; i++)
+			for (i = 0 ; i < MAX_FD ; i++)
 				sv->renamed[i] = EMPTY;
 			sv->fd0_redirected = fd0_redirected;
 			sv->empty_redirs = empty_redirs - 1;
@@ -141,7 +145,7 @@ redirect(union node *redir, int flags)
 
 		if ((flags & REDIR_PUSH) && sv->renamed[fd] == EMPTY) {
 			INTOFF;
-			if ((i = fcntl(fd, F_DUPFD_CLOEXEC, 10)) == -1) {
+			if ((i = fcntl(fd, F_DUPFD_CLOEXEC, MAX_FD)) == -1) {
 				switch (errno) {
 				case EBADF:
 					i = CLOSED;
@@ -168,7 +172,7 @@ redirect(union node *redir, int flags)
 
 
 static void
-openredirect(union node *redir, char memory[10])
+openredirect(union node *redir, char memory[MAX_FD])
 {
 	struct stat sb;
 	int fd = redir->nfile.fd;
@@ -318,7 +322,7 @@ popredir(void)
 		INTON;
 		return;
 	}
-	for (i = 0 ; i < 10 ; i++) {
+	for (i = 0 ; i < MAX_FD ; i++) {
 		if (rp->renamed[i] != EMPTY) {
 			if (rp->renamed[i] >= 0) {
 				dup2(rp->renamed[i], i);
@@ -353,7 +357,7 @@ clearredir(void)
 	int i;
 
 	for (rp = redirlist ; rp ; rp = rp->next) {
-		for (i = 0 ; i < 10 ; i++) {
+		for (i = 0 ; i < MAX_FD ; i++) {
 			if (rp->renamed[i] >= 0) {
 				close(rp->renamed[i]);
 			}
