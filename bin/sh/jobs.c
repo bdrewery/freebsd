@@ -225,7 +225,7 @@ fgcmd(int argc __unused, char **argv __unused)
 	restartjob(jp);
 	jp->foreground = 1;
 	INTOFF;
-	status = waitforjob(jp, (int *)NULL);
+	status = waitforjob(jp, (int *)NULL, 1);
 	INTON;
 	return status;
 }
@@ -1016,7 +1016,7 @@ vforkexecshell(struct job *jp, char **argv, char **envp, const char *path, int i
  */
 
 int
-waitforjob(struct job *jp, int *origstatus)
+waitforjob(struct job *jp, int *origstatus, int allow_Tflag)
 {
 #if JOBS
 	int propagate_int = jp->jobctl && jp->foreground;
@@ -1027,7 +1027,7 @@ waitforjob(struct job *jp, int *origstatus)
 	INTOFF;
 	TRACE(("waitforjob(%%%td) called\n", jp - jobtab + 1));
 	while (jp->state == 0)
-		if (dowait(DOWAIT_BLOCK | (Tflag ? DOWAIT_SIG |
+		if (dowait(DOWAIT_BLOCK | (Tflag && allow_Tflag ? DOWAIT_SIG |
 		    DOWAIT_SIG_TRAP : 0), jp) == -1)
 			dotrap();
 #if JOBS

@@ -89,7 +89,7 @@ void showjobs(int, int);
 struct job *makejob(union node *, int);
 pid_t forkshell(struct job *, union node *, int);
 pid_t vforkexecshell(struct job *, char **, char **, const char *, int, int []);
-int waitforjob(struct job *, int *);
+int waitforjob(struct job *, int *, int);
 int stoppedjobs(void);
 int backgndpidset(void);
 pid_t backgndpidval(void);

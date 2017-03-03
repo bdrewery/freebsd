@@ -515,7 +515,7 @@ expbackq(union node *cmd, int quoted, int flag, struct worddest *dst)
 	if (in.buf)
 		ckfree(in.buf);
 	if (in.jp)
-		exitstatus = waitforjob(in.jp, (int *)NULL);
+		exitstatus = waitforjob(in.jp, (int *)NULL, 0);
 	TRACE(("expbackq: size=%td: \"%.*s\"\n",
 		((dest - stackblock()) - startloc),
 		(int)((dest - stackblock()) - startloc),

@@ -440,7 +440,7 @@ evalsubshell(union node *n, int flags)
 		evaltree(n->nredir.n, flags | EV_EXIT);	/* never returns */
 	} else if (! backgnd) {
 		INTOFF;
-		exitstatus = waitforjob(jp, (int *)NULL);
+		exitstatus = waitforjob(jp, (int *)NULL, 1);
 		INTON;
 	} else
 		exitstatus = 0;
@@ -618,7 +618,7 @@ evalpipe(union node *n)
 	INTON;
 	if (n->npipe.backgnd == 0) {
 		INTOFF;
-		exitstatus = waitforjob(jp, (int *)NULL);
+		exitstatus = waitforjob(jp, (int *)NULL, 1);
 		TRACE(("evalpipe:  job done exit status %d\n", exitstatus));
 		INTON;
 	} else
@@ -1163,7 +1163,7 @@ cmddone:
 parent:	/* parent process gets here (if we forked) */
 	if (mode == FORK_FG) {	/* argument to fork */
 		INTOFF;
-		exitstatus = waitforjob(jp, &realstatus);
+		exitstatus = waitforjob(jp, &realstatus, 1);
 		INTON;
 		if (iflag && loopnest > 0 && WIFSIGNALED(realstatus)) {
 			evalskip = SKIPBREAK;
