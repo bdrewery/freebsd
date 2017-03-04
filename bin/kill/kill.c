@@ -137,8 +137,9 @@ main(int argc, char *argv[])
 		else
 #endif
 		{
+			errno = 0;
 			pid = strtol(*argv, &ep, 10);
-			if (!**argv || *ep)
+			if (!**argv || *ep || errno == ERANGE)
 				errx(2, "illegal process id: %s", *argv);
 			ret = kill(pid, numsig);
 		}
