@@ -631,7 +631,7 @@ kvprintf(char const *fmt, void (*func)(int, void*), void *arg, int radix, va_lis
 #define PCHAR(c) {int cc=(c); if (func) (*func)(cc,arg); else *d++ = cc; retval++; }
 	char nbuf[MAXNBUF];
 	char *d;
-	const char *p, *percent, *q;
+	const char *bfmt, *p, *percent, *q;
 	u_char *up;
 	int ch, n;
 	uintmax_t num;
@@ -661,7 +661,7 @@ kvprintf(char const *fmt, void (*func)(int, void*), void *arg, int radix, va_lis
 				return (retval);
 			PCHAR(ch);
 		}
-		percent = fmt - 1;
+		bfmt = NULL; percent = fmt - 1;
 		qflag = 0; lflag = 0; ladjust = 0; sharpflag = 0; neg = 0;
 		sign = 0; dot = 0; dwidth = 0; upper = 0;
 		cflag = 0; hflag = 0; jflag = 0; tflag = 0; zflag = 0;
@@ -711,28 +711,11 @@ reswitch:	switch (ch = (u_char)*fmt++) {
 				width = n;
 			goto reswitch;
 		case 'b':
+			sign = 0;
 			num = (u_int)va_arg(ap, int);
-			p = va_arg(ap, char *);
-			for (q = ksprintn(nbuf, num, *p++, NULL, 0); *q;)
-				PCHAR(*q--);
-
-			if (num == 0)
-				break;
-
-			for (tmp = 0; *p;) {
-				n = *p++;
-				if (num & (1 << (n - 1))) {
-					PCHAR(tmp ? ',' : '<');
-					for (; (n = *p) > ' '; ++p)
-						PCHAR(n);
-					tmp = 1;
-				} else
-					for (; *p > ' '; ++p)
-						continue;
-			}
-			if (tmp)
-				PCHAR('>');
-			break;
+			bfmt = va_arg(ap, char *);
+			base = *bfmt++;
+			goto number;
 		case 'c':
 			width -= 1;
 
@@ -931,6 +914,21 @@ number:
 				while (width-- > 0)
 					PCHAR(' ');
 
+			if (bfmt == NULL || num == 0)
+				break;
+			for (tmp = 0; *bfmt;) {
+				n = *bfmt++;
+				if (num & (1 << (n - 1))) {
+					PCHAR(tmp ? ',' : '<');
+					for (; (n = *bfmt) > ' '; ++bfmt)
+						PCHAR(n);
+					tmp = 1;
+				} else
+					for (; *bfmt > ' '; ++bfmt)
+						continue;
+			}
+			if (tmp)
+				PCHAR('>');
 			break;
 		default:
 			while (percent < fmt)
