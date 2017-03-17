@@ -39,8 +39,10 @@
 #include <sys/umtx.h>
 #include <limits.h>
 #include <fcntl.h>
+#include <paths.h>
 #include <pthread.h>
 #include <stdarg.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
@@ -61,7 +63,7 @@ __weak_reference(_sem_trywait, sem_trywait);
 __weak_reference(_sem_unlink, sem_unlink);
 __weak_reference(_sem_wait, sem_wait);
 
-#define SEM_PREFIX	"/tmp/SEMD"
+#define SEM_PREFIX	"SEMD"
 #define SEM_MAGIC	((u_int32_t)0x73656d32)
 
 _Static_assert(SEM_VALUE_MAX <= USEM_MAX_COUNT, "SEM_VALUE_MAX too large");
@@ -142,7 +144,7 @@ sem_t *
 _sem_open(const char *name, int flags, ...)
 {
 	char path[PATH_MAX];
-
+	const char *envtmpdir;
 	struct stat sb;
 	va_list ap;
 	struct sem_nameinfo *ni = NULL;
@@ -155,7 +157,13 @@ _sem_open(const char *name, int flags, ...)
 		return (SEM_FAILED);
 	}
 	name++;
-	strcpy(path, SEM_PREFIX);
+	envtmpdir = getenv("TMPDIR");
+	if (envtmpdir == NULL)
+		envtmpdir = _PATH_TMP;
+	if (snprintf(path, sizeof(path), "%s/%s", envtmpdir, SEM_PREFIX) < 0) {
+		errno = ENAMETOOLONG;
+		return (SEM_FAILED);
+	}
 	if (strlcat(path, name, sizeof(path)) >= sizeof(path)) {
 		errno = ENAMETOOLONG;
 		return (SEM_FAILED);
@@ -298,13 +306,20 @@ int
 _sem_unlink(const char *name)
 {
 	char path[PATH_MAX];
+	const char *envtmpdir;
 
 	if (name[0] != '/') {
 		errno = ENOENT;
 		return -1;
 	}
 	name++;
-	strcpy(path, SEM_PREFIX);
+	envtmpdir = getenv("TMPDIR");
+	if (envtmpdir == NULL)
+		envtmpdir = _PATH_TMP;
+	if (snprintf(path, sizeof(path), "%s/%s", envtmpdir, SEM_PREFIX) < 0) {
+		errno = ENAMETOOLONG;
+		return (-1);
+	}
 	if (strlcat(path, name, sizeof(path)) >= sizeof(path)) {
 		errno = ENAMETOOLONG;
 		return (-1);
