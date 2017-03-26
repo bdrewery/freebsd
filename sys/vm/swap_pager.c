@@ -2460,7 +2460,7 @@ vmspace_swap_count(struct vmspace *vmspace)
 	map = &vmspace->vm_map;
 	count = 0;
 
-	for (cur = map->header.next; cur != &map->header; cur = cur->next) {
+	MAP_ENTRY_FOREACH(cur, map) {
 		if ((cur->eflags & MAP_ENTRY_IS_SUB_MAP) == 0 &&
 		    (object = cur->object.vm_object) != NULL) {
 			VM_OBJECT_WLOCK(object);

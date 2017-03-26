@@ -535,7 +535,7 @@ kern_munmap(struct thread *td, uintptr_t addr0, size_t size)
 		pkm.pm_address = (uintptr_t) NULL;
 		if (vm_map_lookup_entry(map, addr, &entry)) {
 			for (;
-			    entry != &map->header && entry->start < addr + size;
+			    entry != MAP_ENTRY_SENTINEL(map) && entry->start < addr + size;
 			    entry = entry->next) {
 				if (vm_map_check_protection(map, entry->start,
 					entry->end, VM_PROT_EXECUTE) == TRUE) {
@@ -761,14 +761,14 @@ RestartScan:
 	 */
 	lastvecindex = -1;
 	for (current = entry;
-	    (current != &map->header) && (current->start < end);
+	    (current != MAP_ENTRY_SENTINEL(map)) && (current->start < end);
 	    current = current->next) {
 
 		/*
 		 * check for contiguity
 		 */
 		if (current->end < end &&
-		    (entry->next == &map->header ||
+		    (entry->next == MAP_ENTRY_SENTINEL(map) ||
 		     current->next->start > current->end)) {
 			vm_map_unlock_read(map);
 			return (ENOMEM);

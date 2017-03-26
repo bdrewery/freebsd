@@ -1652,7 +1652,7 @@ pmc_log_process_mappings(struct pmc_owner *po, struct proc *p)
 	map = &vm->vm_map;
 	vm_map_lock_read(map);
 
-	for (entry = map->header.next; entry != &map->header; entry = entry->next) {
+	MAP_ENTRY_FOREACH(entry, map) {
 
 		if (entry == NULL) {
 			PMCDBG2(LOG,OPS,2, "hwpmc: vm_map entry unexpectedly "

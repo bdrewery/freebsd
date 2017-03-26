@@ -2428,9 +2428,9 @@ _vm_object_in_map(vm_map_t map, vm_object_t object, vm_map_entry_t entry)
 		return 0;
 
 	if (entry == 0) {
-		tmpe = map->header.next;
+		tmpe = MAP_ENTRY_FIRST(map);
 		entcount = map->nentries;
-		while (entcount-- && (tmpe != &map->header)) {
+		while (entcount-- && (tmpe != MAP_ENTRY_SENTINEL(map))) {
 			if (_vm_object_in_map(map, object, tmpe)) {
 				return 1;
 			}
@@ -2438,9 +2438,9 @@ _vm_object_in_map(vm_map_t map, vm_object_t object, vm_map_entry_t entry)
 		}
 	} else if (entry->eflags & MAP_ENTRY_IS_SUB_MAP) {
 		tmpm = entry->object.sub_map;
-		tmpe = tmpm->header.next;
+		tmpe = MAP_ENTRY_FIRST(tmpm);
 		entcount = tmpm->nentries;
-		while (entcount-- && tmpe != &tmpm->header) {
+		while (entcount-- && tmpe != MAP_ENTRY_SENTINEL(tmpm)) {
 			if (_vm_object_in_map(tmpm, object, tmpe)) {
 				return 1;
 			}

@@ -112,8 +112,7 @@ procfs_doprocmap(PFS_FILL_ARGS)
 		return (ESRCH);
 	map = &vm->vm_map;
 	vm_map_lock_read(map);
-	for (entry = map->header.next; entry != &map->header;
-	     entry = entry->next) {
+	MAP_ENTRY_FOREACH(entry, map) {
 		vm_object_t obj, tobj, lobj;
 		int ref_count, shadow_count, flags;
 		vm_offset_t e_start, e_end, addr;

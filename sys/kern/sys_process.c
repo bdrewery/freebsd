@@ -392,9 +392,9 @@ ptrace_vm_entry(struct thread *td, struct proc *p, struct ptrace_vm_entry *pve)
 	vm_map_lock_read(map);
 
 	do {
-		entry = map->header.next;
+		entry = MAP_ENTRY_FIRST(map);
 		index = 0;
-		while (index < pve->pve_entry && entry != &map->header) {
+		while (index < pve->pve_entry && entry != MAP_ENTRY_SENTINEL(map)) {
 			entry = entry->next;
 			index++;
 		}
@@ -402,12 +402,12 @@ ptrace_vm_entry(struct thread *td, struct proc *p, struct ptrace_vm_entry *pve)
 			error = EINVAL;
 			break;
 		}
-		while (entry != &map->header &&
+		while (entry != MAP_ENTRY_SENTINEL(map) &&
 		    (entry->eflags & MAP_ENTRY_IS_SUB_MAP) != 0) {
 			entry = entry->next;
 			index++;
 		}
-		if (entry == &map->header) {
+		if (entry == MAP_ENTRY_SENTINEL(map)) {
 			error = ENOENT;
 			break;
 		}
