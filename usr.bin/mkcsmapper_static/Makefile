@@ -13,5 +13,3 @@ build-tools: mkcsmapper_static
 
 .include "${SRCTOP}/usr.bin/mkcsmapper/Makefile.inc"
 .include <bsd.prog.mk>
-
-${PROG}: ${BUILD_TOOLS_META}

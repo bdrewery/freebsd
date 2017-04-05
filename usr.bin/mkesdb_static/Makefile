@@ -13,5 +13,3 @@ build-tools: mkesdb_static
 
 .include "${SRCTOP}/usr.bin/mkesdb/Makefile.inc"
 .include <bsd.prog.mk>
-
-${PROG}: ${BUILD_TOOLS_META}

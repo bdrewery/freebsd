@@ -422,6 +422,8 @@ BUILD_ARCH!=	uname -p
 .endif
 .endif
 WORLDTMP=	${OBJTREE}${.CURDIR}/tmp
+BTOOLSPREFIX=	${WORLDTMP}/tools
+BTOOLSPATH?=	${BTOOLSPREFIX}$${.CURDIR}
 BPATH=		${WORLDTMP}/legacy/usr/sbin:${WORLDTMP}/legacy/usr/bin:${WORLDTMP}/legacy/bin
 XPATH=		${WORLDTMP}/usr/sbin:${WORLDTMP}/usr/bin
 STRICTTMPPATH=	${BPATH}:${XPATH}
@@ -482,11 +484,8 @@ MINIMUM_SUPPORTED_REL?= 9.1
 CROSSENV+=	MAKEOBJDIRPREFIX=${OBJTREE} \
 		MACHINE_ARCH=${TARGET_ARCH} \
 		MACHINE=${TARGET} \
-		CPUTYPE=${TARGET_CPUTYPE}
-.if ${MK_META_MODE} != "no"
-# Don't rebuild build-tools targets during normal build.
-CROSSENV+=	BUILD_TOOLS_META=.NOMETA_CMP
-.endif
+		CPUTYPE=${TARGET_CPUTYPE} \
+		BTOOLSPATH=${BTOOLSPATH:Q}
 .if ${MK_GROFF} != "no"
 CROSSENV+=	GROFF_BIN_PATH=${WORLDTMP}/legacy/usr/bin \
 		GROFF_FONT_PATH=${WORLDTMP}/legacy/usr/share/groff_font \
@@ -518,7 +517,7 @@ BMAKE=		MAKEOBJDIRPREFIX=${WORLDTMP} \
 		${BSARGS}
 
 # build-tools stage
-TMAKE=		MAKEOBJDIRPREFIX=${OBJTREE} \
+TMAKE=		MAKEOBJDIRPREFIX=${BTOOLSPREFIX} \
 		${BMAKEENV} ${MAKE} ${WORLD_FLAGS} -f Makefile.inc1 \
 		TARGET=${TARGET} TARGET_ARCH=${TARGET_ARCH} \
 		DESTDIR= \
@@ -2572,10 +2571,6 @@ CD2ENV=${CDENV} CC="${CC} ${CD2CFLAGS}" CXX="${CXX} ${CD2CXXFLAGS} ${CD2CFLAGS}"
 CDTMP=	${MAKEOBJDIRPREFIX}/${XDDIR}/${.CURDIR}/tmp
 CDMAKE=${CDENV} PATH=${CDTMP}/usr/bin:${PATH} ${MAKE} ${NOFUN}
 CD2MAKE=${CD2ENV} PATH=${CDTMP}/usr/bin:${XDDESTDIR}/usr/bin:${PATH} ${MAKE} ${NOFUN}
-.if ${MK_META_MODE} != "no"
-# Don't rebuild build-tools targets during normal build.
-CD2MAKE+=	BUILD_TOOLS_META=.NOMETA_CMP
-.endif
 XDDESTDIR=${DESTDIR}/${XDTP}
 .if !defined(OSREL)
 OSREL!= uname -r | sed -e 's/[-(].*//'

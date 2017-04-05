@@ -389,7 +389,7 @@ GNTOOLS+=	genattr genattrtab genautomata gencodes gencheck genchecksum \
 		genextract genflags gengenrtl gengtype genmodes genopinit \
 		genoutput genpeep genpreds genrecog
 
-${GNTOOLS:C,$,.o,} ${GNTOOLS}: ${BUILD_TOOLS_META}
+${GNTOOLS:C,$,.o,} ${GNTOOLS}:
 all: ${GNTOOLS} ${GENSRCS} ${GENONLY}
 beforedepend: ${GENONLY}
 
@@ -405,11 +405,11 @@ LIBIBERTY_SRCS=	choose-temp.c concat.c cp-demangle.c cp-demint.c cplus-dem.c \
 LIBIBERTY_OBJS=	${LIBIBERTY_SRCS:R:S/$/.o/g}
 
 .for _src in ${LIBIBERTY_SRCS}
-${_src:R:S/$/.o/}: ${_src} ${BUILD_TOOLS_META}
+${_src:R:S/$/.o/}: ${_src}
 	${CC} -c -I ${.CURDIR}/../libiberty ${CFLAGS} -o ${.TARGET} ${.IMPSRC}
 .endfor
 
-${LIBIBERTY}: ${LIBIBERTY_OBJS} ${BUILD_TOOLS_META}
+${LIBIBERTY}: ${LIBIBERTY_OBJS}
 	@rm -f ${.TARGET}
 	@${AR} ${ARFLAGS} ${.TARGET} `lorder ${LIBIBERTY_OBJS} | tsort -q`
 	${RANLIB} ${.TARGET}
@@ -433,7 +433,7 @@ SRCS=		errors.c genattr.c genattrtab.c \
 SRCS+=		${GENSRCS}
 OBJS+=		${SRCS:N*.h:R:S/$/.o/g}
 GENOBJS+=	${GENSRCS:N*.h:R:S/$/.o/g}
-${OBJS} ${GENOBJS}: ${BUILD_TOOLS_META}
+${OBJS} ${GENOBJS}:
 CLEANFILES+=	${GENSRCS} ${GENONLY} ${GENOBJS} ${GNTOOLS}
 
 #-----------------------------------------------------------------------
