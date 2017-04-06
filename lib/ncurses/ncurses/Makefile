@@ -275,8 +275,8 @@ DBGSRCS= \
 # Used instead of the hideous read_termcap.c abomination.
 SRCS+=	termcap.c
 
-CLEANFILES=	${GENSRCS} ${GENHDRS} keys.list make_hash term.h.new \
-		make_keys MKterm.h.awk comp_captab.c curses.head
+CLEANFILES=	${GENSRCS} ${GENHDRS} keys.list term.h.new \
+		MKterm.h.awk comp_captab.c curses.head
 
 CFLAGS+=	-DFREEBSD_NATIVE -DTERMIOS
 
@@ -341,7 +341,7 @@ lib_keyname.c: keys.list MKkeyname.awk
 unctrl.c: MKunctrl.awk
 	echo | ${AWK} -f ${NCURSES_DIR}/ncurses/base/MKunctrl.awk bigstrings=${USE_BIG_STRINGS} > unctrl.c
 
-comp_captab.c: MKcaptab.sh MKcaptab.awk Caps make_hash
+comp_captab.c: MKcaptab.sh MKcaptab.awk Caps ${BTOOLSPATH:U.}/make_hash
 	env PATH=${BTOOLSPATH:U.}:${PATH} sh ${NCURSES_DIR}/ncurses/tinfo/MKcaptab.sh "${AWK}" \
 	    ${USE_BIG_STRINGS} ${NCURSES_DIR}/ncurses/tinfo/MKcaptab.awk \
 	    ${NCURSES_DIR}/include/Caps > comp_captab.c
@@ -357,7 +357,7 @@ nomacros.h: MKlib_gen.sh curses.h
 	LC_ALL=C sh ${NCURSES_DIR}/ncurses/base/MKlib_gen.sh "${CC:N${CCACHE_BIN}} -E ${CFLAGS}" \
 	    "${AWK}" generated < curses.h | fgrep undef > $@
 
-init_keytry.h: keys.list make_keys
+init_keytry.h: keys.list ${BTOOLSPATH:U.}/make_keys
 	${BTOOLSPATH:U.}/make_keys keys.list > init_keytry.h
 
 hashsize.h: MKhashsize.sh Caps
@@ -389,13 +389,15 @@ keys.list: MKkeys_list.sh Caps
 
 # Build tools
 build-tools: make_hash make_keys
-
-make_keys: make_keys.c names.c ncurses_def.h ${HEADERS}
+.if make(build-tools) || empty(BTOOLSPATH)
+CLEANFILES+=	make_keys make_hash
+make_keys: make_keys.c names.c ncurses_def.h
 	${CC} -o $@ ${CFLAGS} ${NCURSES_DIR}/ncurses/tinfo/make_keys.c
 
-make_hash: make_hash.c hashsize.h ncurses_def.h ${HEADERS}
+make_hash: make_hash.c hashsize.h ncurses_def.h
 	${CC} -o $@ ${CFLAGS} -DMAIN_PROGRAM \
 		${NCURSES_DIR}/ncurses/tinfo/make_hash.c
+.endif
 
 # ./configure generated
 MKterm.h.awk: MKterm.h.awk.in

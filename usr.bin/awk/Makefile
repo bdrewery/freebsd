@@ -15,17 +15,20 @@ LIBADD=	m
 LINKS=	${BINDIR}/awk ${BINDIR}/nawk
 MLINKS=	awk.1 nawk.1
 
-CLEANFILES= maketab proctab.c ytab.h
+CLEANFILES= proctab.c ytab.h
 
 # XXX: awkgram.c isn't really needed here but it is added to keep
 # awkgram.h: .NOMETA respected.
 ytab.h: awkgram.c awkgram.h .NOMETA
 	ln -sf ${.ALLSRC:M*.h} ${.TARGET}
 
-proctab.c: maketab
+proctab.c: ${BTOOLSPATH:U.}/maketab ytab.h
 	${BTOOLSPATH:U.}/maketab > proctab.c
 
 build-tools: maketab
+.if make(build-tools) || empty(BTOOLSPATH)
+CLEANFILES+=	maketab
 maketab: ytab.h maketab.c
+.endif
 
 .include <bsd.prog.mk>

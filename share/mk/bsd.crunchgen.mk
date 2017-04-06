@@ -38,8 +38,12 @@ OUTMK=	${PROG}.mk
 OUTC=	${PROG}.c
 OUTPUTS=${OUTMK} ${OUTC} ${PROG}.cache
 CRUNCHOBJS= ${.OBJDIR}
-BTOOLSPREFIX=	${CRUNCHOBJS}/tools
-BTOOLSPATH?=	${BTOOLSPREFIX}$${.CURDIR}
+#BTOOLSPREFIX=	${CRUNCHOBJS}/tools
+#BTOOLSPATH?=	${BTOOLSPREFIX}
+#BTOOLSPATH:=	${BTOOLSPATH}$${.CURDIR}
+#CRUNCH_BUILDOPTS+=	BTOOLSPATH=${BTOOLSPATH:Q}
+#CRUNCH_BUILDOPTS+=	BTOOLSPATH='${BTOOLSPATH}$${.CURDIR}'
+#/usr/obj/sparc64.sparc64/root/git/freebsd/tmp/tools/root/git/freebsd/bin/sh/mknodes.o
 CRUNCH_GENERATE_LINKS?= yes
 # Don't let the prog.mk use MK_AUTO_OBJ, but do let the component builds use
 # it.
@@ -98,6 +102,7 @@ ${CONF}: Makefile
 	echo special ${P} srcdir ${CRUNCH_SRCDIR_${P}} >>${.TARGET}
 .ifdef CRUNCH_BUILDOPTS_${P}
 	echo special ${P} buildopts DIRPRFX=${DIRPRFX}${P}/ \
+	    BTOOLSPATH=${BTOOLSPATH}${SRCTOP}${P} \
 	    ${CRUNCH_BUILDOPTS_${P}} >>${.TARGET}
 .else
 	echo special ${P} buildopts DIRPRFX=${DIRPRFX}${P}/ >>${.TARGET}
@@ -111,8 +116,7 @@ ${CONF}: Makefile
 CRUNCHGEN?= crunchgen
 CRUNCHENV+= MK_TESTS=no \
 	    UPDATE_DEPENDFILE=no \
-	    _RECURSING_CRUNCH=1 \
-	    BTOOLSPATH=${BTOOLSPATH:Q}
+	    _RECURSING_CRUNCH=1
 .ORDER: ${OUTPUTS} objs
 ${OUTPUTS:[1]}: .META
 ${OUTPUTS:[2..-1]}: .NOMETA
@@ -138,13 +142,11 @@ objs: ${OUTMK} .META
 	${CRUNCHENV} MAKEOBJDIRPREFIX=${CRUNCHOBJS} \
 	    ${MAKE} -f ${OUTMK} objs
 
-# <sigh> Someone should replace the bin/csh and bin/sh build-tools with
-# shell scripts so we can remove this nonsense.
 .for _tool in ${CRUNCH_BUILDTOOLS}
 build-tools-${_tool}:
 	${_+_}cd ${.CURDIR}/../../${_tool}; \
-	    ${CRUNCHENV} MAKEOBJDIRPREFIX=${BTOOLSPREFIX} ${MAKE} obj; \
-	    ${CRUNCHENV} MAKEOBJDIRPREFIX=${BTOOLSPREFIX} ${MAKE} build-tools
+	    ${CRUNCHENV} MAKEOBJDIRPREFIX=${CRUNCHOBJS} ${MAKE} obj; \
+	    ${CRUNCHENV} MAKEOBJDIRPREFIX=${CRUNCHOBJS} ${MAKE} build-tools
 build-tools: build-tools-${_tool}
 .endfor
 

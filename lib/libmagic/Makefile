@@ -35,14 +35,16 @@ MAGFILES=	${CONTRDIR}/magic/Header \
 magic: ${MAGFILES}
 	cat ${.ALLSRC:O} > ${.TARGET}
 
-magic.mgc: mkmagic magic
+magic.mgc: ${BTOOLSPATH:U.}/mkmagic magic
 	${BTOOLSPATH:U.}/mkmagic magic
 
-CLEANFILES+=	mkmagic
 build-tools: mkmagic
+.if make(build-tools) || empty(BTOOLSPATH)
+CLEANFILES+=	mkmagic
 mkmagic: apprentice.c cdf_time.c encoding.c funcs.c magic.c print.c ${INCS}
 	${CC} ${CFLAGS} -DCOMPILE_ONLY ${LDFLAGS} -o ${.TARGET} ${.ALLSRC:N*.h} \
 	    ${LDADD}
+.endif
 
 FILEVER!= awk '$$1 == "\#define" && $$2 == "VERSION" { print $$3; exit }' \
 			${.CURDIR}/config.h

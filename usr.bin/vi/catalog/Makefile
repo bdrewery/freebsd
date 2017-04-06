@@ -17,10 +17,6 @@ SCAN=	${V}/cl/*.c ${V}/common/*.c ${V}/ex/*.c ${V}/vi/*.c
 
 .PATH: ${V}/catalog
 
-all:		dump
-
-build-tools:	dump
-
 # Helper since iconv is non trivial to make a build tool
 utf8convert:
 .for c in dutch french german spanish swedish
@@ -97,18 +93,21 @@ ${c}.check: ${c}.base
 	echo =========================) > $c
 .endfor
 
-english.base: dump ${SCAN} #Makefile
+english.base: ${BTOOLSPATH:U.}/dump ${SCAN} #Makefile
 	${BTOOLSPATH:U.}/dump ${SCAN} |\
 	sed -e '/|/!d' \
 	    -e 's/|/ "/' \
 	    -e 's/^"//' |\
 	sort -nu > $@
 
-
+build-tools:	dump
+.if make(build-tools) || empty(BTOOLSPATH)
+CLEANFILES+=	dump
 dump: dump.c
 	${CC} -o ${.TARGET} ${.ALLSRC}
+.endif
 
-CLEANFILES+= dump ${CAT} english.base *.check __ck1 __ck2
+CLEANFILES+= ${CAT} english.base *.check __ck1 __ck2
 
 CATALOGS= ${CAT}
 NLLINKS= nl_NL

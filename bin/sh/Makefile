@@ -32,17 +32,17 @@ WFORMAT=0
 	${.CURDIR:H}/test \
 	${SRCTOP}/usr.bin/printf
 
-CLEANFILES+= mknodes mknodes.o \
-	mksyntax mksyntax.o
 CLEANFILES+= ${GENSRCS} ${GENHDRS}
-
-build-tools: mknodes mksyntax
 
 .ORDER: builtins.c builtins.h
 builtins.h: .NOMETA
 builtins.c builtins.h: mkbuiltins builtins.def
 	sh ${.CURDIR}/mkbuiltins ${.CURDIR}
 
+build-tools: mknodes mksyntax
+.if make(build-tools) || empty(BTOOLSPATH)
+CLEANFILES+= mknodes mknodes.o \
+	mksyntax mksyntax.o
 # XXX this is just to stop the default .c rule being used, so that the
 # intermediate object has a fixed name.
 # XXX we have a default .c rule, but no default .o rule.
@@ -50,15 +50,16 @@ mknodes.o mksyntax.o:
 	${CC} ${CFLAGS} ${LDFLAGS} ${.IMPSRC} ${LDLIBS} -o ${.TARGET}
 mknodes: mknodes.o
 mksyntax: mksyntax.o
+.endif
 
 .ORDER: nodes.c nodes.h
 nodes.h: .NOMETA
-nodes.c nodes.h: mknodes nodetypes nodes.c.pat
+nodes.c nodes.h: ${BTOOLSPATH:U.}/mknodes nodetypes nodes.c.pat
 	${BTOOLSPATH:U.}/mknodes ${.CURDIR}/nodetypes ${.CURDIR}/nodes.c.pat
 
 .ORDER: syntax.c syntax.h
 syntax.h: .NOMETA
-syntax.c syntax.h: mksyntax
+syntax.c syntax.h: ${BTOOLSPATH:U.}/mksyntax
 	${BTOOLSPATH:U.}/mksyntax
 
 token.h: mktokens
