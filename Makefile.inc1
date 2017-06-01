@@ -353,6 +353,19 @@ OSRELDATE=	0
 .export OSRELDATE
 .endif
 
+.if ${MK_META_MODE} == "yes"
+.if !defined(WORLDTMP_OSRELDATE)
+.if exists(${WORLDTMP}/usr/include/osreldate.h)
+WORLDTMP_OSRELDATE!=	\
+    awk '/^\#define[[:space:]]*__FreeBSD_version/ { print $$3 }' \
+    ${WORLDTMP}/usr/include/osreldate.h
+.else
+WORLDTMP_OSRELDATE=	0
+.endif
+.export WORLDTMP_OSRELDATE
+.endif
+.endif
+
 # Set VERSION for CTFMERGE to use via the default CTFFLAGS=-L VERSION.
 .if !defined(_REVISION)
 _REVISION!=	MK_AUTO_OBJ=no ${MAKE} -C ${SRCDIR}/release -V REVISION
@@ -643,6 +656,26 @@ LIBCOMPAT= SOFT
 .include "Makefile.libcompat"
 .endif
 
+# META_MODE normally ignores host file changes since every build updates
+# timestamps (see NO_META_IGNORE_HOST in sys.mk).  There are known times
+# when the ABI breaks though that we want to force rebuilding WORLDTMP
+# to get updated host tools.  Note that this logic is the opposite of
+# normal BOOTSTRAP handling.  We want to compare the WORLDTMP's OSRELDATE
+# to the host's OSRELDATE.  If the WORLDTMP is older than the ABI-breakage
+# OSRELDATE of the HOST then we rebuild.
+.if ${MK_META_MODE} == "yes" && defined(NO_CLEAN)
+# r318736 - ino64 major ABI breakage
+META_MODE_BADABI_REVS+=	1200031
+.for _rev in ${META_MODE_BADABI_REVS}
+.if ${BOOTSTRAPPING} >= ${_rev} && ${WORLDTMP_OSRELDATE} < ${_rev}
+META_MODE_REBUILD_HOST=	t
+.endif
+.endfor
+.if defined(META_MODE_REBUILD_HOST)
+.error META_MODE: Rebuilding host tools due to ABI breakage.
+.endif
+.endif
+
 WMAKE=		${WMAKEENV} ${MAKE} ${WORLD_FLAGS} -f Makefile.inc1 DESTDIR=${WORLDTMP}
 
 IMAKEENV=	${CROSSENV}
@@ -699,7 +732,7 @@ _worldtmp: .PHONY
 	@echo "--------------------------------------------------------------"
 	@echo ">>> Rebuilding the temporary build tree"
 	@echo "--------------------------------------------------------------"
-.if !defined(NO_CLEAN)
+.if !defined(NO_CLEAN) || defined(META_MODE_REBUILD_HOST)
 	rm -rf ${WORLDTMP}
 .if defined(LIBCOMPAT)
 	rm -rf ${LIBCOMPATTMP}
