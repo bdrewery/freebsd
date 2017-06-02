@@ -111,6 +111,8 @@ CFLAGS.gcc.ioctl.c+= -Wno-unused
 
 CFLAGS.gcc+=	${CFLAGS.gcc.${.IMPSRC}}
 
+DESTDIR?=	${SYSROOT}
+
 DEPENDOBJS+=	tables.h
 tables.h: mktables
 	sh ${.CURDIR}/mktables ${DESTDIR}${INCLUDEDIR} ${.TARGET}

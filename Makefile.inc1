@@ -643,7 +643,9 @@ LIBCOMPAT= SOFT
 .include "Makefile.libcompat"
 .endif
 
-WMAKE=		${WMAKEENV} ${MAKE} ${WORLD_FLAGS} -f Makefile.inc1 DESTDIR=${WORLDTMP}
+WMAKE=		${WMAKEENV} ${MAKE} ${WORLD_FLAGS} -f Makefile.inc1 \
+		SYSROOT=${WORLDTMP} \
+		DESTDIR=${WORLDTMP}
 
 IMAKEENV=	${CROSSENV}
 IMAKE=		${IMAKEENV} ${MAKE} -f Makefile.inc1 \
