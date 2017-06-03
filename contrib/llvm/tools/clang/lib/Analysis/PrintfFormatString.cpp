@@ -833,6 +833,7 @@ bool PrintfSpecifier::hasValidAlternativeForm() const {
   case ConversionSpecifier::FArg:
   case ConversionSpecifier::gArg:
   case ConversionSpecifier::GArg:
+  case ConversionSpecifier::FreeBSDbArg:
   case ConversionSpecifier::FreeBSDrArg:
   case ConversionSpecifier::FreeBSDyArg:
     return true;
@@ -958,6 +959,7 @@ bool PrintfSpecifier::hasValidPrecision() const {
   case ConversionSpecifier::gArg:
   case ConversionSpecifier::GArg:
   case ConversionSpecifier::sArg:
+  case ConversionSpecifier::FreeBSDbArg:
   case ConversionSpecifier::FreeBSDrArg:
   case ConversionSpecifier::FreeBSDyArg:
   case ConversionSpecifier::PArg:
