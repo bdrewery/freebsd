@@ -3837,6 +3837,16 @@ file_type_to_name(short type)
 		return ("shm");
 	case DTYPE_SEM:
 		return ("ksem");
+	case DTYPE_PTS:
+		return ("pts");
+	case DTYPE_DEV:
+		return ("dev");
+	case DTYPE_PROCDESC:
+		return ("proc");
+	case DTYPE_LINUXEFD:
+		return ("leve");
+	case DTYPE_LINUXTFD:
+		return ("ltmr");
 	default:
 		return ("unkn");
 	}
