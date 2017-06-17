@@ -152,7 +152,10 @@ DTBOWN?=	root
 DTBGRP?=	wheel
 DTBMODE?=	444
 
-LIBDIR?=	/usr/lib
+LIBDIR_DEFAULT=	/usr/lib
+LIBDIR?=	${LIBDIR_DEFAULT}
+_PREMK_LIBDIR?=	${LIBDIR_DEFAULT}
+BASE_LIBDIR=	${_PREMK_LIBDIR}
 LIBCOMPATDIR?=	/usr/lib/compat
 LIBDATADIR?=	/usr/libdata
 LIBEXECDIR?=	/usr/libexec
