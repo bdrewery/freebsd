@@ -176,11 +176,17 @@ DEPEND_MP?=	-MP
 # Handle OBJS=../somefile.o hacks.  Just replace '/' rather than use :T to
 # avoid collisions.
 DEPEND_FILTER=	C,/,_,g
+.if !defined(_SKIP_READ_DEPEND)
 DEPENDSRCS=	${SRCS:M*.[cSC]} ${SRCS:M*.cxx} ${SRCS:M*.cpp} ${SRCS:M*.cc}
 .if !empty(DEPENDSRCS)
 DEPENDOBJS+=	${DEPENDSRCS:R:S,$,.o,}
 .endif
 DEPENDFILES_OBJS=	${DEPENDOBJS:O:u:${DEPEND_FILTER}:C/^/${DEPENDFILE}./}
+.else
+.undef DEPENDSRCS
+.undef DEPENDOBJS
+.undef DEPENDFILES_OBJS
+.endif	# !defined(_SKIP_READ_DEPEND)
 DEPEND_CFLAGS+=	-MD ${DEPEND_MP} -MF${DEPENDFILE}.${.TARGET:${DEPEND_FILTER}}
 DEPEND_CFLAGS+=	-MT${.TARGET}
 .if !defined(_meta_filemon)
@@ -192,7 +198,6 @@ CFLAGS+=	${${DEPEND_CFLAGS_CONDITION}:?${DEPEND_CFLAGS}:}
 .else
 CFLAGS+=	${DEPEND_CFLAGS}
 .endif
-.if !defined(_SKIP_READ_DEPEND)
 .for __depend_obj in ${DEPENDFILES_OBJS}
 .if ${MAKE_VERSION} < 20160220
 .sinclude "${.OBJDIR}/${__depend_obj}"
@@ -200,7 +205,6 @@ CFLAGS+=	${DEPEND_CFLAGS}
 .dinclude "${.OBJDIR}/${__depend_obj}"
 .endif
 .endfor
-.endif	# !defined(_SKIP_READ_DEPEND)
 .endif	# !defined(_meta_filemon)
 .endif	# defined(SRCS)
 
