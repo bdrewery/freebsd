@@ -263,22 +263,36 @@ _depfile=	${.OBJDIR}/${__obj}.meta
 _depfile=	${.OBJDIR}/.depend.${__obj}
 .endif
 .if !exists(${_depfile})
+# No dependency file present.  We must setup guessed dependencies for proper
+# SUFFIX transformation handling.  Unless NO_DEPEND_MISSING, or
+# NO_META_MISSING for META_MODE, is set then we force rebuild the object.
+# If either of those are set then we add in the header dependencies to try
+# our best with what we know.
 .if ${SYSTEM_OBJS:M${__obj}}
-${__obj}: ${OBJS_DEPEND_GUESS}
+${__obj}: ${OBJS_DEPEND_GUESS:N*.h}
 .endif
 ${__obj}: ${OBJS_DEPEND_GUESS.${__obj}}
+.if !defined(_meta_filemon) && !defined(NO_DEPEND_MISSING)
+.if exists(${.OBJDIR}/${__obj})
+.info ${_depfile}: required but missing
+.endif
+${__obj}: /dev/null
+.elif !defined(_meta_filemon)
+# We're not using forced depend files so just try our best for rebuilds.
+.endif	# !defined(_meta_filemon) && !defined(NO_DEPEND_MISSING)
 .elif defined(_meta_filemon)
 # For meta mode we still need to know which file to depend on to avoid
 # ambiguous suffix transformation rules from .PATH.  Meta mode does not
 # use .depend files.  We really only need source files, not headers since
-# they are typically in SRCS/beforebuild already.  For target-specific
+# they are typically in SRCS/beforebuild already for generating and
+# read from the meta file for rebuilding.  For target-specific
 # guesses do include headers though since they may not be in SRCS.
 .if ${SYSTEM_OBJS:M${__obj}}
 ${__obj}: ${OBJS_DEPEND_GUESS:N*.h}
 .endif
 ${__obj}: ${OBJS_DEPEND_GUESS.${__obj}}
 .endif	# !exists(${_depfile})
-.endfor
+.endfor	# __obj in ${DEPENDOBJS:O:u}
 
 .NOPATH: .depend ${DEPENDFILES_OBJS}
 
