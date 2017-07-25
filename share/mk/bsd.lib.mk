@@ -188,7 +188,7 @@ lib${LIB_PRIVATE}${LIB}.a: ${OBJS} ${STATICOBJS}
 .if ${MK_PROFILE} != "no" && defined(LIB) && !empty(LIB)
 _LIBS+=		lib${LIB_PRIVATE}${LIB}_p.a
 POBJS+=		${OBJS:.o=.po} ${STATICOBJS:.o=.po}
-DEPENDOBJS+=	${POBJS}
+DEPENDOBJS+=	${SRCS:N*.h:N*.s:R:S/$/.po/} ${STATICOBJS:.o=.po}
 CLEANFILES+=	${POBJS}
 
 lib${LIB_PRIVATE}${LIB}_p.a: ${POBJS}
@@ -214,7 +214,7 @@ lib${LIB_PRIVATE}${LIB}.ll: ${LLOBJS}
 .if defined(SHLIB_NAME) || \
     defined(INSTALL_PIC_ARCHIVE) && defined(LIB) && !empty(LIB)
 SOBJS+=		${OBJS:.o=.pico}
-DEPENDOBJS+=	${SOBJS}
+DEPENDOBJS+=	${SRCS:N*.h:N*.s:R:S/$/.pico/}
 CLEANFILES+=	${SOBJS}
 .endif
 
