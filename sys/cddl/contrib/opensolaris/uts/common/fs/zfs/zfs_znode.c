@@ -143,8 +143,9 @@ zfs_znode_cache_destructor(void *buf, void *arg)
 	znode_t *zp = buf;
 
 	ASSERT(!POINTER_IS_VALID(zp->z_zfsvfs));
-	ASSERT(ZTOV(zp) == NULL);
+	ASSERT(ZTOV(zp) != NULL);
 	vn_free(ZTOV(zp));
+	zp->z_vnode = NULL;
 	ASSERT(!list_link_active(&zp->z_link_node));
 	mutex_destroy(&zp->z_acl_lock);
 	avl_destroy(&zp->z_range_avl);
@@ -1401,7 +1402,6 @@ zfs_znode_free(znode_t *zp)
 	zfsvfs_t *zfsvfs = zp->z_zfsvfs;
 
 	ASSERT(zp->z_sa_hdl == NULL);
-	zp->z_vnode = NULL;
 	mutex_enter(&zfsvfs->z_znodes_lock);
 	POINTER_INVALIDATE(&zp->z_zfsvfs);
 	list_remove(&zfsvfs->z_all_znodes, zp);
