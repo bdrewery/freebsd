@@ -42,7 +42,7 @@ __FBSDID("$FreeBSD$");
 #include <libcasper.h>
 #include <libcasper_service.h>
 
-#include "cap_sysctl.h"
+#include <casper/cap_sysctl.h>
 
 int
 cap_sysctlbyname(cap_channel_t *chan, const char *name, void *oldp,

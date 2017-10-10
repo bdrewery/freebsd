@@ -1,6 +1,7 @@
 # $FreeBSD$
 
-SUBDIR=	librescue \
+SUBDIR= libcasper \
+	librescue \
 	rescue
 
 .include <bsd.subdir.mk>

@@ -43,7 +43,7 @@ __FBSDID("$FreeBSD$");
 #include <libcasper.h>
 #include <libcasper_service.h>
 
-#include "cap_grp.h"
+#include <casper/cap_grp.h>
 
 static struct group ggrp;
 static char *gbuffer;

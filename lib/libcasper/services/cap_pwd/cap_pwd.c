@@ -43,7 +43,7 @@ __FBSDID("$FreeBSD$");
 #include <libcasper.h>
 #include <libcasper_service.h>
 
-#include "cap_pwd.h"
+#include <casper/cap_pwd.h>
 
 static struct passwd gpwd;
 static char *gbuffer;

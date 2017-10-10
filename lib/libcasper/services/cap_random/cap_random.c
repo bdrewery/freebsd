@@ -41,7 +41,7 @@ __FBSDID("$FreeBSD$");
 #include <libcasper.h>
 #include <libcasper_service.h>
 
-#include "cap_random.h"
+#include <casper/cap_random.h>
 
 #define	MAXSIZE	(1024 * 1024)
 

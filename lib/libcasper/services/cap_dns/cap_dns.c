@@ -44,7 +44,7 @@ __FBSDID("$FreeBSD$");
 #include <libcasper.h>
 #include <libcasper_service.h>
 
-#include "cap_dns.h"
+#include <casper/cap_dns.h>
 
 static struct hostent hent;
 
