@@ -37,7 +37,12 @@
 #define	CAP_SYSCTL_RDWR		(CAP_SYSCTL_READ | CAP_SYSCTL_WRITE)
 #define	CAP_SYSCTL_RECURSIVE	0x04
 
+#ifdef WITH_CASPER
 int cap_sysctlbyname(cap_channel_t *chan, const char *name, void *oldp,
     size_t *oldlenp, const void *newp, size_t newlen);
+#else
+#define	cap_sysctlbyname(chan, name, oldp, oldlenp, newp, newlen)		\
+	sysctlbyname(name, oldp, oldlenp, newp, newlen)
+#endif
 
 #endif	/* !_CAP_SYSCTL_H_ */
