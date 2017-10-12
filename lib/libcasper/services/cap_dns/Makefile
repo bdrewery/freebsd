@@ -16,6 +16,7 @@ SRCS=	cap_dns.c
 .endif
 
 INCS=	cap_dns.h
+CLEANFILES+=	cap_dns.h
 
 LIBADD=	nv
 

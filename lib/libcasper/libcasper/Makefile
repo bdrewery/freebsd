@@ -18,6 +18,7 @@ SRCS+=	zygote.c
 .endif
 
 INCS=	libcasper.h
+CLEANFILES+=	libcasper.h
 INCS+=	libcasper_service.h
 
 LIBADD=	nv

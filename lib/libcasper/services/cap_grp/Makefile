@@ -16,6 +16,7 @@ SRCS=	cap_grp.c
 .endif
 
 INCS=	cap_grp.h
+CLEANFILES+=	cap_grp.h
 
 LIBADD=	nv
 

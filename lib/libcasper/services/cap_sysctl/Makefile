@@ -16,6 +16,7 @@ SRCS=	cap_sysctl.c
 .endif
 
 INCS=	cap_sysctl.h
+CLEANFILES+=	cap_sysctl.h
 
 LIBADD=	nv
 

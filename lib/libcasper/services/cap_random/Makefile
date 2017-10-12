@@ -15,6 +15,7 @@ SRCS=	cap_random.c
 .endif
 
 INCS=	cap_random.h
+CLEANFILES+=	cap_random.h
 
 LIBADD=	nv
 

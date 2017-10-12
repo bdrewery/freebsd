@@ -16,6 +16,7 @@ SRCS=	cap_pwd.c
 .endif
 
 INCS=	cap_pwd.h
+CLEANFILES+=	cap_pwd.h
 
 LIBADD=	nv
 
