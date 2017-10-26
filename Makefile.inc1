@@ -79,11 +79,15 @@ MK_GCC_BOOTSTRAP=	no
 .endif
 
 MAKEOBJDIRPREFIX?=	/usr/obj
+.if ${MK_UNIFIED_OBJDIR} == "yes"
+OBJTREE=	${MAKEOBJDIRPREFIX}${.CURDIR}/${TARGET}.${TARGET_ARCH}
+.else
 .if ${MACHINE} == ${TARGET} && ${MACHINE_ARCH} == ${TARGET_ARCH} && !defined(CROSS_BUILD_TESTING)
 OBJTREE=	${MAKEOBJDIRPREFIX}
 .else
 OBJTREE=	${MAKEOBJDIRPREFIX}/${TARGET}.${TARGET_ARCH}
 .endif
+.endif	# ${MK_UNIFIED_OBJDIR} == "yes"
 
 # Pull in compiler metadata from buildworld/toolchain if possible to avoid
 # running CC from bsd.compiler.mk.

@@ -9,12 +9,16 @@ OPLIST=`sh listallopts.sh`
 MDUNIT=47
 export MDUNIT
 
-ODIR=/usr/obj/`pwd`
+: ${MAKEOBJDIRPREFIX:=/usr/obj}
+: ${TARGET:=$(uname -m)}
+: ${TARGET_ARCH:=$(uname -p)}
+ODIR=${MAKEOBJDIRPREFIX}${PWD}/${TARGET}.${TARGET_ARCH}
 FDIR=${ODIR}/files
 MNT=${ODIR}/_.mnt
 RDIR=${ODIR}/_.result
 
 export ODIR MNT RDIR FDIR
+export WITH_UNIFIED_OBJDIR=yes
 
 bw ( ) (
 	cd ../../.. 
