@@ -51,6 +51,13 @@ NOTE TO PEOPLE WHO THINK THAT FreeBSD 12.x IS SLOW:
 
 ****************************** SPECIAL WARNING: ******************************
 
+20171026:
+	The default MAKEOBJDIR has changed from /usr/obj/<srcdir> for native
+	builds, and /usr/obj/<arch>/<srcdir> for cross-builds, to a unified
+	/usr/obj/<srcdir>/<arch>.  This behavior can be changed to the old
+	format by setting WITHOUT_UNIFIED_OBJDIR=yes in /etc/src-env.conf,
+	the environment, or with -DWITHOUT_UNIFIED_OBJDIR when building.
+
 20171021:
 	As part of the boot loader infrastructure cleanup, LOADER_*_SUPPORT
 	options are changing from controlling the build if defined / undefined

@@ -1,0 +1,10 @@
+.\" $FreeBSD$
+Set to use the newer style unified object directory for
+.Xr build 7
+targets.
+For native-builds the format of
+.Pa ${MAKEOBJDIRPREFIX}/${.CURDIR}
+is used,
+while for cross-builds
+.Pa ${MAKEOBJDIRPREFIX}/${TARGET}.${TARGET_ARCH}/${.CURDIR}
+is used.
