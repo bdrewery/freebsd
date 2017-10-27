@@ -9,6 +9,12 @@
 #  MAKEOBJDIR is	/usr/obj/usr/src/[${TARGET}.${TARGET_ARCH}/]bin/sh
 #
 #  If MK_UNIFIED_OBJDIR is no then OBJROOT will always match OBJTOP.
+#
+#  If .MAKE.LEVEL == 0 then the TARGET.TARGET_ARCH is potentially added on.
+#  If .MAKE.LEVEL >  0 and MAKEOBJDIRPREFIX is set then it will not get
+#  TARGET.TARGET_ARCH added in as it assumes that MAKEOBJDIRPREFIX is
+#  nested in the existing OBJTOP with TARGET.TARGET_ARCH in it.
+#
 
 _default_makeobjdirprefix?=	/usr/obj
 _default_makeobjdir=	$${.CURDIR:S,^$${SRCTOP},$${OBJTOP},}
@@ -23,18 +29,12 @@ MAKEOBJDIRPREFIX:=	${MAKEOBJDIRPREFIX}${TARGET:D/${TARGET}.${TARGET_ARCH}}
 .endif
 .endif	# ${MK_UNIFIED_OBJDIR} == "no"
 
-# MAKEOBJDIRPREFIX will override any OBJROOT/OBJTOP set since it is older.
-.if !empty(MAKEOBJDIRPREFIX)
-OBJROOT=
-OBJTOP=
-.endif
-
 # Allow passing in OBJTOP only
 .if !empty(OBJTOP) && !defined(OBJROOT)
 OBJROOT:=	${OBJTOP}/
 .endif
 
-.if empty(OBJROOT) || ${.MAKE.LEVEL} == 0
+.if ${.MAKE.LEVEL} == 0 || (empty(MAKEOBJDIRPREFIX) && empty(OBJROOT))
 .if !empty(MAKEOBJDIRPREFIX)
 # put things approximately where they want
 OBJROOT:=	${MAKEOBJDIRPREFIX}${SRCTOP}/
@@ -88,7 +88,9 @@ OBJTOP:=	${OBJROOT:H}
 # Assign this directory as .OBJDIR if possible
 #
 # The expected OBJDIR already exists, set it as .OBJDIR.
-.if exists(${MAKEOBJDIR})
+.if !empty(MAKEOBJDIRPREFIX) && exists(${MAKEOBJDIRPREFIX}${.CURDIR})
+.OBJDIR: ${MAKEOBJDIRPREFIX}${.CURDIR}
+.elif exists(${MAKEOBJDIR})
 .OBJDIR: ${MAKEOBJDIR}
 # Special case to work around bmake bug.  If the top-level .OBJDIR does not yet
 # exist and MAKEOBJDIR is passed into environment and yield a blank value,
