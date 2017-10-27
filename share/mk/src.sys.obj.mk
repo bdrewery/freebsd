@@ -7,6 +7,7 @@
 #  OBJROOT is		/usr/obj/usr/src/
 #  OBJTOP is		/usr/obj/usr/src/[${TARGET}.${TARGET_ARCH}/]
 #  MAKEOBJDIR is	/usr/obj/usr/src/[${TARGET}.${TARGET_ARCH}/]bin/sh
+#  MAKEOBJDIRSUFFIX allows appending a directory to the MAKEOBJDIR.
 #
 #  If MK_UNIFIED_OBJDIR is no then OBJROOT will always match OBJTOP.
 #
@@ -17,7 +18,7 @@
 #
 
 _default_makeobjdirprefix?=	/usr/obj
-_default_makeobjdir=	$${.CURDIR:S,^$${SRCTOP},$${OBJTOP},}
+_default_makeobjdir=	$${.CURDIR:S,^$${SRCTOP},$${OBJTOP},}$${MAKEOBJDIRSUFFIX:D/$${MAKEOBJDIRSUFFIX}}
 
 .if ${MK_UNIFIED_OBJDIR} == "no"
 # Fall back to simpler/older behavior
