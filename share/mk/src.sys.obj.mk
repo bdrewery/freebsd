@@ -60,8 +60,6 @@ OBJROOT:=	${OBJROOT:H:tA}/${OBJROOT:T}
 .export OBJROOT SRCTOP
 .endif
 
-# OBJTOP normally won't be set yet unless passed in environment or using
-# the old style objdir.
 .if ${MK_UNIFIED_OBJDIR} == "yes"
 OBJTOP:=	${OBJROOT}${TARGET:D${TARGET}.${TARGET_ARCH}:U${MACHINE}.${MACHINE_ARCH}}
 .else
