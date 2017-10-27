@@ -50,6 +50,10 @@ __ENV_ONLY_OPTIONS:= \
 MK_META_MODE=	no
 .endif
 
+.if defined(SRCTOP)
+.sinclude <src.sys.obj.mk>
+.endif
+
 .if ${MK_DIRDEPS_BUILD} == "yes"
 .sinclude <meta.sys.mk>
 .elif ${MK_META_MODE} == "yes"

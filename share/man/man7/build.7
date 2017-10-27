@@ -457,8 +457,82 @@ Defines the prefix for directory names in the tree of built objects.
 Defaults to
 .Pa /usr/obj
 if not defined.
-This variable should only be set in the environment and not via
+This variable should only be set in the environment or
+.Pa /etc/src-env.conf
+and not via
 .Pa /etc/make.conf
+or
+.Pa /etc/src.conf
+or the command line.
+.It Va OBJROOT
+Defines the top of the object directory such that the current relative
+build directory objects will build in it with the
+.Sy TARGET
+and
+.Sy TARGET_ARCH
+in its path.
+The variable should end in a slash.
+For example, building in
+.Pa bin/sh
+with an
+.Va OBJROOT
+literal value of
+.Pa /usr/obj/test/
+on an amd64 system will place
+.Pa bin/sh
+objects into
+.Pa /usr/obj/test/amd64.amd64/bin/sh .
+The default value is
+.Sy ${MAKEOBJDIRPREFIX}${SRCTOP}/
+where
+.Va SRCTOP
+is the path to the top of the source tree.
+See
+.Cm buildworld
+for the default when
+.Va WITH_UNIFIED_OBJDIR
+is disabled.
+.Pp
+This variable should generally not be used directly;
+.Va MAKEOBJDIRPREFIX
+is preferred and overrides this variable.
+This variable should only be set in the environment or
+.Pa /etc/src-env.conf
+and not via
+.Pa /etc/make.conf
+or
+.Pa /etc/src.conf
+or the command line.
+.It Va OBJTOP
+Defines the top of the object directory such that the current relative
+build directory objects will build in it.
+For example, building in
+.Pa bin/sh
+with an
+.Va OBJTOP
+literal value of
+.Pa /usr/obj/test
+will place
+.Pa bin/sh
+objects into
+.Pa /usr/obj/test/bin/sh .
+The default value is
+.Sy ${OBJROOT}${TARGET}.${TARGET_ARCH} .
+See
+.Cm buildworld
+for the default when
+.Va WITH_UNIFIED_OBJDIR
+is disabled.
+.Pp
+This variable should generally not be used directly;
+.Va MAKEOBJDIRPREFIX
+is preferred and overrides this variable.
+This variable should only be set in the environment or
+.Pa /etc/src-env.conf
+and not via
+.Pa /etc/make.conf
+or
+.Pa /etc/src.conf
 or the command line.
 .It Va NO_WERROR
 If defined, compiler warnings will not cause the build to halt,
