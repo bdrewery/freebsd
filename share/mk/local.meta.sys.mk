@@ -8,7 +8,6 @@
 MK_INSTALL_AS_USER= yes
 
 # Default OBJROOT/MAKEOBJDIR handled in local.sys.obj.mk
-.include <src.sys.obj.mk>
 
 .if !defined(HOST_TARGET)
 # we need HOST_TARGET etc below.
