@@ -29,12 +29,7 @@ MAKEOBJDIRPREFIX:=	${MAKEOBJDIRPREFIX}${TARGET:D/${TARGET}.${TARGET_ARCH}}
 .endif
 .endif	# ${MK_UNIFIED_OBJDIR} == "no"
 
-# Allow passing in OBJTOP only
-.if !empty(OBJTOP) && !defined(OBJROOT)
-OBJROOT:=	${OBJTOP}/
-.endif
-
-.if ${.MAKE.LEVEL} == 0 || (empty(MAKEOBJDIRPREFIX) && empty(OBJROOT))
+.if empty(OBJROOT) || ${.MAKE.LEVEL} == 0
 .if !empty(MAKEOBJDIRPREFIX)
 # put things approximately where they want
 OBJROOT:=	${MAKEOBJDIRPREFIX}${SRCTOP}/
@@ -63,20 +58,16 @@ OBJROOT:=	${OBJROOT:H:tA}/${OBJROOT:T}
 .endif
 # Must export since OBJDIR will dynamically be based on it
 .export OBJROOT SRCTOP
-.elif !empty(OBJROOT) && !empty(MAKEOBJDIRPREFIX)
-.error Both OBJROOT=${OBJROOT} and MAKEOBJDIRPREFIX=${MAKEOBJDIRPREFIX} are set
 .endif
 
 # OBJTOP normally won't be set yet unless passed in environment or using
 # the old style objdir.
-.if empty(OBJTOP)
 .if ${MK_UNIFIED_OBJDIR} == "yes"
 OBJTOP:=	${OBJROOT}${TARGET:D${TARGET}.${TARGET_ARCH}:U${MACHINE}.${MACHINE_ARCH}}
 .else
 # TARGET.TARGET_ARCH handled in OBJROOT already.
 OBJTOP:=	${OBJROOT:H}
 .endif	# ${MK_UNIFIED_OBJDIR} == "yes"
-.endif	# empty(OBJTOP)
 
 # Wait to validate MAKEOBJDIR until OBJTOP is set.
 .if defined(MAKEOBJDIR)
@@ -86,7 +77,7 @@ OBJTOP:=	${OBJROOT:H}
 .endif
 
 # Assign this directory as .OBJDIR if possible
-#
+.if ${MK_AUTO_OBJ} == "no"
 # The expected OBJDIR already exists, set it as .OBJDIR.
 .if !empty(MAKEOBJDIRPREFIX) && exists(${MAKEOBJDIRPREFIX}${.CURDIR})
 .OBJDIR: ${MAKEOBJDIRPREFIX}${.CURDIR}
@@ -96,6 +87,7 @@ OBJTOP:=	${OBJROOT:H}
 # exist and MAKEOBJDIR is passed into environment and yield a blank value,
 # bmake will incorrectly set .OBJDIR=${SRCTOP}/ rather than the expected
 # ${SRCTOP} to match ${.CURDIR}.
-.elif ${MK_AUTO_OBJ} == "no" && ${.CURDIR} == ${SRCTOP}
+.elif ${.CURDIR} == ${SRCTOP}
 .OBJDIR: ${.CURDIR}
 .endif
+.endif	# ${MK_AUTO_OBJ} == "no"
