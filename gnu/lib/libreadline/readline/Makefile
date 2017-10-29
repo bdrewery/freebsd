@@ -13,7 +13,7 @@ SRCS=     readline.c vi_mode.c funmap.c keymaps.c parens.c search.c \
 INSTALLED_HEADERS= readline.h chardefs.h keymaps.h history.h tilde.h \
 		   rlstdc.h rlconf.h rltypedefs.h
 
-CFLAGS+=	-I${.OBJDIR}/..
+CFLAGS+=	-I..
 SRCDIR=	${.CURDIR}/../../../../contrib/libreadline
 
 CLEANFILES+= ${INSTALLED_HEADERS}

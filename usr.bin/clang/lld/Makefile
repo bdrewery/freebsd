@@ -14,8 +14,8 @@ SYMLINKS=	${PROG_CXX} ${BINDIR}/ld
 
 CFLAGS+=	-I${LLD_SRCS}/ELF
 CFLAGS+=	-I${LLD_SRCS}/include
-CFLAGS+=	-I${.OBJDIR}
-CFLAGS+=	-I${OBJTOP}/lib/clang/libllvm
+CFLAGS+=	-I.
+CFLAGS+=	-I${RELOBJTOP}/lib/clang/libllvm
 
 SRCDIR=		tools/lld
 SRCS+=		ELF/Arch/AArch64.cpp
@@ -69,8 +69,8 @@ SRCS+=		tools/lld/lld.cpp
 LIBDEPS+=	llvm
 
 .for lib in ${LIBDEPS}
-DPADD+=		${OBJTOP}/lib/clang/lib${lib}/lib${lib}.a
-LDADD+=		${OBJTOP}/lib/clang/lib${lib}/lib${lib}.a
+DPADD+=		${RELOBJTOP}/lib/clang/lib${lib}/lib${lib}.a
+LDADD+=		${RELOBJTOP}/lib/clang/lib${lib}/lib${lib}.a
 .endfor
 
 LLVM_TBLGEN?=	llvm-tblgen

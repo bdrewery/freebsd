@@ -76,7 +76,7 @@ CFLAGS+= -DFORCE_OPTIMIZATION_DOWNGRADE=${WANT_FORCE_OPTIMIZATION_DOWNGRADE}
 .endif
 
 .if exists(${.OBJDIR}/../cc_tools)
-CFLAGS+=	-I${.OBJDIR}/../cc_tools
+CFLAGS+=	-I../cc_tools
 .endif
 CFLAGS+=	-I${.CURDIR}/../cc_tools
 # This must go after the -I for cc_tools to resolve ambiguities for hash.h

@@ -97,7 +97,7 @@ CLEANFILES+=tokdefs.h scanner.h pcap_version.h version.c
 
 YFLAGS+=-p pcap_
 LFLAGS+=-Ppcap_ --header-file=${.OBJDIR}/scanner.h --nounput
-CFLAGS+=-DHAVE_CONFIG_H -I${.CURDIR} -I${.OBJDIR}
+CFLAGS+=-DHAVE_CONFIG_H -I${.CURDIR} -I.
 CFLAGS+=-D_U_="__attribute__((unused))"
 CFLAGS+=-DHAVE_SNPRINTF -DHAVE_VSNPRINTF
 CFLAGS+=-DBUILDING_PCAP

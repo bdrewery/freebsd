@@ -8,7 +8,7 @@ LIB=	sysdecode
 SRCS=	errno.c flags.c ioctl.c signal.c syscallnames.c utrace.c
 INCS=	sysdecode.h
 
-CFLAGS+= -I${.OBJDIR}
+CFLAGS+= -I.
 CFLAGS+= -I${SRCTOP}/sys
 CFLAGS+= -I${SRCTOP}/libexec/rtld-elf
 

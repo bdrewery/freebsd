@@ -19,7 +19,7 @@ INCS=	magic.h
 MAGICPATH?=	/usr/share/misc
 
 CFLAGS+= -DMAGIC='"${MAGICPATH}/magic"' -DHAVE_CONFIG_H
-CFLAGS+= -I${.CURDIR} -I${.OBJDIR} -I${CONTRDIR}/src
+CFLAGS+= -I${.CURDIR} -I. -I${CONTRDIR}/src
 
 WARNS?=		3
 

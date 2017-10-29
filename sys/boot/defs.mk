@@ -17,7 +17,7 @@ SYSDIR=		${SRCTOP}/sys
 UBOOTSRC=	${BOOTSRC}/uboot
 ZFSSRC=		${BOOTSRC}/zfs
 
-BOOTOBJ=	${OBJTOP}/sys/boot
+BOOTOBJ=	${RELOBJTOP}/sys/boot
 
 # BINDIR is where we install
 BINDIR?=	/boot

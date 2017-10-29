@@ -11,7 +11,7 @@ LIBADD+=	netbsd util
 
 SYS_SOCKET_H?=	${SRCTOP}/sys/sys/socket.h
 
-CFLAGS+=	-I${.OBJDIR}
+CFLAGS+=	-I.
 CLEANFILES+=	tables.h
 tables.h: tables.awk ${SYS_SOCKET_H}
 	LC_ALL=C awk -f ${.ALLSRC} > ${.TARGET}

@@ -12,7 +12,7 @@ SDIR=	${SRCTOP}/sys
 CTRB=	${SRCTOP}/contrib/ngatm
 LIBBASE= ${SDIR}/contrib/ngatm
 
-CFLAGS+= -I${LIBBASE} -I${.OBJDIR} -I${CTRB}/libngatm
+CFLAGS+= -I${LIBBASE} -I. -I${CTRB}/libngatm
 # CFLAGS+= -DSSCOP_DEBUG -DSSCFU_DEBUG -DUNI_DEBUG -DCCATM_DEBUG
 
 .PATH: ${LIBBASE}/netnatm ${LIBBASE}/netnatm/saal ${LIBBASE}/netnatm/misc \

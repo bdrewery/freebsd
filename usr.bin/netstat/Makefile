@@ -28,7 +28,7 @@ nl_defs.h: nlist_symbols
 	    !/^\#/ { printf("\#define\tN%s\t%s\n", toupper($$2), i++); }' \
 	    < ${.ALLSRC} > ${.TARGET} || rm -f ${.TARGET}
 CLEANFILES+=	nl_symbols.c nl_defs.h
-CFLAGS+=	-I${.OBJDIR}
+CFLAGS+=	-I.
 
 WARNS?=	3
 CFLAGS+=-fno-strict-aliasing

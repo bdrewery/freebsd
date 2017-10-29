@@ -12,7 +12,7 @@ BINDIR=	${TESTSDIR}
 
 PROGS+=	libarchive_test
 
-CFLAGS+= -I${.CURDIR} -I${.CURDIR:H} -I${.OBJDIR}
+CFLAGS+= -I${.CURDIR} -I${.CURDIR:H} -I.
 CFLAGS+= -I${_LIBARCHIVEDIR}/libarchive -I${_LIBARCHIVEDIR}/libarchive/test
 CFLAGS+= -I${_LIBARCHIVEDIR}/test_utils
 CFLAGS+= -DHAVE_LIBLZMA=1 -DHAVE_LZMA_H=1

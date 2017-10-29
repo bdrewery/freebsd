@@ -31,7 +31,7 @@ __<bsd.init.mk>__:
 # allowed to be built though since they are never installed.
 _need_host_libs=
 .for lib in ${_INTERNALLIBS}
-_need_host_libs+= ${LIB${lib:tu}DIR:S,^${OBJTOP}/,,}
+_need_host_libs+= ${LIB${lib:tu}DIR:S,^${RELOBJTOP}/,,}
 .endfor
 
 N_host_libs:= ${cd ${SRCTOP} && echo lib/lib*:L:sh:${_need_host_libs:${M_ListToSkip}}:${M_ListToSkip}}
@@ -194,7 +194,7 @@ _DPADD= ${DPADD} ${_PROGS_DPADD}
 # This only works for DPADD with full OBJ/SRC paths, which is mostly just
 # _INTERNALLIBS.
 _DP_DIRDEPS= \
-	${_DPADD:O:u:M${OBJTOP}*:H:N.:tA:C,${OBJTOP}[^/]*/,,:N.:O:u} \
+	${_DPADD:O:u:C,^${RELOBJTOP}/,${OBJTOP}/,:M${OBJTOP}*:H:N.:tA:C,${OBJTOP}[^/]*/,,:N.:O:u} \
 	${_DPADD:O:u:M${OBJROOT}*:N${OBJTOP}*:N${STAGE_ROOT}/*:H:S,${OBJROOT},,:C,^([^/]+)/(.*),\2.\1,:S,${HOST_TARGET}$,host,:N.*:O:u}
 # Resolve the paths to RELDIRs
 .if !empty(_DP_DIRDEPS)
@@ -205,7 +205,7 @@ _ALL_LIBADD= ${LIBADD} ${_PROGS_LIBADD}
 .if !empty(_ALL_LIBADD)
 # Also handle LIBADD for non-internal libraries.
 .for _lib in ${_ALL_LIBADD:O:u}
-_lib${_lib}reldir= ${LIB${_lib:tu}DIR:C,${OBJTOP}/,,}
+_lib${_lib}reldir= ${LIB${_lib:tu}DIR:C,${RELOBJTOP}/,,}
 .if defined(LIB${_lib:tu}DIR) && ${DIRDEPS:M${_lib${_lib}reldir}} == "" && \
     exists(${SRCTOP}/${_lib${_lib}reldir})
 DIRDEPS+= ${_lib${_lib}reldir}

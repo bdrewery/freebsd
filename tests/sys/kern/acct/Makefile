@@ -4,7 +4,7 @@ TESTSDIR=	${TESTSBASE}/sys/kern/acct
 
 ATF_TESTS_C=	acct_test
 
-CFLAGS+=	-I${.OBJDIR}
+CFLAGS+=	-I.
 
 CLEANFILES+=	convert.c convert.c.tmp
 

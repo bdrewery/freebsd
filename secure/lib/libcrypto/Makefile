@@ -400,7 +400,7 @@ INCSDIR=	${INCLUDEDIR}/openssl
 
 CSTD=	gnu89
 
-CFLAGS+=	-I${.OBJDIR}
+CFLAGS+=	-I.
 CFLAGS+=	-I${LCRYPTO_SRC}/crypto
 CFLAGS+=	-I${LCRYPTO_SRC}/crypto/asn1
 CFLAGS+=	-I${LCRYPTO_SRC}/crypto/evp

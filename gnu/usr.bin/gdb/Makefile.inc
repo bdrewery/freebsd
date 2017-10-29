@@ -15,9 +15,9 @@ CNTRB_BU= ${SRCTOP}/contrib/binutils
 CNTRB_GDB= ${SRCTOP}/contrib/gdb
 CNTRB_RL= ${SRCTOP}/contrib/libreadline
 
-OBJ_BU= ${OBJTOP}/gnu/usr.bin/binutils
-OBJ_GDB= ${OBJTOP}/gnu/usr.bin/gdb
-OBJ_RL= ${OBJTOP}/gnu/lib/libreadline/readline
+OBJ_BU= ${RELOBJTOP}/gnu/usr.bin/binutils
+OBJ_GDB= ${RELOBJTOP}/gnu/usr.bin/gdb
+OBJ_RL= ${RELOBJTOP}/gnu/lib/libreadline/readline
 
 # These assignments duplicate much of the functionality of
 # MACHINE_CPUARCH, but there's no easy way to export make functions...

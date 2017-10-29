@@ -12,7 +12,7 @@ LIB=	unbound
 PRIVATELIB=
 PACKAGE=	unbound
 
-CFLAGS+= -I${UNBOUNDDIR} -I${LDNSDIR} -I${.OBJDIR}
+CFLAGS+= -I${UNBOUNDDIR} -I${LDNSDIR} -I.
 
 SRCS=	alloc.c as112.c autotrust.c cachedb.c config_file.c configlexer.l \
 	configparser.y context.c dname.c dns.c dns64.c dnstree.c \

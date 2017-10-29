@@ -28,7 +28,7 @@ SRCS+=	srvr_amfs_auto.c srvr_nfs.c sun_map.c
 
 CFLAGS+= -I${SRCTOP}/contrib/amd/amd \
 	 -I${SRCTOP}/contrib/amd/include \
-	 -I${OBJTOP}/include/rpcsvc
+	 -I${RELOBJTOP}/include/rpcsvc
 
 LIBADD=	amu
 

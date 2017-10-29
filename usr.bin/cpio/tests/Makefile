@@ -11,9 +11,9 @@ BINDIR=		${TESTSDIR}
 PROGS+=		bsdcpio_test
 
 CFLAGS+=	-DPLATFORM_CONFIG_H=\"${SRCTOP}/lib/libarchive/config_freebsd.h\"
-CFLAGS+=	-I${SRCTOP}/lib/libarchive -I${.OBJDIR}
+CFLAGS+=	-I${SRCTOP}/lib/libarchive -I.
 
-CFLAGS+=	-I${.OBJDIR}
+CFLAGS+=	-I.
 CFLAGS+=	-I${_LIBARCHIVEDIR}/cpio -I${_LIBARCHIVEDIR}/cpio/test
 CFLAGS+=	-I${_LIBARCHIVEDIR}/libarchive
 CFLAGS+=	-I${_LIBARCHIVEDIR}/libarchive_fe -I${_LIBARCHIVEDIR}/test_utils

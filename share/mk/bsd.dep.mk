@@ -146,7 +146,7 @@ OBJS_DEPEND_GUESS.${_YC:R}.o+=	${_YC}
 
 # DTrace probe definitions
 .if ${SRCS:M*.d}
-CFLAGS+=	-I${.OBJDIR}
+CFLAGS+=	-I.
 .endif
 .for _DSRC in ${SRCS:M*.d:N*/*}
 .for _D in ${_DSRC:R}
