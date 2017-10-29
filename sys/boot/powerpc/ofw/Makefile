@@ -26,7 +26,7 @@ LOADER_FDT_SUPPORT?=	yes
 .if ${LOADER_FDT_SUPPORT} == "yes"
 SRCS+=		ofwfdt.c
 CFLAGS+=	-I${.CURDIR}/../../fdt
-CFLAGS+=	-I${.OBJDIR}/../../fdt
+CFLAGS+=	-I../../fdt
 CFLAGS+=	-I${.CURDIR}/../../../contrib/libfdt
 CFLAGS+=	-DLOADER_FDT_SUPPORT
 LIBFDT=		${.OBJDIR}/../../fdt/libfdt.a

@@ -6,7 +6,7 @@
 LIB=		llvm
 INTERNALLIB=
 
-CFLAGS+=	-I${.OBJDIR}
+CFLAGS+=	-I.
 .for arch in AArch64 ARM Mips PowerPC Sparc X86
 CFLAGS+=	-I${LLVM_SRCS}/lib/Target/${arch}
 .endfor
@@ -1293,14 +1293,14 @@ llvm-lib/Options.inc: ${LLVM_SRCS}/lib/ToolDrivers/llvm-lib/Options.td
 	    -I ${LLVM_SRCS}/include -d ${.TARGET}.d -o ${.TARGET} \
 	    ${LLVM_SRCS}/lib/ToolDrivers/llvm-lib/Options.td
 TGHDRS+=	llvm-lib/Options.inc
-CFLAGS.LibDriver.cpp+=	-I${.OBJDIR}/llvm-lib
+CFLAGS.LibDriver.cpp+=	-Illvm-lib
 
 llvm-dlltool/Options.inc: ${LLVM_SRCS}/lib/ToolDrivers/llvm-dlltool/Options.td
 	${LLVM_TBLGEN} -gen-opt-parser-defs \
 	    -I ${LLVM_SRCS}/include -d ${.TARGET}.d -o ${.TARGET} \
 	    ${LLVM_SRCS}/lib/ToolDrivers/llvm-dlltool/Options.td
 TGHDRS+=	llvm-dlltool/Options.inc
-CFLAGS.DlltoolDriver.cpp+=	-I${.OBJDIR}/llvm-dlltool
+CFLAGS.DlltoolDriver.cpp+=	-Illvm-dlltool
 
 beforebuild:
 # 20170724 remove stale Options.inc file, of which there are two different

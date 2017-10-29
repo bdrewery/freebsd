@@ -25,7 +25,7 @@ SRCS+=		nfs_prot_x.c xdr_func_%undef.c
 CLEANFILES+=	nfs_prot_x.c xdr_func_%undef.c
 
 CFLAGS+= -I${SRCTOP}/contrib/amd/libamu \
-	 -I${OBJTOP}/include/rpcsvc
+	 -I${RELOBJTOP}/include/rpcsvc
 
 nfs_prot_x.c: ${NFS_PROT_X}
 	${RPCCOM} -c -C -DWANT_NFS3 ${.ALLSRC} -o ${.TARGET}

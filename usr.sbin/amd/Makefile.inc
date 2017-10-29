@@ -16,7 +16,7 @@ PACKAGE= amd
 CFLAGS+= -I. -I${.CURDIR}
 CFLAGS+= -I${.CURDIR:H}/include
 .if exists(${.OBJDIR:H}/include)
-CFLAGS+= -I${.OBJDIR:H}/include
+CFLAGS+= -I../include
 .endif
 CFLAGS+= -I${SRCTOP}/contrib/amd/include
 CFLAGS+= -I${SRCTOP}/contrib/amd

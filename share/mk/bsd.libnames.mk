@@ -192,7 +192,7 @@ LDADD:=	${LDADD:N-lc} -lc
 
 # Derive LIB*SRCDIR from LIB*DIR
 .for lib in ${_LIBRARIES}
-LIB${lib:tu}SRCDIR?=	${SRCTOP}/${LIB${lib:tu}DIR:S,^${OBJTOP}/,,}
+LIB${lib:tu}SRCDIR?=	${SRCTOP}/${LIB${lib:tu}DIR:S,^${RELOBJTOP}/,,}
 .endfor
 .else
 

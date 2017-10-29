@@ -15,7 +15,7 @@ NCURSES_CFG_H=	${.CURDIR}/ncurses_cfg.h
 
 CFLAGS+=	-I.
 .if exists(${.OBJDIR:H}/ncurses${LIB_SUFFIX})
-CFLAGS+=	-I${.OBJDIR:H}/ncurses${LIB_SUFFIX}
+CFLAGS+=	-I../ncurses${LIB_SUFFIX}
 .endif
 CFLAGS+=	-I${.CURDIR:H}/ncurses${LIB_SUFFIX}
 

@@ -2,7 +2,7 @@
 
 .include "${SRCTOP}/lib/clang/llvm.pre.mk"
 
-CFLAGS+=	-I${OBJTOP}/lib/clang/libllvm
+CFLAGS+=	-I${RELOBJTOP}/lib/clang/libllvm
 
 .include "${SRCTOP}/lib/clang/llvm.build.mk"
 
@@ -15,8 +15,8 @@ LIBDEPS+=	llvm
 .endif
 
 .for lib in ${LIBDEPS}
-DPADD+=		${OBJTOP}/lib/clang/lib${lib}/lib${lib}.a
-LDADD+=		${OBJTOP}/lib/clang/lib${lib}/lib${lib}.a
+DPADD+=		${RELOBJTOP}/lib/clang/lib${lib}/lib${lib}.a
+LDADD+=		${RELOBJTOP}/lib/clang/lib${lib}/lib${lib}.a
 .endfor
 
 PACKAGE=	clang

@@ -16,7 +16,7 @@ h_testbits_xdr.c: ${RPCSRC} h_testbits.h
 	${RPCGEN} ${.ALLSRC:M*.x}
 
 CLEANFILES+=	${RPCSRC:.x=.h} ${RPCSRC:.x=.c} h_testbits_xdr.c
-CFLAGS+=	-I${.OBJDIR}
+CFLAGS+=	-I.
 
 LIBADD+=	rpcsvc util
 

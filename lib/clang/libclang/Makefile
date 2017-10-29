@@ -5,8 +5,8 @@
 
 LIB=		clang
 
-CFLAGS+=	-I${.OBJDIR}
-CFLAGS+=	-I${OBJTOP}/lib/clang/libllvm
+CFLAGS+=	-I.
+CFLAGS+=	-I${RELOBJTOP}/lib/clang/libllvm
 CFLAGS+=	-I${CLANG_SRCS}/lib/Driver
 
 # Ensure FREEBSD_CC_VERSION is defined for Basic/Targets.cpp

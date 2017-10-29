@@ -88,7 +88,7 @@ CFLAGS+= -DSMBIOS_NETWORK_ENDIAN_UUID
 LOADER_FDT_SUPPORT?=	no
 .if ${MK_FDT} != "no" && ${LOADER_FDT_SUPPORT} != "no"
 CFLAGS+=	-I${.CURDIR}/../../fdt
-CFLAGS+=	-I${.OBJDIR}/../../fdt
+CFLAGS+=	-I../../fdt
 CFLAGS+=	-DLOADER_FDT_SUPPORT
 LIBEFI_FDT=	${.OBJDIR}/../../efi/fdt/libefi_fdt.a
 LIBFDT=		${.OBJDIR}/../../fdt/libfdt.a

@@ -26,7 +26,7 @@ SYM_MAPS+=${LIBC_SRCTOP}/net/Symbol.map
 CFLAGS+=-DINET6
 .endif
 
-CFLAGS+=-I${.OBJDIR}
+CFLAGS+=-I.
 
 # name6.c refers res_private.h
 CFLAGS+=-I${LIBC_SRCTOP}/resolv
