@@ -19,8 +19,8 @@ LIBDEPS+=	clang
 LIBDEPS+=	llvm
 
 .for lib in ${LIBDEPS}
-DPADD+=		${OBJTOP}/lib/clang/lib${lib}/lib${lib}.a
-LDADD+=		${OBJTOP}/lib/clang/lib${lib}/lib${lib}.a
+DPADD+=		${RELOBJTOP}/lib/clang/lib${lib}/lib${lib}.a
+LDADD+=		${RELOBJTOP}/lib/clang/lib${lib}/lib${lib}.a
 .endfor
 
 LIBADD+=	edit
