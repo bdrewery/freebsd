@@ -9,7 +9,8 @@ OPLIST=`sh listallopts.sh`
 MDUNIT=47
 export MDUNIT
 
-ODIR=/usr/obj/`pwd`
+: ${MAKEOBJDIRPREFIX:=/usr/obj}
+ODIR=${MAKEOBJDIRPREFIX}/build_option_survey${PWD}
 FDIR=${ODIR}/files
 MNT=${ODIR}/_.mnt
 RDIR=${ODIR}/_.result
