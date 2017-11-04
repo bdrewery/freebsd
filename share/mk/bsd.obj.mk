@@ -51,6 +51,8 @@ CANONICALOBJDIR= ${.OBJDIR}
 .if defined(NO_OBJ)
 # but this makefile does not want it!
 .OBJDIR: ${.CURDIR}
+.elif ${.OBJDIR} == ${.CURDIR}
+.error .OBJDIR not properly set by auto.obj.mk.
 .endif
 # Handle special case where SRCS is full-pathed and requires
 # nested objdirs.  This duplicates some auto.obj.mk logic.
@@ -83,6 +85,10 @@ CANONICALOBJDIR:=${MAKEOBJDIR}
 OBJTOP?= ${MAKEOBJDIR}
 .else
 CANONICALOBJDIR:=/usr/obj${.CURDIR}
+.endif
+
+.if ${CANONICALOBJDIR} == /${RELDIR} || ${.OBJDIR} == /${RELDIR}
+.error .OBJDIR incorrectly set to /${RELDIR}
 .endif
 
 OBJTOP?= ${.OBJDIR:S,${.CURDIR},,}${SRCTOP}

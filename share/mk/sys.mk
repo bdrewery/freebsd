@@ -125,6 +125,9 @@ NO_META_IGNORE_HOST_HEADERS=	1
 .if defined(__objdir) && ${.OBJDIR} != ${__objdir}
 .MAKEOVERRIDES+= MK_AUTO_OBJ
 MK_AUTO_OBJ=	no
+# Fallback to safe .CURDIR rather than whatever make happened
+# to start with.  bsd.obj.mk will fix it later.
+.OBJDIR: ${.CURDIR}
 .endif
 .endif
 .endif	# ${MK_AUTO_OBJ} == "yes"
