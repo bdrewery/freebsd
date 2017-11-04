@@ -359,3 +359,7 @@ ${_tgt}: ${META_DEPS}
 .endif
 .endfor
 .endif
+
+.if defined(SRCTOP) && !empty(.ALLTARGETS:M*install*)
+${.ALLTARGETS:M*install*}: .NOMETA
+.endif

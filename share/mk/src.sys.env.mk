@@ -24,7 +24,7 @@ _src_env_conf_included_:	.NOTMAIN
 
 # Top-level installs should not use meta mode as it may prevent installing
 # based on cookies.
-.if make(*install*) && ${.MAKE.LEVEL} == 0
+.if make(*install*) && ${.MAKE.LEVEL} == 0 && ${RELDIR} == "."
 META_MODE=	normal
 MK_META_MODE=	no
 .export MK_META_MODE
