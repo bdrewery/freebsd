@@ -140,11 +140,14 @@ CheckAutoObj() { \
 }
 .if !empty(MAKEOBJDIRPREFIX)
 WANTED_OBJDIR=	${MAKEOBJDIRPREFIX}${.CURDIR}
-.else
+.elif !empty(MAKEOBJDIR)
 WANTED_OBJDIR=	${MAKEOBJDIR}
 .endif
+.if !empty(WANTED_OBJDIR)
 OBJDIR_WRITABLE!= \
 	${CheckAutoObj}; CheckAutoObj "${WANTED_OBJDIR}" || echo no
+.endif
+OBJDIR_WRITABLE?= no
 # Export the decision to sub-makes.
 MK_AUTO_OBJ:=	${OBJDIR_WRITABLE}
 .export MK_AUTO_OBJ
@@ -160,7 +163,7 @@ MK_AUTO_OBJ:=	${OBJDIR_WRITABLE}
 # The expected OBJDIR already exists, set it as .OBJDIR.
 .if !empty(MAKEOBJDIRPREFIX) && exists(${MAKEOBJDIRPREFIX}${.CURDIR})
 .OBJDIR: ${MAKEOBJDIRPREFIX}${.CURDIR}
-.elif exists(${MAKEOBJDIR})
+.elif !empty(MAKEOBJDIR) && exists(${MAKEOBJDIR})
 .OBJDIR: ${MAKEOBJDIR}
 # Special case to work around bmake bug.  If the top-level .OBJDIR does not yet
 # exist and MAKEOBJDIR is passed into environment and yield a blank value,
