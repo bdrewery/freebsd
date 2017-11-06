@@ -130,11 +130,11 @@ vm86pa:		.long	0		/* phys addr of vm86 region */
 
 #define ALLOCPAGES(foo) \
 	movl	R(physfree), %esi ; \
-	movl	$((foo)*PAGE_SIZE), %eax ; \
+	movl	$((foo)*PAGE_SIZE), %ecx ; \
+	movl	%ecx, %eax ; \
 	addl	%esi, %eax ; \
 	movl	%eax, R(physfree) ; \
 	movl	%esi, %edi ; \
-	movl	$((foo)*PAGE_SIZE),%ecx ; \
 	xorl	%eax,%eax ; \
 	cld ; \
 	rep ; \
