@@ -42,6 +42,35 @@
 __<bsd.obj.mk>__:
 .include <bsd.own.mk>
 
+# Handle special case where SRCS is full-pathed and requires nested objdirs.
+# We need to handle all relative files before applying OBJS_SRCS_FILTER to
+# deal with generated files that must reside in a nested .OBJDIR.
+_nested_srcs=	${SRCS:M*/*} ${DPSRCS:M*/*}
+.if !empty(_nested_srcs) && \
+    (${MK_AUTO_OBJ} == "yes" || make(obj)) && \
+    (${.TARGETS} == "" || ${.TARGETS:Nclean*:N*clean:Ndestroy*} != "")
+# First find all generated srcs that need a nested .OBJDIR.
+.for _src in ${_nested_srcs}
+.if !exists(${_src})
+# This file needs to be generated to a nested .OBJDIR.
+_nested_dpsrcs+=	${_src}
+# Remove from the nested src list
+_nested_srcs:=		${_nested_srcs:N${_src}}
+.endif
+.endfor
+.if !empty(_nested_dpsrcs)
+_nested_objdirs=	${_nested_dpsrcs:H}
+.endif
+# Now find objs that need a nested .OBJDIR.
+_nested_objs=		${_nested_srcs:${OBJS_SRCS_FILTER:ts:}:M*/*:H:N.}
+.if !empty(_nested_objs)
+_nested_objdirs+=	${_nested_objs}
+.endif
+.if !empty(_nested_objdirs)
+_nested_objdirs:=	${_nested_objdirs:O:u}
+.endif	# !empty(_nested_objdirs)
+.endif	# !empty(_nested_srcs)
+
 .if ${MK_AUTO_OBJ} == "yes"
 # it is done by now
 objwarn:
@@ -52,30 +81,21 @@ CANONICALOBJDIR= ${.OBJDIR}
 # but this makefile does not want it!
 .OBJDIR: ${.CURDIR}
 .endif
-# Handle special case where SRCS is full-pathed and requires
-# nested objdirs.  This duplicates some auto.obj.mk logic.
-.if (!empty(SRCS:M*/*) || !empty(DPSRCS:M*/*)) && \
-    (${.TARGETS} == "" || ${.TARGETS:Nclean*:N*clean:Ndestroy*} != "")
-_wantdirs=	${SRCS:M*/*:H} ${DPSRCS:M*/*:H}
-.if !empty(_wantdirs)
-_wantdirs:=	${_wantdirs:O:u}
-_needdirs=
-.for _dir in ${_wantdirs}
+# This duplicates some auto.obj.mk logic.
+_needed_objdirs=
+.for _dir in ${_nested_objdirs}
 .if !exists(${.OBJDIR}/${_dir}/)
-_needdirs+=	${_dir}
+_needed_objdirs+=	${_dir}
 .endif
 .endfor
-.endif
-.if !empty(_needdirs)
-#_mkneededdirs!=	umask ${OBJDIR_UMASK:U002}; ${Mkdirs} ${_needdirs}
+.if !empty(_needed_objdirs)
 __objdir_made != umask ${OBJDIR_UMASK:U002}; ${Mkdirs}; \
-	for dir in ${_needdirs}; do \
+	for dir in ${_needed_objdirs}; do \
 	  dir=${.OBJDIR}/$${dir}; \
 	  ${ECHO_TRACE} "[Creating nested objdir $${dir}...]" >&2; \
           Mkdirs $${dir}; \
 	done
 .endif
-.endif	# !empty(SRCS:M*/*) || !empty(DPSRCS:M*/*)
 .elif !empty(MAKEOBJDIRPREFIX)
 CANONICALOBJDIR:=${MAKEOBJDIRPREFIX}${.CURDIR}
 .elif defined(MAKEOBJDIR) && ${MAKEOBJDIR:M/*} != ""
@@ -132,7 +152,7 @@ obj: .PHONY
 		fi; \
 		${ECHO} "${CANONICALOBJDIR} created for ${.CURDIR}"; \
 	fi
-.for dir in ${SRCS:H:O:u} ${DPSRCS:H:O:u}
+.for dir in ${_nested_objdirs}
 	@if ! test -d ${CANONICALOBJDIR}/${dir}/; then \
 		mkdir -p ${CANONICALOBJDIR}/${dir}; \
 		if ! test -d ${CANONICALOBJDIR}/${dir}/; then \
