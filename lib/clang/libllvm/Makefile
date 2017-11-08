@@ -1412,6 +1412,13 @@ TGHDRS+=	X86GenRegisterBank.inc
 TGHDRS+=	X86GenRegisterInfo.inc
 TGHDRS+=	X86GenSubtargetInfo.inc
 
+DPSRCS+=	${TGHDRS}
+CLEANFILES+=	${TGHDRS} ${TGHDRS:C/$/.d/}
+
+.include "../llvm.build.mk"
+.include <bsd.lib.mk>
+
+.if !defined(_SKIP_DEPEND)
 .for dep in ${TGHDRS:C/$/.d/}
 . if ${MAKE_VERSION} < 20160220
 .  if !make(depend)
@@ -1421,9 +1428,4 @@ TGHDRS+=	X86GenSubtargetInfo.inc
 .   dinclude "${dep}"
 . endif
 .endfor
-
-DPSRCS+=	${TGHDRS}
-CLEANFILES+=	${TGHDRS} ${TGHDRS:C/$/.d/}
-
-.include "../llvm.build.mk"
-.include <bsd.lib.mk>
+.endif

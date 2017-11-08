@@ -790,6 +790,17 @@ clang/StaticAnalyzer/Checkers/Checkers.inc: \
 	    ${CLANG_SRCS}/include/clang/StaticAnalyzer/Checkers/Checkers.td
 TGHDRS+=	clang/StaticAnalyzer/Checkers/Checkers.inc
 
+DPSRCS+=	${TGHDRS}
+CLEANFILES+=	${TGHDRS} ${TGHDRS:C/$/.d/}
+
+.include "../clang.build.mk"
+
+INTERNALLIB=
+
+.include <bsd.lib.mk>
+
+
+.if !defined(_SKIP_DEPEND)
 .for dep in ${TGHDRS:C/$/.d/}
 . if ${MAKE_VERSION} < 20160220
 .  if !make(depend)
@@ -799,12 +810,4 @@ TGHDRS+=	clang/StaticAnalyzer/Checkers/Checkers.inc
 .   dinclude "${dep}"
 . endif
 .endfor
-
-DPSRCS+=	${TGHDRS}
-CLEANFILES+=	${TGHDRS} ${TGHDRS:C/$/.d/}
-
-.include "../clang.build.mk"
-
-INTERNALLIB=
-
-.include <bsd.lib.mk>
+.endif
