@@ -1993,6 +1993,14 @@ _tcsh=bin/csh
 _bt_clean=	${CLEANDIR}
 .endif
 
+.if make(kernel-toolchain)
+.info ${OBJTOP} ${OBJROOT} ${MAKEOBJDIRPREFIX} ${MAKEOBJDIR} ${.OBJDIR} -- ${.MAKEOVERRIDES}
+.endif
+.if make(build-tools)
+.info ${OBJTOP} ${OBJROOT} ${MAKEOBJDIRPREFIX} ${MAKEOBJDIR} ${.OBJDIR} -- ${.MAKEOVERRIDES}
+.error WTF ${TARGET} ${TARGET_ARCH}; false
+.endif
+
 .for _tool in \
     ${_tcsh} \
     bin/sh \
@@ -2787,5 +2795,3 @@ xdev-links: .PHONY
 			ln -sf ../../${XDTP}/usr/bin/$$i \
 			    ../../../../usr/bin/${XDDIR}${_REVISION}-$$i; \
 		done
-
-.include "Makefile.xtools"

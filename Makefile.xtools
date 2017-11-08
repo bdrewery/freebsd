@@ -8,6 +8,8 @@
 # already built.  It then installs the static tools to NXBDESTDIR for Poudriere
 # to pickup.
 #
+.include <src.opts.mk>
+
 NXBOBJROOT=	${OBJROOT}${MACHINE}.${MACHINE_ARCH}/nxb/
 NXBOBJTOP=	${NXBOBJROOT}${TARGET}.${TARGET_ARCH}
 NXTP?=		/nxb-bin
@@ -90,9 +92,14 @@ NXBDIRS+=	gnu/usr.bin/cc
 NXBDIRS+=	gnu/usr.bin/binutils
 .endif
 
+NXBMAKEENV+= \
+	OBJTOP=${NXBOBJTOP:Q} \
+	OBJROOT=${NXBOBJROOT:Q}
+
 NXBMAKEARGS+= \
 	OBJTOP=${NXBOBJTOP:Q} \
 	OBJROOT=${NXBOBJROOT:Q} \
+	MAKEOBJDIRPREFIX= \
 	-DNO_SHARED \
 	-DNO_CPU_CFLAGS \
 	-DNO_PIC \
@@ -118,7 +125,8 @@ NXBMAKEARGS+= \
 
 # For 'toolchain' we want to produce native binaries that themselves generate
 # native binaries.
-NXBTMAKE=	${NXBMAKEENV} ${MAKE} ${NXBMAKEARGS:N-DNO_PIC:N-DNO_SHARED} \
+NXBTMAKE=	${NXBMAKEENV} ${MAKE} -m ${.CURDIR}/share/mk -f Makefile.inc1 \
+		${NXBMAKEARGS:N-DNO_PIC:N-DNO_SHARED} \
 		TARGET=${MACHINE} TARGET_ARCH=${MACHINE_ARCH}
 # For 'everything' we want to produce native binaries (hence -target to
 # be MACHINE) that themselves generate TARGET.TARGET_ARCH binaries.
@@ -128,6 +136,7 @@ NXBMAKE=	${NXBMAKEENV} ${MAKE} ${NXBMAKEARGS} \
 native-xtools: .PHONY
 	# Build the bootstrap/host/cross tools that produce native binaries
 	${_+_}cd ${.CURDIR}; ${NXBTMAKE} kernel-toolchain
+	false
 	# Populate includes/libraries sysroot that produce native binaries.
 	# This is split out from 'toolchain' above mostly so that target LLVM
 	# libraries have a proper LLVM_DEFAULT_TARGET_TRIPLE without

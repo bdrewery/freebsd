@@ -26,6 +26,7 @@ _default_makeobjdir=	$${.CURDIR:S,^$${SRCTOP},$${OBJTOP},}
 .include <bsd.mkopt.mk>
 
 .if ${.MAKE.LEVEL} == 0 || empty(OBJROOT)
+.info IN HERE ${OBJROOT} ${OBJTOP} ${.MAKE.LEVEL}
 .if ${MK_UNIFIED_OBJDIR} == "no"
 # Fall back to historical behavior.
 # We always want to set a default MAKEOBJDIRPREFIX...
@@ -179,3 +180,5 @@ MK_AUTO_OBJ:=	${__objdir_writable}
 # auto.obj.mk or bsd.obj.mk will create the directory and fix .OBJDIR later.
 .OBJDIR: ${.CURDIR}
 .endif
+
+.info OUT ${OBJROOT} ${OBJTOP} ${.MAKE.LEVEL}

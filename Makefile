@@ -135,7 +135,7 @@ TGTS=	all all-man buildenv buildenvvars buildkernel buildworld \
 	_build-tools _build-metadata _cross-tools _includes _libraries \
 	build32 distribute32 install32 buildsoft distributesoft installsoft \
 	builddtb xdev xdev-build xdev-install \
-	xdev-links native-xtools native-xtools-install stageworld stagekernel \
+	xdev-links stageworld stagekernel \
 	stage-packages \
 	create-packages-world create-packages-kernel create-packages \
 	packages installconfig real-packages sign-packages package-pkg \
@@ -642,4 +642,5 @@ MAKE_JOB_ERROR_TOKEN= no
 .endif
 .endif # bmake
 
+.include "Makefile.xtools"
 .endif				# DIRDEPS_BUILD
