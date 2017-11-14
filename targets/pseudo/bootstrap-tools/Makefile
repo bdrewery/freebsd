@@ -21,6 +21,7 @@ BSENV= \
 	TARGET=${HOST_MACHINE} TARGET_ARCH=${HOST_MACHINE_ARCH} \
 	WITHOUT_STAGING=1 STAGE_ROOT= BOOTSTRAPPING_TOOLS=1 \
 	WORLDTMP=${BTOOLSDIR} \
+	UWTMP=${BTOOLSDIR} \
 	INSTALL="sh ${SRCTOP}/tools/install.sh" \
 	PATH=${LEGACY_TOOLS}/usr/sbin:${LEGACY_TOOLS}/usr/bin:${LEGACY_TOOLS}/bin:${PATH}
 
@@ -49,6 +50,8 @@ BSARGS= 	DESTDIR= \
 
 # We will handle building the toolchain and cross-compiler.
 BSARGS+= MK_CROSS_COMPILER=no MK_CLANG=no MK_GCC=no
+# Stick to the simpler single WORLDTMP directory
+BSARGS+= MK_UNIVERSE_TOOLS=no
 
 DISTRIB_ENV=	INSTALL="sh ${SRCTOP}/tools/install.sh" NO_FSCHG=1 MK_TESTS=no
 legacy: .MAKE ${META_DEPS}

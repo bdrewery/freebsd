@@ -579,12 +579,37 @@ universe_${target}_done: universe_${target}_worlds .PHONY
 universe_${target}_worlds: universe_${target}_${target_arch} .PHONY
 universe_${target}_${target_arch}: universe_${target}_prologue .MAKE .PHONY
 	@echo ">> ${target}.${target_arch} ${UNIVERSE_TARGET} started on `LC_ALL=C date`"
-	@(cd ${.CURDIR} && env __MAKE_CONF=/dev/null \
-	    ${SUB_MAKE} ${JFLAG} ${UNIVERSE_TARGET} \
-	    TARGET=${target} \
-	    TARGET_ARCH=${target_arch} \
-	    ${MAKE_PARAMS_${target}} \
-	    > _.${target}.${target_arch}.${UNIVERSE_TARGET} 2>&1 || \
+	@(cd ${.CURDIR} && \
+	    { \
+		export __MAKE_CONF=/dev/null; \
+		if [ "${UNIVERSE_TARGET}" != "kernel-toolchain" -a \
+		    "${UNIVERSE_TARGET}" != "toolchain" ]; then \
+			set -x; \
+			echo "XXX: Use cookies to speed this up more like bootstrap-tools does"; \
+			_universetmp=$$( \
+			    ${SUB_MAKE} -f Makefile.inc1 \
+			    TARGET=${target} \
+			    TARGET_ARCH=${target_arch} \
+			    ${MAKE_PARAMS_${target}} \
+			    -V UNIVERSETMP); \
+			if [ -n "$${_universetmp}" ]; then \
+				mkdir -p "$${_universetmp}"; \
+				echo "LOCKF start"; \
+				/usr/bin/time lockf \
+				    -k "$${_universetmp}/kernel-toolchain.lock" \
+				    ${SUB_MAKE} ${JFLAG} kernel-toolchain \
+				    TARGET=${target} \
+				    TARGET_ARCH=${target_arch} \
+				    ${MAKE_PARAMS_${target}}; \
+				echo "LOCKF end"; \
+			fi; \
+			set +x; \
+		fi; \
+		${SUB_MAKE} ${JFLAG} ${UNIVERSE_TARGET} \
+		    TARGET=${target} \
+		    TARGET_ARCH=${target_arch} \
+		    ${MAKE_PARAMS_${target}}; \
+	    } | tee _.${target}.${target_arch}.${UNIVERSE_TARGET} 2>&1 || \
 	    (echo "${target}.${target_arch} ${UNIVERSE_TARGET} failed," \
 	    "check _.${target}.${target_arch}.${UNIVERSE_TARGET} for details" | \
 	    ${MAKEFAIL}))

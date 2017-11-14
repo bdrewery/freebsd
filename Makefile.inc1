@@ -98,6 +98,11 @@ WANT_COMPILER_TYPE=	gcc
 .else
 WANT_COMPILER_TYPE=
 .endif
+.if ${MK_LLD_BOOTSTRAP} == "yes"
+WANT_LINKER_TYPE=	lld
+.else
+WANT_LINKER_TYPE=	bfd
+.endif
 .if !defined(WANT_COMPILER_FREEBSD_VERSION)
 .if ${WANT_COMPILER_TYPE} == "clang"
 WANT_COMPILER_FREEBSD_VERSION_FILE= lib/clang/freebsd_cc_version.h
@@ -443,11 +448,31 @@ BUILD_ARCH!=	uname -p
 .error To cross-build, set TARGET_ARCH.
 .endif
 .endif
+# This is where arch-dependent sysroot libraries/headers are installed to.
 WORLDTMP?=	${OBJTOP}/tmp
-BPATH=		${CCACHE_WRAPPER_PATH_PFX}${WORLDTMP}/legacy/usr/sbin:${WORLDTMP}/legacy/usr/bin:${WORLDTMP}/legacy/bin
-XPATH=		${WORLDTMP}/usr/sbin:${WORLDTMP}/usr/bin
+# This is where arch-independent / host tools, such as the compiler, are
+# installed to.
+UNIVERSETMP=	${OBJROOT}universe-${WANT_COMPILER_TYPE}-${WANT_LINKER_TYPE}-${MACHINE_ARCH}
+.for v in WORLD UNIVERSE
+_${v}_BPATH=	${${v}TMP}/legacy/usr/sbin:${${v}TMP}/legacy/usr/bin:${${v}TMP}/legacy/bin
+_${v}_XPATH=	${${v}TMP}/usr/sbin:${${v}TMP}/usr/bin
+.endfor
+BPATH=		${CCACHE_WRAPPER_PATH_PFX}${_UNIVERSE_BPATH}:${_WORLD_BPATH}
+XPATH=		${_UNIVERSE_XPATH}:${_WORLD_XPATH}
 STRICTTMPPATH=	${BPATH}:${XPATH}
 TMPPATH=	${STRICTTMPPATH}:${PATH}
+
+# Only use the universe directory if building with clang since we can
+# utilize -target and --sysroot reliably with it.  META_MODE is required
+# to ensure the compiler is incrementally rebuilt properly and not blown
+# away for every arch in 'make universe' while they hold the universelock.
+.if !empty(WANT_COMPILER_TYPE) && ${WANT_COMPILER_TYPE} == "clang" && \
+    ${MK_META_MODE} == "yes"
+MK_UNIVERSE_TOOLS=	yes
+.else
+MK_UNIVERSE_TOOLS=	no
+UNIVERSETMP=
+.endif
 
 #
 # Avoid running mktemp(1) unless actually needed.
@@ -513,15 +538,32 @@ CROSSENV+=	BUILD_TOOLS_META=.NOMETA
 CROSSENV+=	${TARGET_CFLAGS}
 .endif
 
+.if ${MK_UNIVERSE_TOOLS} == "yes"
+# TOOLS_PREFIX blank to enable bootstrap behavior but not default to
+# any sysroot since --sysroot is used.
+BMAKE_TOOLS_PREFIX=
+# Install tools to the universe directory.
+BMAKE_OBJTOP=		${UNIVERSETMP}
+# XXX: WORLDTMP in BMAKEENV is poorly named, should be something like TOOLSDIR
+BMAKE_WORLDTMP=		${UNIVERSETMP}
+.else
+# Keep using the old method with GCC.
+BMAKE_TOOLS_PREFIX=	${WORLDTMP}
+BMAKE_OBJTOP=		${WORLDTMP}
+BMAKE_WORLDTMP=		${WORLDTMP}
+.endif
+
 # bootstrap-tools stage
 BMAKEENV=	INSTALL="sh ${.CURDIR}/tools/install.sh" \
-		TOOLS_PREFIX=${WORLDTMP} \
+		TOOLS_PREFIX=${BMAKE_TOOLS_PREFIX} \
 		PATH=${BPATH}:${PATH} \
-		WORLDTMP=${WORLDTMP} \
+		WORLDTMP=${BMAKE_WORLDTMP} \
+		UWTMP=${BMAKE_WORLDTMP} \
 		MAKEFLAGS="-m ${.CURDIR}/tools/build/mk ${.MAKEFLAGS}"
+
 # need to keep this in sync with targets/pseudo/bootstrap-tools/Makefile
 BSARGS= 	DESTDIR= \
-		OBJTOP='${WORLDTMP}/obj-tools' \
+		OBJTOP='${BMAKE_OBJTOP}/obj-tools' \
 		OBJROOT='$${OBJTOP}/' \
 		MAKEOBJDIRPREFIX= \
 		BOOTSTRAPPING=${OSRELDATE} \
@@ -553,7 +595,9 @@ TMAKE=		\
 
 # cross-tools stage
 # TOOLS_PREFIX set in BMAKE
-XMAKE=		${BMAKE} \
+XMAKE=		${BMAKE:NOBJROOT=*:NOBJTOP=*} \
+		OBJTOP='${UNIVERSETMP}/obj-$${BWPHASE}' \
+		OBJROOT='$${OBJTOP}/' \
 		TARGET=${TARGET} TARGET_ARCH=${TARGET_ARCH} \
 		MK_GDB=no MK_LLD_IS_LD=${MK_LLD_BOOTSTRAP} MK_TESTS=no
 
@@ -768,6 +812,81 @@ _sanity_check: .PHONY .MAKE
 	@false
 .endif
 
+_universe_lock: .PHONY
+	@echo "XXX: Lock universe ${WANT_COMPILER_TYPE} (implicit due to UNIVERSETMP)"
+
+_universe_unlock: .PHONY
+	@echo "XXX: Unlock universe ${WANT_COMPILER_TYPE}"
+
+# Clean files/directories common to both WORLDTMP/UNIVERSETMP.
+_uwtmp_clean: .PHONY
+.if !defined(NO_CLEAN)
+	rm -rf ${UWTMP}
+.else
+.if exists(${UWTMP})
+	@echo ">>> Deleting stale files in build tree..."
+	${_+_}cd ${.CURDIR}; ${WMAKE} -DBATCH_DELETE_OLD_FILES \
+	    delete-old delete-old-libs >/dev/null
+.endif
+.if ${USING_SYSTEM_COMPILER} == "yes"
+	# XXX: This causes a full rebuild with meta mode after an installworld
+	#      May be mitigated by universetmp
+.for cc in cc c++
+	if [ -x ${UWTMP}/usr/bin/${cc} ]; then \
+		inum=$$(stat -f %i ${UWTMP}/usr/bin/${cc}); \
+		find ${UWTMP}/usr/bin -inum $${inum} -delete; \
+	fi
+.endfor
+.endif	# ${USING_SYSTEM_COMPILER} == "yes"
+.endif	# !defined(NO_CLEAN)
+	@mkdir -p ${UWTMP}
+
+# Setup some files/directories common to both WORLDTMP/UNIVERSETMP.
+_uwtmp_setup: .PHONY
+.for _dir in \
+    lib lib/casper usr
+	mkdir -p ${UWTMP}/${_dir}
+.endfor
+	ln -sf ${.CURDIR}/sys ${UWTMP}/
+	mtree -deU -f ${.CURDIR}/etc/mtree/BSD.usr.dist \
+	    -p ${UWTMP}/usr >/dev/null
+	mtree -deU -f ${.CURDIR}/etc/mtree/BSD.include.dist \
+	    -p ${UWTMP}/usr/include >/dev/null
+.if ${MK_DEBUG_FILES} != "no"
+	mtree -deU -f ${.CURDIR}/etc/mtree/BSD.debug.dist \
+	    -p ${UWTMP}/usr/lib >/dev/null
+.endif
+.for _mtree in ${LOCAL_MTREE}
+	mtree -deU -f ${.CURDIR}/${_mtree} -p ${UWTMP} > /dev/null
+.endfor
+
+# This directory contains arch-independent / host files.
+_universetmp: .PHONY
+	@echo
+	@echo "--------------------------------------------------------------"
+	@echo ">>> Rebuilding the temporary universe build tree"
+	@echo "--------------------------------------------------------------"
+	${_+_}cd ${.CURDIR}; ${WMAKE} _uwtmp_clean UWTMP=${UNIVERSETMP:Q}
+	@touch ${UNIVERSETMP}/${.TARGET}
+	# Legacy directories only stored in UNIVERSETMP.
+.if defined(NO_CLEAN)
+	rm -rf ${UNIVERSETMP}/legacy/usr/include
+.endif	# defined(NO_CLEAN)
+.for _dir in \
+    legacy/bin legacy/usr
+	mkdir -p ${UNIVERSETMP}/${_dir}
+.endfor
+	mtree -deU -f ${.CURDIR}/etc/mtree/BSD.usr.dist \
+	    -p ${UNIVERSETMP}/legacy/usr >/dev/null
+	mtree -deU -f ${.CURDIR}/etc/mtree/BSD.include.dist \
+	    -p ${UNIVERSETMP}/legacy/usr/include >/dev/null
+.if ${MK_DEBUG_FILES} != "no"
+	mtree -deU -f ${.CURDIR}/etc/mtree/BSD.debug.dist \
+	    -p ${UNIVERSETMP}/legacy/usr/lib >/dev/null
+.endif
+	# Setup shared hierarchies
+	${_+_}cd ${.CURDIR}; ${WMAKE} _uwtmp_setup UWTMP=${UNIVERSETMP:Q}
+
 # Our current approach to dependency tracking cannot cope with certain source
 # tree changes, particularly with respect to removing source files and
 # replacing generated files.  Handle these cases here in an ad-hoc fashion.
@@ -776,6 +895,7 @@ _cleanobj_fast_depend_hack: .PHONY
 # Date      SVN Rev  Syscalls
 # 20160829  r305012  ptrace
 # 20170624  r320278  fstat fstatat fstatfs getdirentries getfsstat statfs
+# XXX: Use DEPENDFILE here?
 .for f in fstat fstatat fstatfs getdirentries getfsstat ptrace statfs           
 .if exists(${OBJTOP}/lib/libc/.depend.${f}.o)
 	@if egrep -qw '${f}\.[sS]' \
@@ -810,54 +930,17 @@ _cleanobj_fast_depend_hack: .PHONY
 .endif
 .endfor
 
+# This directory contains arch-dependent files.
 _worldtmp: .PHONY
 	@echo
 	@echo "--------------------------------------------------------------"
-	@echo ">>> Rebuilding the temporary build tree"
+	@echo ">>> Rebuilding the temporary world build tree"
 	@echo "--------------------------------------------------------------"
-.if !defined(NO_CLEAN)
-	rm -rf ${WORLDTMP}
-.else
-.if exists(${WORLDTMP})
-	@echo ">>> Deleting stale files in build tree..."
-	${_+_}cd ${.CURDIR}; ${WMAKE} -DBATCH_DELETE_OLD_FILES \
-	    delete-old delete-old-libs >/dev/null
-.endif
-	rm -rf ${WORLDTMP}/legacy/usr/include
-.if ${USING_SYSTEM_COMPILER} == "yes"
-.for cc in cc c++
-	if [ -x ${WORLDTMP}/usr/bin/${cc} ]; then \
-		inum=$$(stat -f %i ${WORLDTMP}/usr/bin/${cc}); \
-		find ${WORLDTMP}/usr/bin -inum $${inum} -delete; \
-	fi
-.endfor
-.endif	# ${USING_SYSTEM_COMPILER} == "yes"
-.endif	# !defined(NO_CLEAN)
-	@mkdir -p ${WORLDTMP}
+	${_+_}cd ${.CURDIR}; ${WMAKE} _uwtmp_clean UWTMP=${WORLDTMP:Q}
 	@touch ${WORLDTMP}/${.TARGET}
+	# Setup shared hierarchies
+	${_+_}cd ${.CURDIR}; ${WMAKE} _uwtmp_setup UWTMP=${WORLDTMP:Q}
 
-.for _dir in \
-    lib lib/casper usr legacy/bin legacy/usr
-	mkdir -p ${WORLDTMP}/${_dir}
-.endfor
-	mtree -deU -f ${.CURDIR}/etc/mtree/BSD.usr.dist \
-	    -p ${WORLDTMP}/legacy/usr >/dev/null
-	mtree -deU -f ${.CURDIR}/etc/mtree/BSD.include.dist \
-	    -p ${WORLDTMP}/legacy/usr/include >/dev/null
-	mtree -deU -f ${.CURDIR}/etc/mtree/BSD.usr.dist \
-	    -p ${WORLDTMP}/usr >/dev/null
-	mtree -deU -f ${.CURDIR}/etc/mtree/BSD.include.dist \
-	    -p ${WORLDTMP}/usr/include >/dev/null
-	ln -sf ${.CURDIR}/sys ${WORLDTMP}
-.if ${MK_DEBUG_FILES} != "no"
-	mtree -deU -f ${.CURDIR}/etc/mtree/BSD.debug.dist \
-	    -p ${WORLDTMP}/legacy/usr/lib >/dev/null
-	mtree -deU -f ${.CURDIR}/etc/mtree/BSD.debug.dist \
-	    -p ${WORLDTMP}/usr/lib >/dev/null
-.endif
-.for _mtree in ${LOCAL_MTREE}
-	mtree -deU -f ${.CURDIR}/${_mtree} -p ${WORLDTMP} > /dev/null
-.endfor
 _legacy:
 	@echo
 	@echo "--------------------------------------------------------------"
@@ -939,24 +1022,28 @@ everything: .PHONY
 
 WMAKE_TGTS=
 .if !defined(WORLDFAST)
-WMAKE_TGTS+=	_sanity_check _worldtmp _legacy
+WMAKE_TGTS+=	_sanity_check
+WMAKE_TGTS+=	_universe_lock
+WMAKE_TGTS+=	_universetmp _legacy
 .if empty(SUBDIR_OVERRIDE)
 WMAKE_TGTS+=	_bootstrap-tools
 .endif
+WMAKE_TGTS+=	_worldtmp
 WMAKE_TGTS+=	_cleanobj
 .if !defined(NO_OBJWALK)
 WMAKE_TGTS+=	_obj
 .endif
 WMAKE_TGTS+=	_build-tools _cross-tools
 WMAKE_TGTS+=	_build-metadata
+WMAKE_TGTS+=	_universe_unlock
 WMAKE_TGTS+=	_includes
-.endif
 .if !defined(NO_LIBS)
 WMAKE_TGTS+=	_libraries
 .endif
 WMAKE_TGTS+=	everything
 .if defined(LIBCOMPAT) && empty(SUBDIR_OVERRIDE)
 WMAKE_TGTS+=	build${libcompat}
+.endif
 .endif
 
 buildworld: buildworld_prologue ${WMAKE_TGTS} buildworld_epilogue .PHONY
@@ -1008,6 +1095,10 @@ toolchain: ${TOOLCHAIN_TGTS} .PHONY
 KERNEL_TOOLCHAIN_TGTS=	${TOOLCHAIN_TGTS:N_obj:N_cleanobj:N_includes:N_libraries}
 .if make(kernel-toolchain)
 .ORDER: ${KERNEL_TOOLCHAIN_TGTS}
+.endif
+.if ${MK_UNIVERSE_TOOLS} == "yes"
+KERNEL_TOOLCHAIN_TGTS:=	${KERNEL_TOOLCHAIN_TGTS:N_worldtmp:N_build-metadata}
+# XXX: removing _build-metadata here means buildkernel needs to call it
 .endif
 kernel-toolchain: ${KERNEL_TOOLCHAIN_TGTS} .PHONY
 
@@ -1364,6 +1455,7 @@ INSTALLKERNEL= ${_kernel}
 .endif
 .endfor
 
+# XXX: Sup here need _universetmp?
 ${WMAKE_TGTS:N_worldtmp:Nbuild${libcompat}} ${.ALLTARGETS:M_*:N_worldtmp}: .MAKE .PHONY
 
 #
@@ -1815,10 +1907,10 @@ legacy: .PHONY
 	${_+_}@${ECHODIR} "===> ${_tool} (obj,includes,all,install)"; \
 	    cd ${.CURDIR}/${_tool}; \
 	    if [ -z "${NO_OBJWALK}" ]; then ${MAKE} DIRPRFX=${_tool}/ obj; fi; \
-	    ${MAKE} DIRPRFX=${_tool}/ DESTDIR=${WORLDTMP}/legacy includes; \
+	    ${MAKE} DIRPRFX=${_tool}/ DESTDIR=${UWTMP}/legacy includes; \
 	    ${MAKE} DIRPRFX=${_tool}/ MK_INCLUDES=no all; \
 	    ${MAKE} DIRPRFX=${_tool}/ MK_INCLUDES=no \
-	        DESTDIR=${WORLDTMP}/legacy install
+	        DESTDIR=${UWTMP}/legacy install
 .endfor
 
 #
@@ -1962,7 +2054,7 @@ ${_bt}-${_tool}: .PHONY .MAKE
 		cd ${.CURDIR}/${_tool}; \
 		if [ -z "${NO_OBJWALK}" ]; then ${MAKE} DIRPRFX=${_tool}/ obj; fi; \
 		${MAKE} DIRPRFX=${_tool}/ all; \
-		${MAKE} DIRPRFX=${_tool}/ DESTDIR=${WORLDTMP}/legacy install
+		${MAKE} DIRPRFX=${_tool}/ DESTDIR=${UWTMP}/legacy install
 
 bootstrap-tools: ${_bt}-${_tool}
 .endfor
@@ -2023,9 +2115,9 @@ build-tools: build-tools_${_tool}
 # kernel-tools: Build kernel-building tools
 #
 kernel-tools: .PHONY
-	mkdir -p ${WORLDTMP}/usr
+	mkdir -p ${UWTMP}/usr
 	mtree -deU -f ${.CURDIR}/etc/mtree/BSD.usr.dist \
-	    -p ${WORLDTMP}/usr >/dev/null
+	    -p ${UWTMP}/usr >/dev/null
 
 #
 # cross-tools: All the tools needed to build the rest of the system after
@@ -2101,7 +2193,7 @@ cross-tools: .MAKE .PHONY
 		cd ${.CURDIR}/${_tool}; \
 		if [ -z "${NO_OBJWALK}" ]; then ${MAKE} DIRPRFX=${_tool}/ obj; fi; \
 		${MAKE} DIRPRFX=${_tool}/ all; \
-		${MAKE} DIRPRFX=${_tool}/ DESTDIR=${WORLDTMP} install
+		${MAKE} DIRPRFX=${_tool}/ DESTDIR=${UWTMP} install
 .endfor
 
 #
