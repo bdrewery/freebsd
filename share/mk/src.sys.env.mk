@@ -44,4 +44,5 @@ MAKESYSPATH:=	${.PARSEDIR:tA}
 .export MAKESYSPATH
 .endif
 
+.sinclude "${.CURDIR}/Makefile.inc.sys"
 .include <src.sys.obj.mk>
