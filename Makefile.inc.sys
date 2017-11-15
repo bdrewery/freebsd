@@ -30,7 +30,7 @@ _CAN_USE_AUTO_OBJ?= yes
 .endif
 .endfor
 .if !defined(_CAN_USE_AUTO_OBJ)
-_MAKEARGS+=	MK_AUTO_OBJ=no
-MK_AUTO_OBJ= no
+_MAKEARGS+=		MK_AUTO_OBJ=no
+MK_AUTO_OBJ=		no
 .endif
 .endif	# empty(.MAKEOVERRIDES:MMK_AUTO_OBJ)
