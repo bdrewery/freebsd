@@ -174,8 +174,7 @@ CheckAutoObj() { \
 }
 .if !empty(__objdir)
 # Assume .CURDIR is writable.
-# Top-level targets assume it will always use the expected OBJDIR.
-.if ${.CURDIR} == ${__objdir} || ${RELDIR} == "."
+.if ${.CURDIR} == ${__objdir}
 __objdir_writable?= yes
 .else
 __objdir_writable!= \
@@ -186,12 +185,7 @@ __objdir_writable?= no
 # Export the decision to sub-makes.
 MK_AUTO_OBJ:=	${__objdir_writable}
 # export but do not track
-.export-env MK_AUTO_OBJ
-# Top-level Makefile always assumes it can use the expected OBJDIR but will
-# not create it.  Sub-makes will create them.
-.if ${RELDIR} == "."
-MK_AUTO_OBJ= no
-.endif
+.export MK_AUTO_OBJ
 .elif make(showconfig)
 # Need to export for showconfig internally running make -dg1.  It is enabled
 # in sys.mk by default.
