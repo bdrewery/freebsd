@@ -44,5 +44,7 @@ MAKESYSPATH:=	${.PARSEDIR:tA}
 .export MAKESYSPATH
 .endif
 
+.if ${RELDIR:U} == "."
 .sinclude "${.CURDIR}/Makefile.inc.sys"
+.endif
 .include <src.sys.obj.mk>
