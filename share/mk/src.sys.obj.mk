@@ -19,6 +19,15 @@
 #  TARGET.TARGET_ARCH added in as it assumes that MAKEOBJDIRPREFIX is
 #  nested in the existing OBJTOP with TARGET.TARGET_ARCH in it.
 #
+#  The expected OBJDIR is stored in __objdir for auto.obj.mk to use.
+#
+#  AUTO_OBJ is opportunistically enabled if the computed .OBJDIR is
+#  writable by the current user.
+#  - For the top-level Makefile all targets are assumed to be able to write
+#    to the expected OBJDIR and use it if it exists.
+#  - All other directories will use .OBJDIR=.CURDIR if the expected OBJDIR
+#    is not writable.
+#
 
 _default_makeobjdirprefix?=	/usr/obj
 _default_makeobjdir=	$${.CURDIR:S,^$${SRCTOP},$${OBJTOP},}
@@ -164,7 +173,9 @@ CheckAutoObj() { \
 	fi; \
 }
 .if !empty(__objdir)
-.if ${.CURDIR} == ${__objdir}
+# Assume .CURDIR is writable.
+# Top-level targets assume it will always use the expected OBJDIR.
+.if ${.CURDIR} == ${__objdir} || ${RELDIR} == "."
 __objdir_writable?= yes
 .else
 __objdir_writable!= \
@@ -174,7 +185,13 @@ __objdir_writable!= \
 __objdir_writable?= no
 # Export the decision to sub-makes.
 MK_AUTO_OBJ:=	${__objdir_writable}
-.export MK_AUTO_OBJ
+# export but do not track
+.export-env MK_AUTO_OBJ
+# Top-level Makefile always assumes it can use the expected OBJDIR but will
+# not create it.  Sub-makes will create them.
+.if ${RELDIR} == "."
+MK_AUTO_OBJ= no
+.endif
 .elif make(showconfig)
 # Need to export for showconfig internally running make -dg1.  It is enabled
 # in sys.mk by default.
