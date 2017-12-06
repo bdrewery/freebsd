@@ -589,6 +589,7 @@ universe_${target}_build: universe_${target}_done
 universe_${target}_done:
 	@echo ">> ${target} completed on `LC_ALL=C date`"
 .endfor
+.if make(universe_kernconfs) || make(universe_kernels)
 universe_kernels: universe_kernconfs .PHONY
 .if !defined(TARGET)
 TARGET!=	uname -m
@@ -627,6 +628,7 @@ universe_kernconf_${TARGET}_${kernel}: .MAKE
 	    "check _.${TARGET}.${kernel} for details"| ${MAKEFAIL}))
 	@echo ">> ${TARGET}.${kernel} buildkernel completed on `LC_ALL=C date`"
 .endfor
+.endif	# make(universe_kernels)
 universe: universe_epilogue
 universe_epilogue: .PHONY
 	@echo "--------------------------------------------------------------"
