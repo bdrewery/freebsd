@@ -614,6 +614,7 @@ TARGET_ARCH_${kernel}!=	cd ${KERNSRCDIR}/${TARGET}/conf && \
 .endif
 universe_kernconfs: universe_kernconf_${TARGET}_${kernel}
 universe_kernconf_${TARGET}_${kernel}: .MAKE
+	@echo ">> ${TARGET}.${kernel} buildkernel started on `LC_ALL=C date`"
 	@(cd ${.CURDIR} && env __MAKE_CONF=/dev/null \
 	    ${SUB_MAKE} ${JFLAG} buildkernel \
 	    TARGET=${TARGET} \
@@ -623,6 +624,7 @@ universe_kernconf_${TARGET}_${kernel}: .MAKE
 	    > _.${TARGET}.${kernel} 2>&1 || \
 	    (echo "${TARGET} ${kernel} kernel failed," \
 	    "check _.${TARGET}.${kernel} for details"| ${MAKEFAIL}))
+	@echo ">> ${TARGET}.${kernel} buildkernel completed on `LC_ALL=C date`"
 .endfor
 universe: universe_epilogue
 universe_epilogue: .PHONY
