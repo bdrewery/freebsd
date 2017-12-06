@@ -165,7 +165,7 @@ META_TGT_WHITELIST+= \
 	buildworld everything kernel-toolchain kernel-toolchains kernel \
 	kernels libraries native-xtools showconfig test-system-compiler \
 	tinderbox toolchain \
-	toolchains universe world worlds xdev xdev-build
+	toolchains universe* world worlds xdev xdev-build
 
 .ORDER: buildworld installworld
 .ORDER: buildworld distrib-dirs
@@ -476,7 +476,7 @@ worlds: .PHONY
 # with a reasonable chance of success, regardless of how old your
 # existing system is.
 #
-.if make(universe) || make(universe_kernels) || make(tinderbox) || make(targets)
+.if make(universe*) || make(tinderbox) || make(targets)
 TARGETS?=amd64 arm arm64 i386 mips powerpc riscv sparc64
 _UNIVERSE_TARGETS=	${TARGETS}
 TARGET_ARCHES_arm?=	arm armeb armv6 armv7
@@ -541,8 +541,11 @@ universe_prologue: .PHONY
 .for target in ${_UNIVERSE_TARGETS}
 universe: universe_${target}
 universe_epilogue: universe_${target}
-universe_${target}: universe_${target}_prologue .PHONY
-universe_${target}_prologue: universe_prologue .PHONY
+universe_${target}: .PHONY .MAKE universe_prologue
+	@cd ${.CURDIR}; ${SUB_MAKE} ${.TARGET}_build \
+	    TARGET=${target}
+universe_${target}_build: universe_${target}_prologue .PHONY
+universe_${target}_prologue: .PHONY
 	@echo ">> ${target} started on `LC_ALL=C date`"
 universe_${target}_worlds: .PHONY
 
@@ -581,7 +584,7 @@ universe_${target}_kernels: universe_${target}_prologue .MAKE .PHONY
 .endif # !MAKE_JUST_WORLDS
 
 # Tell the user the worlds and kernels have completed
-universe_${target}: universe_${target}_done
+universe_${target}_build: universe_${target}_done
 universe_${target}_done:
 	@echo ">> ${target} completed on `LC_ALL=C date`"
 .endfor
@@ -654,7 +657,7 @@ UPDATE_DEPENDFILE= NO
 .export MK_DIRDEPS_BUILD MK_STAGING UPDATE_DEPENDFILE
 .endif
 
-.if make(universe)
+.if make(universe*)
 # we do not want a failure of one branch abort all.
 MAKE_JOB_ERROR_TOKEN= no
 .export MAKE_JOB_ERROR_TOKEN
