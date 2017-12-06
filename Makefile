@@ -477,6 +477,7 @@ worlds: .PHONY
 # existing system is.
 #
 .if make(universe*) || make(tinderbox) || make(targets)
+.MAKE.JOB.PREFIX=
 TARGETS?=amd64 arm arm64 i386 mips powerpc riscv sparc64
 _UNIVERSE_TARGETS=	${TARGETS}
 TARGET_ARCHES_arm?=	arm armeb armv6 armv7
