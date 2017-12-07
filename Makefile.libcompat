@@ -139,6 +139,7 @@ _LC_LIBDIRS.yes=		lib gnu/lib
 _LC_LIBDIRS.${MK_CDDL:tl}+=	cddl/lib
 _LC_LIBDIRS.${MK_CRYPT:tl}+=	secure/lib
 _LC_LIBDIRS.${MK_KERBEROS:tl}+=	kerberos5/lib
+_LC_LIBDIRS.${MK_OFED:tl}+=	contrib/ofed/include
 
 _LC_INCDIRS=	\
 		include \
