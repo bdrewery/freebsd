@@ -556,8 +556,9 @@ universe_${target}_done: universe_${target}_worlds .PHONY
 universe_${target}_worlds: universe_${target}_${target_arch} .PHONY
 universe_${target}_${target_arch}: universe_${target}_prologue .MAKE .PHONY
 	@echo ">> ${target}.${target_arch} ${UNIVERSE_TARGET} started on `LC_ALL=C date`"
+	@echo "would use MAKEFLAGS='${MAKEFLAGS}'"
 	@(cd ${.CURDIR} && env __MAKE_CONF=/dev/null \
-	    ${SUB_MAKE} ${JFLAG} ${UNIVERSE_TARGET} \
+	    MAKEFLAGS="${JFLAG} ${.MAKEFLAGS}" ${SUB_MAKE} ${UNIVERSE_TARGET} \
 	    TARGET=${target} \
 	    TARGET_ARCH=${target_arch} \
 	    ${MAKE_PARAMS_${target}} \
@@ -580,7 +581,7 @@ universe_${target}_kernels: universe_${target}_prologue .MAKE .PHONY
 	    (echo "${target} 'make LINT' failed," \
 	    "check _.${target}.makeLINT for details"| ${MAKEFAIL}))
 .endif
-	@cd ${.CURDIR}; ${SUB_MAKE} ${.MAKEFLAGS} TARGET=${target} \
+	@cd ${.CURDIR}; ${SUB_MAKE} TARGET=${target} \
 	    universe_kernels
 .endif # !MAKE_JUST_WORLDS
 
@@ -618,7 +619,7 @@ universe_kernconfs: universe_kernconf_${TARGET}_${kernel}
 universe_kernconf_${TARGET}_${kernel}: .MAKE
 	@echo ">> ${TARGET}.${kernel} buildkernel started on `LC_ALL=C date`"
 	@(cd ${.CURDIR} && env __MAKE_CONF=/dev/null \
-	    ${SUB_MAKE} ${JFLAG} buildkernel \
+	    MAKEFLAGS="${JFLAG} ${.MAKEFLAGS}" ${SUB_MAKE} buildkernel \
 	    TARGET=${TARGET} \
 	    TARGET_ARCH=${TARGET_ARCH_${kernel}} \
 	    ${MAKE_PARAMS_${TARGET}} \
