@@ -490,7 +490,7 @@ loadfile(const char *path, int fd)
 {
 	struct loadedfile *lf;
 #ifdef HAVE_MMAP
-	long pagesize;
+	static long pagesize = 0;
 #endif
 	ssize_t result;
 	size_t bufpos;
@@ -515,7 +515,8 @@ loadfile(const char *path, int fd)
 	if (load_getsize(fd, &lf->len) == SUCCESS) {
 		/* found a size, try mmap */
 #ifdef _SC_PAGESIZE
-		pagesize = sysconf(_SC_PAGESIZE);
+		if (pagesize == 0)
+			pagesize = sysconf(_SC_PAGESIZE);
 #else
 		pagesize = 0;
 #endif
