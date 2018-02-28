@@ -46,6 +46,8 @@ __FBSDID("$FreeBSD$");
 
 extern char **environ;
 
+/* XXX: Need to move these defs to a private shared header between posix_spawn.c
+ * and posix_spawn-compat.c */
 struct __posix_spawnattr {
 	short			sa_flags;
 	pid_t			sa_pgroup;
@@ -293,6 +295,7 @@ posix_spawn_file_actions_addopen(posix_spawn_file_actions_t * __restrict fa,
 		return (EBADF);
 
 	/* Allocate object */
+	/* XXX: Can't work since it is opaque, what is its size?? */
 	fae = malloc(sizeof(posix_spawn_file_actions_entry_t));
 	if (fae == NULL)
 		return (errno);

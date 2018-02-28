@@ -44,42 +44,6 @@ __FBSDID("$FreeBSD$");
 #include "un-namespace.h"
 #include "libc_private.h"
 
-extern char **environ;
-
-struct __posix_spawnattr {
-	short			sa_flags;
-	pid_t			sa_pgroup;
-	struct sched_param	sa_schedparam;
-	int			sa_schedpolicy;
-	sigset_t		sa_sigdefault;
-	sigset_t		sa_sigmask;
-};
-
-struct __posix_spawn_file_actions {
-	STAILQ_HEAD(, __posix_spawn_file_actions_entry) fa_list;
-};
-
-typedef struct __posix_spawn_file_actions_entry {
-	STAILQ_ENTRY(__posix_spawn_file_actions_entry) fae_list;
-	enum { FAE_OPEN, FAE_DUP2, FAE_CLOSE } fae_action;
-
-	int fae_fildes;
-	union {
-		struct {
-			char *path;
-#define fae_path	fae_data.open.path
-			int oflag;
-#define fae_oflag	fae_data.open.oflag
-			mode_t mode;
-#define fae_mode	fae_data.open.mode
-		} open;
-		struct {
-			int newfildes;
-#define fae_newfildes	fae_data.dup2.newfildes
-		} dup2;
-	} fae_data;
-} posix_spawn_file_actions_entry_t;
-
 int
 freebsd11_posix_spawn(pid_t *pid, const char *path,
     const _freebsd11_posix_spawn_file_actions_t *fa,
@@ -109,7 +73,7 @@ freebsd11_posix_spawn_file_actions_init(_freebsd11_posix_spawn_file_actions_t *r
 {
 	_freebsd11_posix_spawn_file_actions_t fa;
 
-	fa = malloc(sizeof(struct __posix_spawn_file_actions));
+	fa = malloc(sizeof(struct posix_spawn_file_actions_t));
 	if (fa == NULL)
 		return (-1);
 
@@ -161,7 +125,7 @@ freebsd11_posix_spawnattr_init(_freebsd11_posix_spawnattr_t *ret)
 {
 	_freebsd11_posix_spawnattr_t sa;
 
-	sa = malloc(sizeof(struct __posix_spawnattr));
+	sa = malloc(sizeof(struct posix_spawnattr_t));
 	if (sa == NULL)
 		return (errno);
 
