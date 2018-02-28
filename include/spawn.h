@@ -52,8 +52,10 @@ typedef	__sigset_t	sigset_t;
 
 struct sched_param;
 
-typedef struct __posix_spawnattr		*posix_spawnattr_t;
-typedef struct __posix_spawn_file_actions	*posix_spawn_file_actions_t;
+typedef struct __posix_spawnattr		*_freebsd11_posix_spawnattr_t;
+typedef struct __posix_spawn_file_actions	*_freebsd11_posix_spawn_file_actions_t;
+typedef struct __posix_spawnattr		posix_spawnattr_t;
+typedef struct __posix_spawn_file_actions	posix_spawn_file_actions_t;
 
 #define POSIX_SPAWN_RESETIDS		0x01
 #define POSIX_SPAWN_SETPGROUP		0x02

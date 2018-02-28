@@ -97,23 +97,23 @@ process_spawnattr(const posix_spawnattr_t sa)
 	 */
 
 	/* Set process group */
-	if (sa->sa_flags & POSIX_SPAWN_SETPGROUP) {
-		if (setpgid(0, sa->sa_pgroup) != 0)
+	if (sa.sa_flags & POSIX_SPAWN_SETPGROUP) {
+		if (setpgid(0, sa.sa_pgroup) != 0)
 			return (errno);
 	}
 
 	/* Set scheduler policy */
-	if (sa->sa_flags & POSIX_SPAWN_SETSCHEDULER) {
-		if (sched_setscheduler(0, sa->sa_schedpolicy,
-		    &sa->sa_schedparam) != 0)
+	if (sa.sa_flags & POSIX_SPAWN_SETSCHEDULER) {
+		if (sched_setscheduler(0, sa.sa_schedpolicy,
+		    &sa.sa_schedparam) != 0)
 			return (errno);
-	} else if (sa->sa_flags & POSIX_SPAWN_SETSCHEDPARAM) {
-		if (sched_setparam(0, &sa->sa_schedparam) != 0)
+	} else if (sa.sa_flags & POSIX_SPAWN_SETSCHEDPARAM) {
+		if (sched_setparam(0, &sa.sa_schedparam) != 0)
 			return (errno);
 	}
 
 	/* Reset user ID's */
-	if (sa->sa_flags & POSIX_SPAWN_RESETIDS) {
+	if (sa.sa_flags & POSIX_SPAWN_RESETIDS) {
 		if (setegid(getgid()) != 0)
 			return (errno);
 		if (seteuid(getuid()) != 0)
@@ -124,13 +124,13 @@ process_spawnattr(const posix_spawnattr_t sa)
 	 * Set signal masks/defaults.
 	 * Use unwrapped syscall, libthr is in undefined state after vfork().
 	 */
-	if (sa->sa_flags & POSIX_SPAWN_SETSIGMASK) {
-		__sys_sigprocmask(SIG_SETMASK, &sa->sa_sigmask, NULL);
+	if (sa.sa_flags & POSIX_SPAWN_SETSIGMASK) {
+		__sys_sigprocmask(SIG_SETMASK, &sa.sa_sigmask, NULL);
 	}
 
-	if (sa->sa_flags & POSIX_SPAWN_SETSIGDEF) {
+	if (sa.sa_flags & POSIX_SPAWN_SETSIGDEF) {
 		for (i = 1; i <= _SIG_MAXSIG; i++) {
-			if (sigismember(&sa->sa_sigdefault, i))
+			if (sigismember(&sa.sa_sigdefault, i))
 				if (__sys_sigaction(i, &sigact, NULL) != 0)
 					return (errno);
 		}
@@ -186,7 +186,7 @@ process_file_actions(const posix_spawn_file_actions_t fa)
 	int error;
 
 	/* Replay all file descriptor modifications */
-	STAILQ_FOREACH(fae, &fa->fa_list, fae_list) {
+	STAILQ_FOREACH(fae, &fa.fa_list, fae_list) {
 		error = process_file_actions_entry(fae);
 		if (error)
 			return (error);
@@ -256,16 +256,11 @@ posix_spawnp(pid_t *pid, const char *path,
  */
 
 int
-posix_spawn_file_actions_init(posix_spawn_file_actions_t *ret)
+posix_spawn_file_actions_init(posix_spawn_file_actions_t *fa)
 {
-	posix_spawn_file_actions_t fa;
 
-	fa = malloc(sizeof(struct __posix_spawn_file_actions));
-	if (fa == NULL)
-		return (-1);
-
+	memset(fa, 0, sizeof(*fa));
 	STAILQ_INIT(&fa->fa_list);
-	*ret = fa;
 	return (0);
 }
 
@@ -274,9 +269,9 @@ posix_spawn_file_actions_destroy(posix_spawn_file_actions_t *fa)
 {
 	posix_spawn_file_actions_entry_t *fae;
 
-	while ((fae = STAILQ_FIRST(&(*fa)->fa_list)) != NULL) {
+	while ((fae = STAILQ_FIRST(&fa->fa_list)) != NULL) {
 		/* Remove file action entry from the queue */
-		STAILQ_REMOVE_HEAD(&(*fa)->fa_list, fae_list);
+		STAILQ_REMOVE_HEAD(&fa->fa_list, fae_list);
 
 		/* Deallocate file action entry */
 		if (fae->fae_action == FAE_OPEN)
@@ -284,7 +279,6 @@ posix_spawn_file_actions_destroy(posix_spawn_file_actions_t *fa)
 		free(fae);
 	}
 
-	free(*fa);
 	return (0);
 }
 
@@ -315,7 +309,7 @@ posix_spawn_file_actions_addopen(posix_spawn_file_actions_t * __restrict fa,
 	fae->fae_oflag = oflag;
 	fae->fae_mode = mode;
 
-	STAILQ_INSERT_TAIL(&(*fa)->fa_list, fae, fae_list);
+	STAILQ_INSERT_TAIL(&fa->fa_list, fae, fae_list);
 	return (0);
 }
 
@@ -338,7 +332,7 @@ posix_spawn_file_actions_adddup2(posix_spawn_file_actions_t *fa,
 	fae->fae_fildes = fildes;
 	fae->fae_newfildes = newfildes;
 
-	STAILQ_INSERT_TAIL(&(*fa)->fa_list, fae, fae_list);
+	STAILQ_INSERT_TAIL(&fa->fa_list, fae, fae_list);
 	return (0);
 }
 
@@ -360,7 +354,7 @@ posix_spawn_file_actions_addclose(posix_spawn_file_actions_t *fa,
 	fae->fae_action = FAE_CLOSE;
 	fae->fae_fildes = fildes;
 
-	STAILQ_INSERT_TAIL(&(*fa)->fa_list, fae, fae_list);
+	STAILQ_INSERT_TAIL(&fa->fa_list, fae, fae_list);
 	return (0);
 }
 
@@ -369,23 +363,17 @@ posix_spawn_file_actions_addclose(posix_spawn_file_actions_t *fa,
  */
 
 int
-posix_spawnattr_init(posix_spawnattr_t *ret)
+posix_spawnattr_init(posix_spawnattr_t *sa)
 {
-	posix_spawnattr_t sa;
 
-	sa = calloc(1, sizeof(struct __posix_spawnattr));
-	if (sa == NULL)
-		return (errno);
-
-	/* Set defaults as specified by POSIX, cleared above */
-	*ret = sa;
+	memset(sa, 0, sizeof(*sa));
 	return (0);
 }
 
 int
 posix_spawnattr_destroy(posix_spawnattr_t *sa)
 {
-	free(*sa);
+
 	return (0);
 }
 
@@ -393,7 +381,8 @@ int
 posix_spawnattr_getflags(const posix_spawnattr_t * __restrict sa,
     short * __restrict flags)
 {
-	*flags = (*sa)->sa_flags;
+
+	*flags = sa->sa_flags;
 	return (0);
 }
 
@@ -401,7 +390,8 @@ int
 posix_spawnattr_getpgroup(const posix_spawnattr_t * __restrict sa,
     pid_t * __restrict pgroup)
 {
-	*pgroup = (*sa)->sa_pgroup;
+
+	*pgroup = sa->sa_pgroup;
 	return (0);
 }
 
@@ -409,7 +399,8 @@ int
 posix_spawnattr_getschedparam(const posix_spawnattr_t * __restrict sa,
     struct sched_param * __restrict schedparam)
 {
-	*schedparam = (*sa)->sa_schedparam;
+
+	*schedparam = sa->sa_schedparam;
 	return (0);
 }
 
@@ -417,7 +408,8 @@ int
 posix_spawnattr_getschedpolicy(const posix_spawnattr_t * __restrict sa,
     int * __restrict schedpolicy)
 {
-	*schedpolicy = (*sa)->sa_schedpolicy;
+
+	*schedpolicy = sa->sa_schedpolicy;
 	return (0);
 }
 
@@ -425,7 +417,8 @@ int
 posix_spawnattr_getsigdefault(const posix_spawnattr_t * __restrict sa,
     sigset_t * __restrict sigdefault)
 {
-	*sigdefault = (*sa)->sa_sigdefault;
+
+	*sigdefault = sa->sa_sigdefault;
 	return (0);
 }
 
@@ -433,21 +426,24 @@ int
 posix_spawnattr_getsigmask(const posix_spawnattr_t * __restrict sa,
     sigset_t * __restrict sigmask)
 {
-	*sigmask = (*sa)->sa_sigmask;
+
+	*sigmask = sa->sa_sigmask;
 	return (0);
 }
 
 int
 posix_spawnattr_setflags(posix_spawnattr_t *sa, short flags)
 {
-	(*sa)->sa_flags = flags;
+
+	sa->sa_flags = flags;
 	return (0);
 }
 
 int
 posix_spawnattr_setpgroup(posix_spawnattr_t *sa, pid_t pgroup)
 {
-	(*sa)->sa_pgroup = pgroup;
+
+	sa->sa_pgroup = pgroup;
 	return (0);
 }
 
@@ -455,14 +451,16 @@ int
 posix_spawnattr_setschedparam(posix_spawnattr_t * __restrict sa,
     const struct sched_param * __restrict schedparam)
 {
-	(*sa)->sa_schedparam = *schedparam;
+
+	sa->sa_schedparam = *schedparam;
 	return (0);
 }
 
 int
 posix_spawnattr_setschedpolicy(posix_spawnattr_t *sa, int schedpolicy)
 {
-	(*sa)->sa_schedpolicy = schedpolicy;
+
+	sa->sa_schedpolicy = schedpolicy;
 	return (0);
 }
 
@@ -470,7 +468,8 @@ int
 posix_spawnattr_setsigdefault(posix_spawnattr_t * __restrict sa,
     const sigset_t * __restrict sigdefault)
 {
-	(*sa)->sa_sigdefault = *sigdefault;
+
+	sa->sa_sigdefault = *sigdefault;
 	return (0);
 }
 
@@ -478,6 +477,7 @@ int
 posix_spawnattr_setsigmask(posix_spawnattr_t * __restrict sa,
     const sigset_t * __restrict sigmask)
 {
-	(*sa)->sa_sigmask = *sigmask;
+
+	sa->sa_sigmask = *sigmask;
 	return (0);
 }

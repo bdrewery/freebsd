@@ -94,6 +94,7 @@ SRCS+=	__getosreldate.c \
 	pmadvise.c \
 	popen.c \
 	posix_spawn.c \
+	posix_spawn-compat.c \
 	psignal.c \
 	pututxline.c \
 	pw_scan.c \
