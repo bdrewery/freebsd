@@ -24,10 +24,29 @@ RELOBJTOP?=	${RELTOP}
 RELSRCTOP?=	${RELTOP}
 
 # site customizations that do not depend on anything!
+#
+# MAKEOBJDIRPREFIX must be set with '?=' to avoid breaking sub-makes
+# trying to override it.
+.if defined(MAKEOBJDIRPREFIX)
+_saveMAKEOBJDIRPREFIX:=	${MAKEOBJDIRPREFIX}
+.endif
+MAKEOBJDIRPREFIX=	_requires?=
+
 SRC_ENV_CONF?= /etc/src-env.conf
 .if !empty(SRC_ENV_CONF) && !target(_src_env_conf_included_)
 .-include "${SRC_ENV_CONF}"
 _src_env_conf_included_:	.NOTMAIN
+.endif
+
+# Assert that MAKEOBJDIRPREFIX was set with '?='
+.if ${MAKEOBJDIRPREFIX} != "_requires?="
+.error ${SRC_ENV_CONF}: Must use '?=' rather than '=' for MAKEOBJDIRPREFIX.
+.endif
+.if defined(_saveMAKEOBJDIRPREFIX)
+MAKEOBJDIRPREFIX:=	${_saveMAKEOBJDIRPREFIX}
+.undef _saveMAKEOBJDIRPREFIX
+.else
+.undef MAKEOBJDIRPREFIX
 .endif
 
 .include <bsd.mkopt.mk>
