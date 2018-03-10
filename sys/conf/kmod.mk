@@ -372,6 +372,8 @@ ${_src}:
 # Respect configuration-specific C flags.
 CFLAGS+=	${ARCH_FLAGS} ${CONF_CFLAGS}
 
+# These files may already exist in KERNBUILDDIR
+.if !defined(KERNBUILDDIR)
 .if !empty(SRCS:Mvnode_if.c)
 CLEANFILES+=	vnode_if.c
 vnode_if.c: ${SYSDIR}/tools/vnode_if.awk ${SYSDIR}/kern/vnode_if.src
@@ -389,6 +391,7 @@ vnode_if_newproto.h:
 vnode_if_typedef.h:
 	${AWK} -f ${SYSDIR}/tools/vnode_if.awk ${SYSDIR}/kern/vnode_if.src -q
 .endif
+.endif	# !defined(KERNBUILDDIR)
 
 # Build _if.[ch] from _if.m, and clean them when we're done.
 # __MPATH defined in config.mk
