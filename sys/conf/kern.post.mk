@@ -111,7 +111,7 @@ kernel-obj:
 .if !defined(MODULES_WITH_WORLD) && !defined(NO_MODULES) && exists($S/modules)
 modules: modules-all
 
-modules-all modules-depend: vnode_if.c vnode_if.h
+modules-all modules-depend: vnode_if.c vnode_if.h ${MFILES:T:S/.m$/.h/}
 
 .if !defined(NO_MODULES_OBJ)
 modules-all modules-depend: modules-obj

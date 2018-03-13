@@ -372,16 +372,14 @@ ${_src}:
 # Respect configuration-specific C flags.
 CFLAGS+=	${ARCH_FLAGS} ${CONF_CFLAGS}
 
-# These files may already exist in KERNBUILDDIR
-.if !defined(KERNBUILDDIR)
 .if !empty(SRCS:Mvnode_if.c)
-CLEANFILES+=	vnode_if.c
+MFILE_CLEANFILES+=	vnode_if.c
 vnode_if.c: ${SYSDIR}/tools/vnode_if.awk ${SYSDIR}/kern/vnode_if.src
 	${AWK} -f ${SYSDIR}/tools/vnode_if.awk ${SYSDIR}/kern/vnode_if.src -c
 .endif
 
 .if !empty(SRCS:Mvnode_if.h)
-CLEANFILES+=	vnode_if.h vnode_if_newproto.h vnode_if_typedef.h
+MFILE_CLEANFILES+=	vnode_if.h vnode_if_newproto.h vnode_if_typedef.h
 vnode_if.h vnode_if_newproto.h vnode_if_typedef.h: ${SYSDIR}/tools/vnode_if.awk \
     ${SYSDIR}/kern/vnode_if.src
 vnode_if.h: vnode_if_newproto.h vnode_if_typedef.h
@@ -391,7 +389,6 @@ vnode_if_newproto.h:
 vnode_if_typedef.h:
 	${AWK} -f ${SYSDIR}/tools/vnode_if.awk ${SYSDIR}/kern/vnode_if.src -q
 .endif
-.endif	# !defined(KERNBUILDDIR)
 
 # Build _if.[ch] from _if.m, and clean them when we're done.
 # __MPATH defined in config.mk
@@ -402,7 +399,7 @@ _MPATH=${__MPATH:H:O:u}
 _MATCH=M${_i:R:S/$/.m/}
 _MATCHES=${_MFILES:${_MATCH}}
 .if !empty(_MATCHES)
-CLEANFILES+=	${_i}
+MFILE_CLEANFILES+=	${_i}
 .endif
 .endfor # _i
 .m.c:	${SYSDIR}/tools/makeobjops.awk
@@ -410,6 +407,13 @@ CLEANFILES+=	${_i}
 
 .m.h:	${SYSDIR}/tools/makeobjops.awk
 	${AWK} -f ${SYSDIR}/tools/makeobjops.awk ${.IMPSRC} -h
+
+# These files may already exist in KERNBUILDDIR
+.if !defined(KERNBUILDDIR)
+CLEANFILES+=	${MFILE_CLEANFILES}
+.else
+${MFILE_CLEANFILES}: .NOMETA
+.endif
 
 .for _i in mii pccard
 .if !empty(SRCS:M${_i}devs.h)
