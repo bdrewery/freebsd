@@ -80,6 +80,7 @@ __FBSDID("$FreeBSD$");
 
 #include <dev/puc/puc_cfg.h>
 #include <dev/puc/puc_bfe.h>
+#include <dev/puc/pucdata.c>
 
 static int puc_msi_disable;
 SYSCTL_INT(_hw_puc, OID_AUTO, msi_disable, CTLFLAG_RDTUN,
