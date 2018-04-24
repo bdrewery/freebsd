@@ -86,7 +86,6 @@ __FBSDID("$FreeBSD$");
 #include <vm/vm_extern.h>
 #include <vm/vm_map.h>
 #include <vm/swap_pager.h>
-#include "opt_compat.h"
 #include "opt_swap.h"
 
 static MALLOC_DEFINE(M_BIOBUF, "biobuf", "BIO buffer");
@@ -792,9 +791,12 @@ bufspace_daemon(void *arg)
 {
 	struct bufdomain *bd;
 
+	EVENTHANDLER_REGISTER(shutdown_pre_sync, kthread_shutdown, curthread,
+	    SHUTDOWN_PRI_LAST + 100);
+
 	bd = arg;
 	for (;;) {
-		kproc_suspend_check(curproc);
+		kthread_suspend_check();
 
 		/*
 		 * Free buffers from the clean queue until we meet our
@@ -3358,8 +3360,8 @@ buf_daemon()
 	/*
 	 * This process needs to be suspended prior to shutdown sync.
 	 */
-	EVENTHANDLER_REGISTER(shutdown_pre_sync, kproc_shutdown, bufdaemonproc,
-	    SHUTDOWN_PRI_LAST);
+	EVENTHANDLER_REGISTER(shutdown_pre_sync, kthread_shutdown, curthread,
+	    SHUTDOWN_PRI_LAST + 100);
 
 	/*
 	 * Start the buf clean daemons as children threads.
@@ -3382,7 +3384,7 @@ buf_daemon()
 		bd_request = 0;
 		mtx_unlock(&bdlock);
 
-		kproc_suspend_check(bufdaemonproc);
+		kthread_suspend_check();
 
 		/*
 		 * Save speedupreq for this pass and reset to capture new

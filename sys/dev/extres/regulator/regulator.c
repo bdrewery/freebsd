@@ -166,17 +166,19 @@ static void
 regulator_shutdown(void *dummy)
 {
 	struct regnode *entry;
+	int status, ret;
 	int disable = 1;
 
 	REG_TOPO_SLOCK();
 	TUNABLE_INT_FETCH("hw.regulator.disable_unused", &disable);
 	TAILQ_FOREACH(entry, &regnode_list, reglist_link) {
-		if (entry->enable_cnt == 0 &&
-		    entry->std_param.always_on == 0 && disable) {
+		if (entry->std_param.always_on == 0 && disable) {
 			if (bootverbose)
 				printf("regulator: shuting down %s\n",
 				    entry->name);
-			regnode_stop(entry, 0);
+			ret = regnode_status(entry, &status);
+			if (ret == 0 && status == REGULATOR_STATUS_ENABLED)
+				regnode_stop(entry, 0);
 		}
 	}
 	REG_TOPO_UNLOCK();
@@ -1007,7 +1009,7 @@ regulator_parse_ofw_stdparam(device_t pdev, phandle_t node,
 	int rv;
 
 	par = &def->std_param;
-	rv = OF_getprop_alloc(node, "regulator-name", 1,
+	rv = OF_getprop_alloc(node, "regulator-name",
 	    (void **)&def->name);
 	if (rv <= 0) {
 		device_printf(pdev, "%s: Missing regulator name\n",
@@ -1057,7 +1059,7 @@ regulator_parse_ofw_stdparam(device_t pdev, phandle_t node,
 	rv = OF_getencprop(node, "vin-supply", &supply_xref,
 	    sizeof(supply_xref));
 	if (rv >=  0) {
-		rv = OF_getprop_alloc(supply_xref, "regulator-name", 1,
+		rv = OF_getprop_alloc(supply_xref, "regulator-name",
 		    (void **)&def->parent_name);
 		if (rv <= 0)
 			def->parent_name = NULL;
@@ -1085,7 +1087,7 @@ regulator_get_by_ofw_property(device_t cdev, phandle_t cnode, char *name,
 	}
 
 	cells = NULL;
-	ncells = OF_getencprop_alloc(cnode, name,  sizeof(*cells),
+	ncells = OF_getencprop_alloc_multi(cnode, name, sizeof(*cells),
 	    (void **)&cells);
 	if (ncells <= 0)
 		return (ENXIO);
