@@ -147,6 +147,8 @@ CFLAGS+= -DPCAP_SUPPORT_NETMAP
 
 .if ${MK_OFED} != "no"
 SRCS+= pcap-rdmasniff.c
+LDADD+=	-L${.OBJDIR:H}/ofed/libibverbs
+LDADD+=	-L${.OBJDIR:H}/ofed/libmlx5
 LIBADD+= ibverbs
 LIBADD+= mlx5
 CFLAGS+= -DPCAP_SUPPORT_RDMASNIFF
