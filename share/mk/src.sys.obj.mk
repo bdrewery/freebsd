@@ -124,6 +124,8 @@ __objdir:=	${MAKEOBJDIRPREFIX}${.CURDIR}
 .endif
 .elif !empty(MAKEOBJDIR)
 __objdir:=	${MAKEOBJDIR}
+.else
+.error  Empty MAKEOBJDIR? CURDIR=${.CURDIR} .MAKE.LEVEL=${.MAKE.LEVEL} OBJROOT='${OBJROOT}' OBJTOP='${OBJTOP}' MAKEOBJDIRPREFIX='${MAKEOBJDIRPREFIX}'
 .endif
 
 # Try to enable MK_AUTO_OBJ by default if we can write to the __objdir.  Only
