@@ -1275,7 +1275,7 @@ SRCS_EXT+=	Transforms/Vectorize/Vectorize.cpp
 SRCS_EXT+=	XRay/InstrumentationMap.cpp
 
 SRCS_ALL+=	${SRCS_MIN}
-.if !defined(TOOLS_PREFIX) || ${MK_LLD_IS_LD} != "no"
+.if !defined(TOOLS_PREFIX) || ${MK_LLD_BOOTSTRAP} != "no"
 SRCS_ALL+=	${SRCS_MIW}
 .endif
 .if ${MK_CLANG_EXTRAS} != "no"
@@ -1284,16 +1284,19 @@ SRCS_ALL+=	${SRCS_EXT}
 .if ${MK_CLANG_FULL} != "no"
 SRCS_ALL+=	${SRCS_FUL}
 .endif
-.if ${MK_CLANG_EXTRAS} != "no" || ${MK_LLD} != "no"
+.if ${MK_CLANG_EXTRAS} != "no" || ${MK_LLD} != "no" || \
+    (defined(TOOLS_PREFIX) && ${MK_LLD_BOOTSTRAP} != "no")
 SRCS_ALL+=	${SRCS_EXL}
 .endif
-.if ${MK_LLD} != "no"
+.if ${MK_LLD} != "no" || \
+    (defined(TOOLS_PREFIX) && ${MK_LLD_BOOTSTRAP} != "no")
 SRCS_ALL+=	${SRCS_LLD}
 .endif
 .if ${MK_CLANG_EXTRAS} != "no" || ${MK_LLDB} != "no"
 SRCS_ALL+=	${SRCS_XDB}
 .endif
-.if ${MK_CLANG_EXTRAS} != "no" || ${MK_LLDB} != "no" || ${MK_LLD} != "no"
+.if ${MK_CLANG_EXTRAS} != "no" || ${MK_LLDB} != "no" || ${MK_LLD} != "no" || \
+    (defined(TOOLS_PREFIX) && ${MK_LLD_BOOTSTRAP} != "no")
 SRCS_ALL+=	${SRCS_XDL}
 .endif
 .if ${MK_CLANG_EXTRAS} != "no" || ${MK_LLDB} != "no" || !defined(TOOLS_PREFIX)
