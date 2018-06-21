@@ -218,7 +218,8 @@ _filldir(DIR *dirp, bool use_current_pos)
 			struct dirent *dp;
 
 			dp = (struct dirent *) ddptr;
-			if ((long)dp & 03L)
+			/* dirent should be 8-byte aligned. */
+			if (((uintptr_t)dp & 0x7) != 0)
 				break;
 			if ((dp->d_reclen <= 0) ||
 			    (dp->d_reclen > (ddeptr + 1 - ddptr)))

@@ -76,7 +76,8 @@ _readdir_unlocked(DIR *dirp, int flags)
 		}
 		dirp->dd_flags &= ~__DTF_SKIPREAD;
 		dp = (struct dirent *)(dirp->dd_buf + dirp->dd_loc);
-		if ((long)dp & 03L)	/* bogus pointer check */
+		/* dirent should be 8-byte aligned. */
+		if (((uintptr_t)dp & 0x7) != 0)
 			return (NULL);
 		if (dp->d_reclen <= 0 ||
 		    dp->d_reclen > dirp->dd_len + 1 - dirp->dd_loc)
