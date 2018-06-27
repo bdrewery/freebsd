@@ -320,39 +320,20 @@ When set, it enforces these options:
 .Va WITHOUT_CLANG_FULL
 .It
 .Va WITHOUT_LLVM_COV
-.El
-.Pp
-When set, these options are also in effect:
-.Pp
-.Bl -inset -compact
-.It Va WITHOUT_LLVM_TARGET_AARCH64
-(unless
-.Va WITH_LLVM_TARGET_AARCH64
-is set explicitly)
-.It Va WITHOUT_LLVM_TARGET_ALL
-(unless
-.Va WITH_LLVM_TARGET_ALL
-is set explicitly)
-.It Va WITHOUT_LLVM_TARGET_ARM
-(unless
-.Va WITH_LLVM_TARGET_ARM
-is set explicitly)
-.It Va WITHOUT_LLVM_TARGET_MIPS
-(unless
-.Va WITH_LLVM_TARGET_MIPS
-is set explicitly)
-.It Va WITHOUT_LLVM_TARGET_POWERPC
-(unless
-.Va WITH_LLVM_TARGET_POWERPC
-is set explicitly)
-.It Va WITHOUT_LLVM_TARGET_SPARC
-(unless
-.Va WITH_LLVM_TARGET_SPARC
-is set explicitly)
-.It Va WITHOUT_LLVM_TARGET_X86
-(unless
-.Va WITH_LLVM_TARGET_X86
-is set explicitly)
+.It
+.Va WITHOUT_LLVM_TARGET_AARCH64
+.It
+.Va WITHOUT_LLVM_TARGET_ALL
+.It
+.Va WITHOUT_LLVM_TARGET_ARM
+.It
+.Va WITHOUT_LLVM_TARGET_MIPS
+.It
+.Va WITHOUT_LLVM_TARGET_POWERPC
+.It
+.Va WITHOUT_LLVM_TARGET_SPARC
+.It
+.Va WITHOUT_LLVM_TARGET_X86
 .El
 .It Va WITH_CLANG
 Set to build the Clang C/C++ compiler during the normal phase of the build.
@@ -454,6 +435,10 @@ When set, these options are also in effect:
 (unless
 .Va WITH_GSSAPI
 is set explicitly)
+.It Va WITHOUT_KERBEROS_SUPPORT
+(unless
+.Va WITH_KERBEROS_SUPPORT
+is set explicitly)
 .El
 .It Va WITH_CTF
 Set to compile with CTF (Compact C Type Format) data.
@@ -504,7 +489,30 @@ When set, it enforces these options:
 .It
 .Va WITHOUT_LLVM_COV
 .It
+.Va WITHOUT_LLVM_TARGET_AARCH64
+.It
+.Va WITHOUT_LLVM_TARGET_ALL
+.It
+.Va WITHOUT_LLVM_TARGET_ARM
+.It
+.Va WITHOUT_LLVM_TARGET_MIPS
+.It
+.Va WITHOUT_LLVM_TARGET_POWERPC
+.It
+.Va WITHOUT_LLVM_TARGET_SPARC
+.It
+.Va WITHOUT_LLVM_TARGET_X86
+.It
 .Va WITHOUT_TESTS
+.El
+.Pp
+When set, these options are also in effect:
+.Pp
+.Bl -inset -compact
+.It Va WITHOUT_TESTS_SUPPORT
+(unless
+.Va WITH_TESTS_SUPPORT
+is set explicitly)
 .El
 .It Va WITH_CXX
 Set to build
@@ -1438,6 +1446,10 @@ When set, these options are also in effect:
 (unless
 .Va WITH_GSSAPI
 is set explicitly)
+.It Va WITHOUT_KERBEROS_SUPPORT
+(unless
+.Va WITH_KERBEROS_SUPPORT
+is set explicitly)
 .El
 .It Va WITHOUT_PAM
 Set to not build PAM library and modules.
@@ -1757,6 +1769,20 @@ When set, it enforces these options:
 .Va WITHOUT_LLDB
 .It
 .Va WITHOUT_LLVM_COV
+.It
+.Va WITHOUT_LLVM_TARGET_AARCH64
+.It
+.Va WITHOUT_LLVM_TARGET_ALL
+.It
+.Va WITHOUT_LLVM_TARGET_ARM
+.It
+.Va WITHOUT_LLVM_TARGET_MIPS
+.It
+.Va WITHOUT_LLVM_TARGET_POWERPC
+.It
+.Va WITHOUT_LLVM_TARGET_SPARC
+.It
+.Va WITHOUT_LLVM_TARGET_X86
 .El
 .It Va WITHOUT_UNBOUND
 Set to not build
