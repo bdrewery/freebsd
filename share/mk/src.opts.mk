@@ -213,23 +213,6 @@ __DEFAULT_DEPENDENT_OPTIONS= \
 	CLANG_FULL/CLANG \
 	LLVM_TARGET_ALL/CLANG \
 
-# MK_*_SUPPORT options which default to "yes" unless their corresponding
-# MK_* variable is set to "no".
-#
-.for var in \
-    BLACKLIST \
-    BZIP2 \
-    INET \
-    INET6 \
-    KERBEROS \
-    KVM \
-    NETGRAPH \
-    PAM \
-    TESTS \
-    WIRELESS
-__DEFAULT_DEPENDENT_OPTIONS+= ${var}_SUPPORT/${var}
-.endfor
-
 #
 # Default behaviour of some options depends on the architecture.  Unfortunately
 # this means that we have to test TARGET_ARCH (the buildworld case) as well
@@ -534,6 +517,28 @@ MK_${vv:H}:=	${MK_${vv:T}}
 #
 # Set defaults for the MK_*_SUPPORT variables.
 #
+
+#
+# MK_*_SUPPORT options which default to "yes" unless their corresponding
+# MK_* variable is set to "no".
+#
+.for var in \
+    BLACKLIST \
+    BZIP2 \
+    INET \
+    INET6 \
+    KERBEROS \
+    KVM \
+    NETGRAPH \
+    PAM \
+    TESTS \
+    WIRELESS
+.if defined(WITHOUT_${var}_SUPPORT) || ${MK_${var}} == "no"
+MK_${var}_SUPPORT:= no
+.else
+MK_${var}_SUPPORT:= yes
+.endif
+.endfor
 
 .if !${COMPILER_FEATURES:Mc++11}
 MK_LLDB:=	no
