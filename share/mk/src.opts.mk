@@ -515,6 +515,10 @@ MK_LLDB:=	no
 MK_CLANG_EXTRAS:= no
 MK_CLANG_FULL:= no
 MK_LLVM_COV:= no
+.for __llt in ${__LLVM_TARGETS}
+MK_LLVM_TARGET_${__llt:tu}:= no
+.endfor
+MK_LLVM_TARGET_ALL:= no
 .endif
 
 .if !${COMPILER_FEATURES:Mc++11}
