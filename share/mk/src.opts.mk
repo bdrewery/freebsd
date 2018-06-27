@@ -210,7 +210,12 @@ __DEFAULT_NO_OPTIONS = \
 # LEFT/RIGHT. Left options which default to "yes" unless their corresponding
 # RIGHT option is disabled.
 __DEFAULT_DEPENDENT_OPTIONS= \
+	MAN_UTILS/MAN \
+
+# Late options are handled after all of the "no" overrides later.
+__DEFAULT_DEPENDENT_OPTIONS_LATE= \
 	CLANG_FULL/CLANG \
+	GSSAPI/KERBEROS \
 	LLVM_TARGET_ALL/CLANG \
 
 # MK_*_SUPPORT options which default to "yes" unless their corresponding
@@ -227,7 +232,7 @@ __DEFAULT_DEPENDENT_OPTIONS= \
     PAM \
     TESTS \
     WIRELESS
-__DEFAULT_DEPENDENT_OPTIONS+= ${var}_SUPPORT/${var}
+__DEFAULT_DEPENDENT_OPTIONS_LATE+= ${var}_SUPPORT/${var}
 .endfor
 
 #
@@ -262,14 +267,14 @@ __LLVM_TARGET_FILT=	C/(amd64|i386)/x86/:S/sparc64/sparc/:S/arm64/aarch64/
 .for __llt in ${__LLVM_TARGETS}
 # Default the given TARGET's LLVM_TARGET support to the value of MK_CLANG.
 .if ${__TT:${__LLVM_TARGET_FILT}} == ${__llt}
-__DEFAULT_DEPENDENT_OPTIONS+=	LLVM_TARGET_${__llt:${__LLVM_TARGET_FILT}:tu}/CLANG
+__DEFAULT_DEPENDENT_OPTIONS_LATE+=	LLVM_TARGET_${__llt:${__LLVM_TARGET_FILT}:tu}/CLANG
 # aarch64 needs arm for -m32 support.
 .elif ${__TT} == "arm64" && ${__llt} == "arm"
-__DEFAULT_DEPENDENT_OPTIONS+=	LLVM_TARGET_ARM/LLVM_TARGET_AARCH64
+__DEFAULT_DEPENDENT_OPTIONS_LATE+=	LLVM_TARGET_ARM/LLVM_TARGET_AARCH64
 # Default the rest of the LLVM_TARGETs to the value of MK_LLVM_TARGET_ALL
 # which is based on MK_CLANG.
 .else
-__DEFAULT_DEPENDENT_OPTIONS+=	LLVM_TARGET_${__llt:${__LLVM_TARGET_FILT}:tu}/LLVM_TARGET_ALL
+__DEFAULT_DEPENDENT_OPTIONS_LATE+=	LLVM_TARGET_${__llt:${__LLVM_TARGET_FILT}:tu}/LLVM_TARGET_ALL
 .endif
 .endfor
 
@@ -512,25 +517,6 @@ MK_CLANG_FULL:= no
 MK_LLVM_COV:= no
 .endif
 
-#
-# MK_* options whose default value depends on another option.
-#
-.for vv in \
-    GSSAPI/KERBEROS \
-    MAN_UTILS/MAN
-.if defined(WITH_${vv:H})
-MK_${vv:H}:=	yes
-.elif defined(WITHOUT_${vv:H})
-MK_${vv:H}:=	no
-.else
-MK_${vv:H}:=	${MK_${vv:T}}
-.endif
-.endfor
-
-#
-# Set defaults for the MK_*_SUPPORT variables.
-#
-
 .if !${COMPILER_FEATURES:Mc++11}
 MK_LLDB:=	no
 .endif
@@ -545,5 +531,10 @@ MK_LLDB:=	no
 MK_GNUCXX:=no
 MK_GCC:=no
 .endif
+
+# Handle late dependent options to account for no overrides above.
+__DEFAULT_DEPENDENT_OPTIONS:=	${__DEFAULT_DEPENDENT_OPTIONS_LATE}
+.undef __DEFAULT_DEPENDENT_OPTIONS_LATE
+.include <bsd.mkopt.mk>
 
 .endif #  !target(__<src.opts.mk>__)
