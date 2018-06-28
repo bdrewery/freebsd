@@ -183,13 +183,11 @@ Set this if you do not want to build
 .Xr blacklistd 8
 and
 .Xr blacklistctl 8 .
-When set, these options are also in effect:
+When set, it enforces these options:
 .Pp
-.Bl -inset -compact
-.It Va WITHOUT_BLACKLIST_SUPPORT
-(unless
-.Va WITH_BLACKLIST_SUPPORT
-is set explicitly)
+.Bl -item -compact
+.It
+.Va WITHOUT_BLACKLIST_SUPPORT
 .El
 .It Va WITHOUT_BLACKLIST_SUPPORT
 Set to build some programs without
@@ -230,13 +228,11 @@ Set to not build contributed bzip2 software as a part of the base system.
 .Bf -symbolic
 The option has no effect yet.
 .Ef
-When set, these options are also in effect:
+When set, it enforces these options:
 .Pp
-.Bl -inset -compact
-.It Va WITHOUT_BZIP2_SUPPORT
-(unless
-.Va WITH_BZIP2_SUPPORT
-is set explicitly)
+.Bl -item -compact
+.It
+.Va WITHOUT_BZIP2_SUPPORT
 .El
 .It Va WITHOUT_BZIP2_SUPPORT
 Set to build some programs without optional bzip2 support.
@@ -423,6 +419,8 @@ When set, it enforces these options:
 .It
 .Va WITHOUT_KERBEROS
 .It
+.Va WITHOUT_KERBEROS_SUPPORT
+.It
 .Va WITHOUT_OPENSSH
 .It
 .Va WITHOUT_OPENSSL
@@ -434,10 +432,6 @@ When set, these options are also in effect:
 .It Va WITHOUT_GSSAPI
 (unless
 .Va WITH_GSSAPI
-is set explicitly)
-.It Va WITHOUT_KERBEROS_SUPPORT
-(unless
-.Va WITH_KERBEROS_SUPPORT
 is set explicitly)
 .El
 .It Va WITH_CTF
@@ -504,15 +498,8 @@ When set, it enforces these options:
 .Va WITHOUT_LLVM_TARGET_X86
 .It
 .Va WITHOUT_TESTS
-.El
-.Pp
-When set, these options are also in effect:
-.Pp
-.Bl -inset -compact
-.It Va WITHOUT_TESTS_SUPPORT
-(unless
-.Va WITH_TESTS_SUPPORT
-is set explicitly)
+.It
+.Va WITHOUT_TESTS_SUPPORT
 .El
 .It Va WITH_CXX
 Set to build
@@ -901,16 +888,19 @@ and
 .Xr truss 1 .
 .It Va WITHOUT_KERBEROS
 Set this to not build Kerberos 5 (KTH Heimdal).
+When set, it enforces these options:
+.Pp
+.Bl -item -compact
+.It
+.Va WITHOUT_KERBEROS_SUPPORT
+.El
+.Pp
 When set, these options are also in effect:
 .Pp
 .Bl -inset -compact
 .It Va WITHOUT_GSSAPI
 (unless
 .Va WITH_GSSAPI
-is set explicitly)
-.It Va WITHOUT_KERBEROS_SUPPORT
-(unless
-.Va WITH_KERBEROS_SUPPORT
 is set explicitly)
 .El
 .It Va WITHOUT_KERBEROS_SUPPORT
@@ -935,13 +925,11 @@ library as a part of the base system.
 .Bf -symbolic
 The option has no effect yet.
 .Ef
-When set, these options are also in effect:
+When set, it enforces these options:
 .Pp
-.Bl -inset -compact
-.It Va WITHOUT_KVM_SUPPORT
-(unless
-.Va WITH_KVM_SUPPORT
-is set explicitly)
+.Bl -item -compact
+.It
+.Va WITHOUT_KVM_SUPPORT
 .El
 .It Va WITHOUT_KVM_SUPPORT
 Set to build some programs without optional
@@ -1377,15 +1365,8 @@ When set, it enforces these options:
 .Va WITHOUT_ATM
 .It
 .Va WITHOUT_BLUETOOTH
-.El
-.Pp
-When set, these options are also in effect:
-.Pp
-.Bl -inset -compact
-.It Va WITHOUT_NETGRAPH_SUPPORT
-(unless
-.Va WITH_NETGRAPH_SUPPORT
-is set explicitly)
+.It
+.Va WITHOUT_NETGRAPH_SUPPORT
 .El
 .It Va WITHOUT_NETGRAPH_SUPPORT
 Set to build libraries, programs, and kernel modules without netgraph support.
@@ -1436,6 +1417,8 @@ When set, it enforces these options:
 .It
 .Va WITHOUT_KERBEROS
 .It
+.Va WITHOUT_KERBEROS_SUPPORT
+.It
 .Va WITHOUT_OPENSSH
 .El
 .Pp
@@ -1446,23 +1429,17 @@ When set, these options are also in effect:
 (unless
 .Va WITH_GSSAPI
 is set explicitly)
-.It Va WITHOUT_KERBEROS_SUPPORT
-(unless
-.Va WITH_KERBEROS_SUPPORT
-is set explicitly)
 .El
 .It Va WITHOUT_PAM
 Set to not build PAM library and modules.
 .Bf -symbolic
 This option is deprecated and does nothing.
 .Ef
-When set, these options are also in effect:
+When set, it enforces these options:
 .Pp
-.Bl -inset -compact
-.It Va WITHOUT_PAM_SUPPORT
-(unless
-.Va WITH_PAM_SUPPORT
-is set explicitly)
+.Bl -item -compact
+.It
+.Va WITHOUT_PAM_SUPPORT
 .El
 .It Va WITHOUT_PAM_SUPPORT
 Set to build some programs without PAM support, particularly
@@ -1716,15 +1693,8 @@ When set, it enforces these options:
 .Bl -item -compact
 .It
 .Va WITHOUT_DTRACE_TESTS
-.El
-.Pp
-When set, these options are also in effect:
-.Pp
-.Bl -inset -compact
-.It Va WITHOUT_TESTS_SUPPORT
-(unless
-.Va WITH_TESTS_SUPPORT
-is set explicitly)
+.It
+.Va WITHOUT_TESTS_SUPPORT
 .El
 .It Va WITHOUT_TESTS_SUPPORT
 Set to disables the build of all test-related dependencies, including ATF.
@@ -1837,13 +1807,11 @@ Set to not build programs used for 802.11 wireless networks; especially
 .Xr wpa_supplicant 8
 and
 .Xr hostapd 8 .
-When set, these options are also in effect:
+When set, it enforces these options:
 .Pp
-.Bl -inset -compact
-.It Va WITHOUT_WIRELESS_SUPPORT
-(unless
-.Va WITH_WIRELESS_SUPPORT
-is set explicitly)
+.Bl -item -compact
+.It
+.Va WITHOUT_WIRELESS_SUPPORT
 .El
 .It Va WITHOUT_WIRELESS_SUPPORT
 Set to build libraries, programs, and kernel modules without
