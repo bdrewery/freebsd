@@ -100,7 +100,7 @@ ${PROG_FULL}: ${OBJS}
 	${CXX:N${CCACHE_BIN}} ${CXXFLAGS:N-M*} ${LDFLAGS} -o ${.TARGET} \
 	    ${OBJS} ${LDADD}
 .else
-	${CC:N${CCACHE_BIN}} ${CFLAGS:N-M*} ${LDFLAGS} -o ${.TARGET} ${OBJS} \
+	${CCLD} ${CFLAGS:N-M*} ${LDFLAGS} -o ${.TARGET} ${OBJS} \
 	    ${LDADD}
 .endif
 .if ${MK_CTF} != "no"
@@ -135,7 +135,7 @@ ${PROG_FULL}: ${OBJS}
 	${CXX:N${CCACHE_BIN}} ${CXXFLAGS:N-M*} ${LDFLAGS} -o ${.TARGET} \
 	    ${OBJS} ${LDADD}
 .else
-	${CC:N${CCACHE_BIN}} ${CFLAGS:N-M*} ${LDFLAGS} -o ${.TARGET} ${OBJS} \
+	${CCLD} ${CFLAGS:N-M*} ${LDFLAGS} -o ${.TARGET} ${OBJS} \
 	    ${LDADD}
 .endif
 .if ${MK_CTF} != "no"

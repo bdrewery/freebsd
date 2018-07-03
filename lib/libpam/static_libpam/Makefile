@@ -64,7 +64,7 @@ CLEANFILES+=	openpam_static.o \
 		openpam_static_modules.o
 
 openpam_static_modules.o: openpam_static.o ${STATIC_MODULES}
-	${CC:N${CCACHE_BIN}} -nostdlib ${LDFLAGS} -o ${.TARGET} \
+	${CCLD} -nostdlib ${LDFLAGS} -o ${.TARGET} \
 	    -r -Wl,--whole-archive ${.ALLSRC}
 
 .include "${.CURDIR:H}/libpam/Makefile"

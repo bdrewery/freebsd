@@ -57,7 +57,7 @@ CLANG_ANALYZE_CFLAGS=	${CFLAGS:N-Wa,--fatal-warnings}
 CLANG_ANALYZE_CXXFLAGS=	${CXXFLAGS:N-Wa,--fatal-warnings}
 
 .c.clang-analyzer:
-	${CC:N${CCACHE_BIN}} ${CLANG_ANALYZE_FLAGS} \
+	${CCLD} ${CLANG_ANALYZE_FLAGS} \
 	    ${CLANG_ANALYZE_CFLAGS} \
 	    ${.IMPSRC}
 .cc.clang-analyzer .cpp.clang-analyzer .cxx.clang-analyzer .C.clang-analyzer:

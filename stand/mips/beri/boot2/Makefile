@@ -60,7 +60,7 @@ LDFLAGS+=	-static				\
 CFLAGS+=	-I${BOOTSRC}/mips/beri/common
 
 flashboot.elf: relocate.o start.o boot2.o altera_jtag_uart.o cfi.o sdcard.o
-	${CC:N${CCACHE_BIN}} ${LDFLAGS} -T ${.CURDIR}/flashboot.ldscript \
+	${CCLD} ${LDFLAGS} -T ${.CURDIR}/flashboot.ldscript \
 	    -o ${.TARGET} ${.ALLSRC} ${LIBSA}
 flashboot: flashboot.elf
 	${OBJCOPY} -S -O binary ${.TARGET}.elf ${.TARGET}
@@ -68,7 +68,7 @@ flashboot.md5: flashboot
 	md5 flashboot > flashboot.md5
 
 jtagboot: start.o boot2.o altera_jtag_uart.o cfi.o sdcard.o
-	${CC:N${CCACHE_BIN}} ${LDFLAGS} -T ${.CURDIR}/jtagboot.ldscript \
+	${CCLD} ${LDFLAGS} -T ${.CURDIR}/jtagboot.ldscript \
 	    -o ${.TARGET} ${.ALLSRC} ${LIBSA}
 jtagboot.md5: jtagboot
 	md5 jtagboot > jtagboot.md5

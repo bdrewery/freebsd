@@ -34,7 +34,7 @@
 # Be sure to omit ${CCACHE_BIN} (if specified) from the variable as it gets
 # automatically appended to the variables in bsd.compiler.mk when
 # ${MK_CCACHE_BUILD} != no.
-ATF_BUILD_CC:=		${CC:N${CCACHE_BIN}:[1]}
+ATF_BUILD_CC:=		${CCLD:[1]}
 ATF_BUILD_CPP:=		${CPP:N${CCACHE_BIN}:[1]}
 ATF_BUILD_CXX:=		${CXX:N${CCACHE_BIN}:[1]}
 

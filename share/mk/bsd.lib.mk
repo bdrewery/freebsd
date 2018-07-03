@@ -131,32 +131,32 @@ PO_FLAG=-pg
 	${CTFCONVERT_CMD}
 
 .asm.po:
-	${CC:N${CCACHE_BIN}} -x assembler-with-cpp -DPROF ${PO_CFLAGS} \
+	${CCLD} -x assembler-with-cpp -DPROF ${PO_CFLAGS} \
 	    ${ACFLAGS} -c ${.IMPSRC} -o ${.TARGET}
 	${CTFCONVERT_CMD}
 
 .asm.pico:
-	${CC:N${CCACHE_BIN}} -x assembler-with-cpp ${PICFLAG} -DPIC \
+	${CCLD} -x assembler-with-cpp ${PICFLAG} -DPIC \
 	    ${CFLAGS} ${ACFLAGS} -c ${.IMPSRC} -o ${.TARGET}
 	${CTFCONVERT_CMD}
 
 .asm.nossppico:
-	${CC:N${CCACHE_BIN}} -x assembler-with-cpp ${PICFLAG} -DPIC \
+	${CCLD} -x assembler-with-cpp ${PICFLAG} -DPIC \
 	    ${CFLAGS:C/^-fstack-protector.*$//} ${ACFLAGS} -c ${.IMPSRC} -o ${.TARGET}
 	${CTFCONVERT_CMD}
 
 .S.po:
-	${CC:N${CCACHE_BIN}} -DPROF ${PO_CFLAGS} ${ACFLAGS} -c ${.IMPSRC} \
+	${CCLD} -DPROF ${PO_CFLAGS} ${ACFLAGS} -c ${.IMPSRC} \
 	    -o ${.TARGET}
 	${CTFCONVERT_CMD}
 
 .S.pico:
-	${CC:N${CCACHE_BIN}} ${PICFLAG} -DPIC ${CFLAGS} ${ACFLAGS} \
+	${CCLD} ${PICFLAG} -DPIC ${CFLAGS} ${ACFLAGS} \
 	    -c ${.IMPSRC} -o ${.TARGET}
 	${CTFCONVERT_CMD}
 
 .S.nossppico:
-	${CC:N${CCACHE_BIN}} ${PICFLAG} -DPIC ${CFLAGS:C/^-fstack-protector.*$//} ${ACFLAGS} \
+	${CCLD} ${PICFLAG} -DPIC ${CFLAGS:C/^-fstack-protector.*$//} ${ACFLAGS} \
 	    -c ${.IMPSRC} -o ${.TARGET}
 	${CTFCONVERT_CMD}
 

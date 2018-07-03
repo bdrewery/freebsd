@@ -128,7 +128,7 @@ LDFLAGS+=	-Wl,-z max-page-size=2097152 -Wl,-z common-page-size=4096
 .endif
 
 NORMAL_C= ${CC} -c ${CFLAGS} ${WERROR} ${PROF} ${.IMPSRC}
-NORMAL_S= ${CC:N${CCACHE_BIN}} -c ${ASM_CFLAGS} ${WERROR} ${.IMPSRC}
+NORMAL_S= ${CCLD} -c ${ASM_CFLAGS} ${WERROR} ${.IMPSRC}
 PROFILE_C= ${CC} -c ${CFLAGS} ${WERROR} ${.IMPSRC}
 NORMAL_C_NOWERROR= ${CC} -c ${CFLAGS} ${PROF} ${.IMPSRC}
 

@@ -178,6 +178,10 @@ CFLAGS		+=	-fno-strict-aliasing
 IR_CFLAGS	?=	${STATIC_CFLAGS:N-O*} ${CFLAGS:N-O*}
 PO_CFLAGS	?=	${CFLAGS}
 
+# Compiler and linker.
+# Mostly to avoid invoking ccache as it does not support caching linking.
+CCLD		?=	${CC:N${CCACHE_BIN}}
+
 # cp(1) is used to copy source files to ${.OBJDIR}, make sure it can handle
 # read-only files as non-root by passing -f.
 CP		?=	cp -f

@@ -64,7 +64,7 @@ ${var}:=	${${var}}
 # rather than checking mtime.  For external compilers it should be safe
 # to use the more optimal mtime check.
 # XXX: CCACHE_COMPILERCHECK= string:<compiler_version, compiler_build_rev, compiler_patch_rev, compiler_default_target, compiler_default_sysroot>
-.if ${CC:N${CCACHE_BIN}:[1]:M/*} == ""
+.if ${CCLD:[1]:M/*} == ""
 CCACHE_COMPILERCHECK?=	content
 .else
 CCACHE_COMPILERCHECK?=	mtime

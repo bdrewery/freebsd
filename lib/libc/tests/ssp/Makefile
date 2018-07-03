@@ -34,7 +34,7 @@ PROGS+=		h_memset
 .if ${COMPILER_TYPE} == "clang" && !defined(_SKIP_BUILD) && \
     (!defined(_RECURSING_PROGS) || ${PROG} == "h_raw")
 .if !defined(_CLANG_RESOURCE_DIR)
-_CLANG_RESOURCE_DIR!=	${CC:N${CCACHE_BIN}} -print-resource-dir
+_CLANG_RESOURCE_DIR!=	${CCLD} -print-resource-dir
 .export _CLANG_RESOURCE_DIR
 .endif
 _libclang_rt_arch=	${MACHINE_ARCH:S/amd64/x86_64/:C/hf$//:S/mipsn32/mips64/}

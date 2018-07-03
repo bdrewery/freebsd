@@ -5,7 +5,7 @@
 	chmod a+x ${.TARGET}
 
 .c:
-	${CC:N${CCACHE_BIN}} ${CFLAGS} ${LDFLAGS} ${.IMPSRC} ${LDLIBS} -o ${.TARGET}
+	${CCLD} ${CFLAGS} ${LDFLAGS} ${.IMPSRC} ${LDLIBS} -o ${.TARGET}
 	${CTFCONVERT_CMD}
 
 .c.o:
@@ -46,11 +46,11 @@
 	${FC} ${RFLAGS} ${EFLAGS} ${FFLAGS} -c ${.IMPSRC} -o ${.TARGET}
 
 .S.o:
-	${CC:N${CCACHE_BIN}} ${CFLAGS} ${ACFLAGS} -c ${.IMPSRC} -o ${.TARGET}
+	${CCLD} ${CFLAGS} ${ACFLAGS} -c ${.IMPSRC} -o ${.TARGET}
 	${CTFCONVERT_CMD}
 
 .asm.o:
-	${CC:N${CCACHE_BIN}} -x assembler-with-cpp ${CFLAGS} ${ACFLAGS} -c ${.IMPSRC} \
+	${CCLD} -x assembler-with-cpp ${CFLAGS} ${ACFLAGS} -c ${.IMPSRC} \
 	    -o ${.TARGET}
 	${CTFCONVERT_CMD}
 
