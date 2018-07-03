@@ -15,7 +15,9 @@ SRCS+=	g_label_ufs.c
 SRCS+=	opt_geom.h
 SRCS+=	vnode_if.h
 
+.if !defined(KERNBUILDDIR)
 opt_geom.h:
 	echo "#define GEOM_LABEL 1" > ${.TARGET}
+.endif
 
 .include <bsd.kmod.mk>

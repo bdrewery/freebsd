@@ -8,7 +8,8 @@ SRCS=	if_ipsec.c ipsec.c ipsec_input.c ipsec_mbuf.c ipsec_mod.c \
 	opt_inet.h opt_inet6.h opt_ipsec.h opt_sctp.h 
 SRCS.INET=	udpencap.c
 
-opt_ipsec.h:
+opt_ipsec.h: .NOPATH
 	@echo "#define IPSEC_SUPPORT 1" > ${.TARGET}
+CLEANFILES+= opt_ipsec.h
 
 .include <bsd.kmod.mk>

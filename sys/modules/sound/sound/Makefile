@@ -38,7 +38,7 @@ EXPORT_SYMS=	YES	# XXX evaluate
 # Create an empty opt_isa.h in order to keep kmod.mk from linking in an
 # existing one from KERNBUILDDIR which possibly has DEV_ISA defined so
 # sound.ko is always built without isadma support.
-opt_isa.h:
+opt_isa.h: .NOPATH
 	:> ${.TARGET}
 .else
 .if !defined(KERNBUILDDIR)

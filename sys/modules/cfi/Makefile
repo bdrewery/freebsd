@@ -13,7 +13,9 @@ _cfi_bus=	cfi_bus_fdt.c cfi_bus_ixp4xx.c ofw_bus_if.h
 _cfi_bus=	cfi_bus_fdt.c ofw_bus_if.h
 .endif
 
+.if !defined(KERNBUILDDIR)
 opt_cfi.h:
 	echo "#define CFI_SUPPORT_STRATAFLASH 1" > ${.TARGET}
+.endif
 
 .include <bsd.kmod.mk>

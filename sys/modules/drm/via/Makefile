@@ -15,10 +15,12 @@ DRM_DEBUG_OPT= "\#define DRM_DEBUG 1"
 DRM_LINUX_OPT= "\#define DRM_LINUX 1"
 .endif
 
+.if !defined(KERNBUILDDIR)
 opt_drm.h:
 	touch opt_drm.h
 	echo $(DRM_DEBUG_OPT) >> opt_drm.h
 	echo $(DRM_LINUX_OPT) >> opt_drm.h
+.endif
 
 .include <bsd.kmod.mk>
 

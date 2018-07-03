@@ -5,7 +5,9 @@
 KMOD=   tcpmd5
 SRCS=   xform_tcp.c opt_inet.h opt_inet6.h opt_ipsec.h
 
+.if !defined(KERNBUILDDIR)
 opt_ipsec.h:
 	@echo "#define IPSEC_SUPPORT 1" > ${.TARGET}
+.endif
 
 .include <bsd.kmod.mk>
