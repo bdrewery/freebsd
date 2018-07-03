@@ -57,7 +57,7 @@ linux32_vdso.so		optional	compat_linux32			\
 	clean		"linux32_vdso.so"
 #
 ia32_genassym.o			standard				\
-	dependency 	"$S/compat/ia32/ia32_genassym.c offset.inc"		\
+	dependency 	"$S/compat/ia32/ia32_genassym.c"		\
 	compile-with	"${CC} ${CFLAGS:N-flto:N-fno-common} -c ${.IMPSRC}" \
 	no-obj no-implicit-rule						\
 	clean		"ia32_genassym.o"
@@ -105,7 +105,7 @@ hptrr_lib.o			optional	hptrr			\
 #
 amd64/acpica/acpi_machdep.c	optional	acpi
 acpi_wakecode.o			optional	acpi			\
-	dependency	"$S/amd64/acpica/acpi_wakecode.S assym.inc"	\
+	dependency	"$S/amd64/acpica/acpi_wakecode.S"	\
 	compile-with	"${NORMAL_S}"					\
 	no-obj no-implicit-rule before-depend				\
 	clean		"acpi_wakecode.o"
