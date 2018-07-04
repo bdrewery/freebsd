@@ -160,6 +160,32 @@ ${FULLKERNEL}: ${SYSTEM_DEP} vers.o
 OBJS_DEPEND_GUESS+=	offset.inc assym.inc vnode_if.h ${BEFORE_DEPEND:M*.h} \
 			${MFILES:T:S/.m$/.h/}
 
+.if !defined(NO_MODULES)
+# Generate as much as possible before building modules.
+MODULE_GENFILES+= \
+	bhnd_bus_if.c \
+	bhnd_bus_if.h \
+	bhnd_erom_if.c \
+	bhnd_erom_if.h \
+	ofw_bus_if.h \
+	bhnd_pwrctl_if.c \
+	bhnd_pwrctl_if.h \
+	bhnd_pwrctl_hostb_if.c \
+	bhnd_pwrctl_hostb_if.h \
+	bhnd_chipc_if.c \
+	bhnd_chipc_if.h \
+	bhnd_pmu_if.c \
+	bhnd_pmu_if.h \
+	bhnd_nvram_map.h \
+	bhnd_nvram_map_data.h \
+	bhnd_nvram_if.c \
+	bhnd_nvram_if.h \
+
+MODULE_GENFILES=
+modules-all modules-depend: ${OBJS_DEPEND_GUESS} ${MODULE_GENFILES}
+.endif
+
+.if 1
 .for mfile in ${MFILES}
 # XXX the low quality .m.o rules gnerated by config are normally used
 # instead of the .m.c rules here.
@@ -168,6 +194,15 @@ ${mfile:T:S/.m$/.c/}: ${mfile}
 ${mfile:T:S/.m$/.h/}: ${mfile}
 	${AWK} -f $S/tools/makeobjops.awk ${mfile} -h
 .endfor
+.else
+
+# XXX: These .NOMETA are wrong. bmake needs to respect the existing .meta file for missing-meta.
+.m.c:	${SYSDIR}/tools/makeobjops.awk .NOMETA
+	${AWK} -f ${SYSDIR}/tools/makeobjops.awk ${.IMPSRC} -c
+
+.m.h:	${SYSDIR}/tools/makeobjops.awk .NOMETA
+	${AWK} -f ${SYSDIR}/tools/makeobjops.awk ${.IMPSRC} -h
+.endif
 
 kernel-clean:
 	rm -f *.o *.so *.pico *.ko *.s eddep errs \

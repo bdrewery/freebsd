@@ -267,6 +267,8 @@ ${FULLPROG}: ${OBJS}
 	${OBJCOPY} --strip-debug ${.TARGET}
 .endif
 
+all: ${PROG}
+
 _ILINKS=machine
 .if ${MACHINE} != ${MACHINE_CPUARCH} && ${MACHINE} != "arm64"
 _ILINKS+=${MACHINE_CPUARCH}
@@ -274,9 +276,9 @@ _ILINKS+=${MACHINE_CPUARCH}
 .if ${MACHINE_CPUARCH} == "i386" || ${MACHINE_CPUARCH} == "amd64"
 _ILINKS+=x86
 .endif
-CLEANFILES+=${_ILINKS}
 
-all: ${PROG}
+.if !defined(KERNBUILDDIR)
+CLEANFILES+= ${_ILINKS}
 
 beforedepend: ${_ILINKS}
 beforebuild: ${_ILINKS}
@@ -288,8 +290,7 @@ beforebuild: ${_ILINKS}
 OBJS_DEPEND_GUESS+=	${_link}
 .endif
 .endfor
-
-.NOPATH: ${_ILINKS}
+.endif
 
 ${_ILINKS}:
 	@case ${.TARGET} in \
@@ -360,13 +361,9 @@ reload: unload load .PHONY
 .if defined(KERNBUILDDIR)
 .PATH: ${KERNBUILDDIR}
 CFLAGS+=	-I${KERNBUILDDIR}
-.for _src in ${SRCS:Mopt_*.h}
+.if target(${_src})
 CLEANFILES+=	${_src}
-.if !target(${_src})
-${_src}:
-	ln -sf ${KERNBUILDDIR}/${_src} ${.TARGET}
 .endif
-.endfor
 .else
 .for _src in ${SRCS:Mopt_*.h}
 CLEANFILES+=	${_src}
@@ -380,6 +377,7 @@ ${_src}:
 # Respect configuration-specific C flags.
 CFLAGS+=	${ARCH_FLAGS} ${CONF_CFLAGS}
 
+.if !defined(KERNBUILDDIR)
 .if !empty(SRCS:Mvnode_if.c)
 CLEANFILES+=	vnode_if.c
 vnode_if.c: ${SYSDIR}/tools/vnode_if.awk ${SYSDIR}/kern/vnode_if.src
@@ -397,6 +395,7 @@ vnode_if_newproto.h:
 vnode_if_typedef.h:
 	${AWK} -f ${SYSDIR}/tools/vnode_if.awk ${SYSDIR}/kern/vnode_if.src -q
 .endif
+.endif
 
 # Build _if.[ch] from _if.m, and clean them when we're done.
 # __MPATH defined in config.mk
@@ -406,16 +405,20 @@ _MPATH=${__MPATH:H:O:u}
 .for _i in ${SRCS:M*_if.[ch]}
 _MATCH=M${_i:R:S/$/.m/}
 _MATCHES=${_MFILES:${_MATCH}}
-.if !empty(_MATCHES)
+# XXX: Needs more thought
+.if 0 && !empty(_MATCHES) && (!defined(KERNBUILDDIR) || \
+    !exists(${KERNBUILDDIR}/${_i}))
 CLEANFILES+=	${_i}
 .endif
 .endfor # _i
-.m.c:	${SYSDIR}/tools/makeobjops.awk
+# XXX: These .NOMETA are wrong. bmake needs to respect the existing .meta file for missing-meta.
+.m.c:	${SYSDIR}/tools/makeobjops.awk .NOMETA
 	${AWK} -f ${SYSDIR}/tools/makeobjops.awk ${.IMPSRC} -c
 
-.m.h:	${SYSDIR}/tools/makeobjops.awk
+.m.h:	${SYSDIR}/tools/makeobjops.awk .NOMETA
 	${AWK} -f ${SYSDIR}/tools/makeobjops.awk ${.IMPSRC} -h
 
+.if !defined(KERNBUILDDIR)
 .for _i in mii pccard
 .if !empty(SRCS:M${_i}devs.h)
 CLEANFILES+=	${_i}devs.h
@@ -423,6 +426,7 @@ ${_i}devs.h: ${SYSDIR}/tools/${_i}devs2h.awk ${SYSDIR}/dev/${_i}/${_i}devs
 	${AWK} -f ${SYSDIR}/tools/${_i}devs2h.awk ${SYSDIR}/dev/${_i}/${_i}devs
 .endif
 .endfor # _i
+.endif
 
 .if !empty(SRCS:Mbhnd_nvram_map.h)
 CLEANFILES+=	bhnd_nvram_map.h
@@ -444,6 +448,7 @@ bhnd_nvram_map_data.h:
 	    ${SYSDIR}/dev/bhnd/nvram/nvram_map -d
 .endif
 
+.if !defined(KERNBUILDDIR)
 .if !empty(SRCS:Musbdevs.h)
 CLEANFILES+=	usbdevs.h
 usbdevs.h: ${SYSDIR}/tools/usbdevs2h.awk ${SYSDIR}/dev/usb/usbdevs
@@ -460,6 +465,7 @@ usbdevs_data.h: ${SYSDIR}/tools/usbdevs2h.awk ${SYSDIR}/dev/usb/usbdevs
 CLEANFILES+=	acpi_quirks.h
 acpi_quirks.h: ${SYSDIR}/tools/acpi_quirks2h.awk ${SYSDIR}/dev/acpica/acpi_quirks
 	${AWK} -f ${SYSDIR}/tools/acpi_quirks2h.awk ${SYSDIR}/dev/acpica/acpi_quirks
+.endif
 .endif
 
 .if !empty(SRCS:Massym.inc) || !empty(DPSRCS:Massym.inc)
