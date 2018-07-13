@@ -222,10 +222,7 @@ symbol_name(vm_offset_t va, db_strategy_t strategy)
 void
 mi_startup(void)
 {
-
 	struct sysinit **sipp;	/* system initialization*/
-	struct sysinit **xipp;	/* interior loop of sort*/
-	struct sysinit *save;	/* bubble*/
 
 #if defined(VERBOSE_SYSINIT)
 	int last;
@@ -244,19 +241,23 @@ mi_startup(void)
 
 restart:
 	/*
-	 * Perform a bubble sort of the system initialization objects by
+	 * Perform a selection sort of the system initialization objects by
 	 * their subsystem (primary key) and order (secondary key).
 	 */
-	for (sipp = sysinit; sipp < sysinit_end; sipp++) {
-		for (xipp = sipp + 1; xipp < sysinit_end; xipp++) {
-			if ((*sipp)->subsystem < (*xipp)->subsystem ||
-			     ((*sipp)->subsystem == (*xipp)->subsystem &&
-			      (*sipp)->order <= (*xipp)->order))
-				continue;	/* skip*/
-			save = *sipp;
-			*sipp = *xipp;
-			*xipp = save;
-		}
+	for (sipp = sysinit; sipp < sysinit_end - 1; sipp++) {
+		struct sysinit **xipp;	/* interior loop of sort*/
+		struct sysinit **min;
+		struct sysinit *save;
+
+		min = sipp;
+		for (xipp = sipp + 1; xipp < sysinit_end; xipp++)
+			if ((*xipp)->subsystem < (*min)->subsystem ||
+			    ((*xipp)->subsystem == (*min)->subsystem &&
+			     (*xipp)->order < (*min)->order))
+				min = xipp;
+		save = *sipp;
+		*sipp = *min;
+		*min = save;
 	}
 
 #if defined(VERBOSE_SYSINIT)
