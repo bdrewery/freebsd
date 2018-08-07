@@ -522,7 +522,6 @@ int
 cpu_set_user_tls(struct thread *td, void *tls_base)
 {
 	struct segment_descriptor sd;
-	uint32_t base;
 
 	/*
 	 * Construct a descriptor and store it in the pcb for
@@ -530,17 +529,7 @@ cpu_set_user_tls(struct thread *td, void *tls_base)
 	 * so that the load of tf_fs into %fs will activate it
 	 * at return to userland.
 	 */
-	base = (uint32_t)tls_base;
-	sd.sd_lobase = base & 0xffffff;
-	sd.sd_hibase = (base >> 24) & 0xff;
-	sd.sd_lolimit = 0xffff;	/* 4GB limit, wraps around */
-	sd.sd_hilimit = 0xf;
-	sd.sd_type  = SDT_MEMRWA;
-	sd.sd_dpl   = SEL_UPL;
-	sd.sd_p     = 1;
-	sd.sd_xx    = 0;
-	sd.sd_def32 = 1;
-	sd.sd_gran  = 1;
+	fill_based_sd(&sd, (uint32_t)tls_base);
 	critical_enter();
 	/* set %gs */
 	td->td_pcb->pcb_gsd = sd;
