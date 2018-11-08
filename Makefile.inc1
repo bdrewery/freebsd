@@ -300,7 +300,7 @@ WANT_LINKER_FREEBSD_VERSION=
 .export WANT_LINKER_FREEBSD_VERSION WANT_LINKER_VERSION
 .endif	# !defined(WANT_LINKER_FREEBSD_VERSION)
 
-.if ${MK_SYSTEM_LINKER} == "yes" && \
+.if !make(sysent) && ${MK_SYSTEM_LINKER} == "yes" && \
     defined(WANT_LINKER_FREEBSD_VERSION) && \
     (${MK_LLD_BOOTSTRAP} == "yes") && \
     !make(xdev*) && \
@@ -1432,6 +1432,18 @@ packageworld: .PHONY
 	    tar cvLf - usr/lib/debug | \
 	    ${XZ_CMD} > ${PACKAGEDIR}/${dist}-dbg.txz
 . endif
+.endfor
+
+_sysent_dirs=	sys/kern
+_sysent_dirs+=	sys/compat/freebsd32
+_sysent_dirs+=	sys/i386/ibcs2
+_sysent_dirs+=	sys/amd64/linux		\
+		sys/amd64/linux32	\
+		sys/arm64/linux		\
+		sys/i386/linux
+sysent: .PHONY
+.for _dir in ${_sysent_dirs}
+	${MAKE} -C ${.CURDIR}/${_dir} sysent
 .endfor
 
 #
