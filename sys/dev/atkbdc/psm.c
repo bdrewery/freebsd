@@ -176,6 +176,22 @@ typedef struct packetbuf {
 #endif
 
 /*
+ * Synaptics command definitions.
+ */
+#define SYNAPTICS_READ_IDENTITY          0x00
+#define SYNAPTICS_READ_MODES             0x01
+#define SYNAPTICS_READ_CAPABILITIES      0x02
+#define SYNAPTICS_READ_MODEL_ID          0x03
+#define SYNAPTICS_READ_SERIAL_PREFIX     0x06
+#define SYNAPTICS_READ_SERIAL_SUFFIX     0x07
+#define SYNAPTICS_READ_RESOLUTIONS       0x08
+#define SYNAPTICS_READ_EXTENDED          0x09
+#define SYNAPTICS_READ_CAPABILITIES_CONT 0x0c
+#define SYNAPTICS_READ_MAX_COORDS        0x0d
+#define SYNAPTICS_READ_DELUXE_LED        0x0e
+#define SYNAPTICS_READ_MIN_COORDS        0x0f
+
+/*
  * Typical bezel limits. Taken from 'Synaptics
  * PS/2 TouchPad Interfacing Guide' p.3.2.3.
  */
@@ -1106,7 +1122,7 @@ doopen(struct psm_softc *sc, int command_byte)
 	 * doesn't show any evidence of such a command.
 	 */
 	if (sc->hw.model == MOUSE_MODEL_SYNAPTICS) {
-		mouse_ext_command(sc->kbdc, 1);
+		mouse_ext_command(sc->kbdc, SYNAPTICS_READ_MODES);
 		get_mouse_status(sc->kbdc, stat, 0, 3);
 		if ((SYNAPTICS_VERSION_GE(sc->synhw, 7, 5) ||
 		     stat[1] == 0x46 || stat[1] == 0x47) &&
@@ -3547,7 +3563,6 @@ proc_synaptics(struct psm_softc *sc, packetbuf_t *pb, mousestatus_t *ms,
 
 	ms->button = touchpad_buttons;
 
-	psmgestures(sc, &f[0], nfingers, ms);
 	for (id = 0; id < PSM_FINGERS; id++)
 		psmsmoother(sc, &f[id], id, ms, x, y);
 
@@ -3557,6 +3572,8 @@ proc_synaptics(struct psm_softc *sc, packetbuf_t *pb, mousestatus_t *ms,
 		ms->button = ms->obutton;
 		return (0);
 	}
+
+	psmgestures(sc, &f[0], nfingers, ms);
 
 	ms->button |= extended_buttons | guest_buttons;
 
@@ -3752,7 +3769,7 @@ psmgestures(struct psm_softc *sc, finger_t *fingers, int nfingers,
 		}
 
 		/* If in tap-hold, add the recorded button. */
-		if (gest->in_taphold)
+		if (tap_enabled != 0 && gest->in_taphold)
 			ms->button |= gest->tap_button;
 
 		/*
@@ -3827,12 +3844,9 @@ psmgestures(struct psm_softc *sc, finger_t *fingers, int nfingers,
 					    (dxp > dyp) ? 2 : 1;
 			}
 		}
-		/*
-		 * Reset two finger scrolling when the number of fingers
-		 * is different from two or any button is pressed.
-		 */
-		if (two_finger_scroll && gest->in_vscroll != 0 &&
-		    (nfingers != 2 || ms->button))
+
+		/* Exit vscroll when number of fingers drops below two. */
+		if (two_finger_scroll && gest->in_vscroll != 0 && nfingers < 2)
 			gest->in_vscroll = 0;
 
 		VLOG(5, (LOG_DEBUG,
@@ -3934,10 +3948,13 @@ psmgestures(struct psm_softc *sc, finger_t *fingers, int nfingers,
 					gest->tap_button =
 					    MOUSE_BUTTON1DOWN;
 				}
+
 				VLOG(2, (LOG_DEBUG,
 				    "synaptics: button PRESS: %d\n",
 				    gest->tap_button));
-				ms->button |= gest->tap_button;
+
+				if (tap_enabled != 0)
+					ms->button |= gest->tap_button;
 			}
 		} else {
 			/*
@@ -3961,7 +3978,8 @@ psmgestures(struct psm_softc *sc, finger_t *fingers, int nfingers,
 		 * cleared) or during the next action.
 		 */
 		if (timevalcmp(&sc->lastsoftintr, &gest->taptimeout, <=)) {
-			ms->button |= gest->tap_button;
+			if (tap_enabled != 0)
+				ms->button |= gest->tap_button;
 		} else {
 			VLOG(2, (LOG_DEBUG, "synaptics: button RELEASE: %d\n",
 			    gest->tap_button));
@@ -6034,7 +6052,7 @@ synaptics_set_mode(struct psm_softc *sc, int mode_byte) {
 	 */
 	if ((sc->synhw.capAdvancedGestures || sc->synhw.capReportsV) &&
 	    sc->hw.model == MOUSE_MODEL_SYNAPTICS && !(mode_byte & (1 << 5))) {
-		mouse_ext_command(sc->kbdc, 3);
+		mouse_ext_command(sc->kbdc, SYNAPTICS_READ_MODEL_ID);
 		set_mouse_sampling_rate(sc->kbdc, 0xc8);
 	}
 }
@@ -6060,7 +6078,7 @@ enable_synaptics(struct psm_softc *sc, enum probearg arg)
 	set_mouse_scaling(kbdc, 1);
 
 	/* Identify the Touchpad version. */
-	if (mouse_ext_command(kbdc, 0) == 0)
+	if (mouse_ext_command(kbdc, SYNAPTICS_READ_IDENTITY) == 0)
 		return (FALSE);
 	if (get_mouse_status(kbdc, status, 0, 3) != 3)
 		return (FALSE);
@@ -6090,7 +6108,7 @@ enable_synaptics(struct psm_softc *sc, enum probearg arg)
 	}
 
 	/* Get the Touchpad model information. */
-	if (mouse_ext_command(kbdc, 3) == 0)
+	if (mouse_ext_command(kbdc, SYNAPTICS_READ_MODEL_ID) == 0)
 		return (FALSE);
 	if (get_mouse_status(kbdc, status, 0, 3) != 3)
 		return (FALSE);
@@ -6121,7 +6139,7 @@ enable_synaptics(struct psm_softc *sc, enum probearg arg)
 	}
 
 	/* Read the extended capability bits. */
-	if (mouse_ext_command(kbdc, 2) == 0)
+	if (mouse_ext_command(kbdc, SYNAPTICS_READ_CAPABILITIES) == 0)
 		return (FALSE);
 	if (get_mouse_status(kbdc, status, 0, 3) != 3)
 		return (FALSE);
@@ -6171,7 +6189,7 @@ enable_synaptics(struct psm_softc *sc, enum probearg arg)
 
 		if (!set_mouse_scaling(kbdc, 1))
 			return (FALSE);
-		if (mouse_ext_command(kbdc, 0x08) == 0)
+		if (mouse_ext_command(kbdc, SYNAPTICS_READ_RESOLUTIONS) == 0)
 			return (FALSE);
 		if (get_mouse_status(kbdc, status, 0, 3) != 3)
 			return (FALSE);
@@ -6208,7 +6226,7 @@ enable_synaptics(struct psm_softc *sc, enum probearg arg)
 		if (synhw.nExtendedQueries >= 1) {
 			if (!set_mouse_scaling(kbdc, 1))
 				return (FALSE);
-			if (mouse_ext_command(kbdc, 0x09) == 0)
+			if (mouse_ext_command(kbdc, SYNAPTICS_READ_EXTENDED) == 0)
 				return (FALSE);
 			if (get_mouse_status(kbdc, status, 0, 3) != 3)
 				return (FALSE);
@@ -6247,7 +6265,8 @@ enable_synaptics(struct psm_softc *sc, enum probearg arg)
 		if (synhw.nExtendedQueries >= 4) {
 			if (!set_mouse_scaling(kbdc, 1))
 				return (FALSE);
-			if (mouse_ext_command(kbdc, 0x0c) == 0)
+			if (mouse_ext_command(kbdc,
+				SYNAPTICS_READ_CAPABILITIES_CONT) == 0)
 				return (FALSE);
 			if (get_mouse_status(kbdc, status, 0, 3) != 3)
 				return (FALSE);
@@ -6268,7 +6287,8 @@ enable_synaptics(struct psm_softc *sc, enum probearg arg)
 			if (synhw.capReportsMax) {
 				if (!set_mouse_scaling(kbdc, 1))
 					return (FALSE);
-				if (mouse_ext_command(kbdc, 0x0d) == 0)
+				if (mouse_ext_command(kbdc,
+					SYNAPTICS_READ_MAX_COORDS) == 0)
 					return (FALSE);
 				if (get_mouse_status(kbdc, status, 0, 3) != 3)
 					return (FALSE);
@@ -6285,7 +6305,8 @@ enable_synaptics(struct psm_softc *sc, enum probearg arg)
 			if (synhw.capReportsMin) {
 				if (!set_mouse_scaling(kbdc, 1))
 					return (FALSE);
-				if (mouse_ext_command(kbdc, 0x0f) == 0)
+				if (mouse_ext_command(kbdc,
+					SYNAPTICS_READ_MIN_COORDS) == 0)
 					return (FALSE);
 				if (get_mouse_status(kbdc, status, 0, 3) != 3)
 					return (FALSE);
@@ -6378,7 +6399,7 @@ enable_synaptics(struct psm_softc *sc, enum probearg arg)
 	 * byte of the response to this query to be a constant 0x3b, this
 	 * does not appear to be true for Touchpads with guest devices.
 	 */
-	if (mouse_ext_command(kbdc, 1) == 0)
+	if (mouse_ext_command(kbdc, SYNAPTICS_READ_MODES) == 0)
 		return (FALSE);
 	if (get_mouse_status(kbdc, status, 0, 3) != 3)
 		return (FALSE);
