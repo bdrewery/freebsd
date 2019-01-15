@@ -1007,8 +1007,22 @@ sendfile(struct thread *td, struct sendfile_args *uap, int compat)
 	    uap->nbytes, &sbytes, uap->flags, td);
 	fdrop(fp, td);
 
-	if (uap->sbytes != NULL)
-		copyout(&sbytes, uap->sbytes, sizeof(off_t));
+	/*
+	 * Only copy out the number of bytes if fo_sendfile did not fail, or
+	 * if it failed with EAGAIN, EBUSY, or EINTR.
+	 */
+	if (uap->sbytes != NULL &&
+	    (error == 0 || error == EAGAIN || error == EBUSY ||
+	     error == EINTR)) {
+		int copyout_error;
+
+		copyout_error = copyout(&sbytes, uap->sbytes, sizeof(off_t));
+		/*
+		 * Ensure that copyout's error doesn't mask an existing error
+		 * (EAGAIN, etc), if the operation was successful.
+		 */
+		error = copyout_error != 0 ? copyout_error : error;
+	}
 
 out:
 	free(hdr_uio, M_IOV);
