@@ -12,4 +12,6 @@ sysent: init_sysent.c syscalls.c ../sys/syscall.h ../sys/syscall.mk \
 init_sysent.c syscalls.c systrace_args.c ../sys/syscall.h \
 ../sys/syscall.mk ../sys/sysproto.h: ${.CURDIR}/makesyscalls.sh ${.CURDIR}/syscalls.master \
 ${.CURDIR}/capabilities.conf
-	sh ${.CURDIR}/makesyscalls.sh ${.CURDIR}/syscalls.master
+	sh ${.CURDIR}/makesyscalls.sh \
+	    -c ${.CURDIR}/capabilities.conf \
+	    ${.CURDIR}/syscalls.master

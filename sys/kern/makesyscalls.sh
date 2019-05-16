@@ -23,6 +23,7 @@ syscallprefix="SYS_"
 switchname="sysent"
 namesname="syscallnames"
 systrace="systrace_args.c"
+mkdir -p ../sys
 
 # tmp files:
 sysaue="sysent.aue.$$"
@@ -45,23 +46,41 @@ sysarg="sysarg.switch.$$"
 sysprotoend="sysprotoend.$$"
 systracetmp="systrace.$$"
 systraceret="systraceret.$$"
-capabilities_conf="capabilities.conf"
 
 trap "rm $sysaue $sysdcl $syscompat $syscompatdcl $syscompat4 $syscompat4dcl $syscompat6 $syscompat6dcl $syscompat7 $syscompat7dcl $syscompat10 $syscompat10dcl $syscompat11 $syscompat11dcl $sysent $sysinc $sysarg $sysprotoend $systracetmp $systraceret" 0
 
 touch $sysaue $sysdcl $syscompat $syscompatdcl $syscompat4 $syscompat4dcl $syscompat6 $syscompat6dcl $syscompat7 $syscompat7dcl $syscompat10 $syscompat10dcl $syscompat11 $syscompat11dcl $sysent $sysinc $sysarg $sysprotoend $systracetmp $systraceret
 
-case $# in
-    0)	echo "usage: $0 input-file <config-file>" 1>&2
+usage() {
+	echo "usage: $0 [-c capabilities.conf] [-s syscalls.conf] syscalls.master" >&2
 	exit 1
-	;;
-esac
+}
 
-if [ -n "$2" ]; then
-	. $2
+while getopts "c:s:" FLAG; do
+	case "$FLAG" in
+	c)
+		capabilities_conf="$OPTARG"
+		;;
+	s)
+		syscalls_conf="$OPTARG"
+		;;
+	*)
+		usage
+		;;
+	esac
+done
+shift $((OPTIND-1))
+
+if [ -z "$1" ]; then
+	usage
+fi
+syscalls_master="$1"
+
+if [ -n "$syscalls_conf" ]; then
+	. $syscalls_conf
 fi
 
-if [ -r $capabilities_conf ]; then
+if [ -n "$capabilities_conf" ] && [ -r "$capabilities_conf" ]; then
 	capenabled=`egrep -v '^#|^$' $capabilities_conf`
 	capenabled=`echo $capenabled | sed 's/ /,/g'`
 else
@@ -99,7 +118,7 @@ sed -e '
 2,${
 	/^#/!s/\([{}()*,]\)/ \1 /g
 }
-' < $1 | awk "
+' < "$syscalls_master" | awk "
 	BEGIN {
 		sysaue = \"$sysaue\"
 		sysdcl = \"$sysdcl\"
@@ -137,7 +156,7 @@ sed -e '
 		syscallprefix = \"$syscallprefix\"
 		switchname = \"$switchname\"
 		namesname = \"$namesname\"
-		infile = \"$1\"
+		infile = \"$syscalls_master\"
 		abi_func_prefix = \"$abi_func_prefix\"
 		capenabled_string = \"$capenabled\"
 		"'

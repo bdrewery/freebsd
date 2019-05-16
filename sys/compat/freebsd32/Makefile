@@ -9,7 +9,10 @@ sysent:  freebsd32_sysent.c freebsd32_syscall.h freebsd32_proto.h freebsd32_syst
 
 freebsd32_sysent.c freebsd32_syscalls.c freebsd32_syscall.h freebsd32_proto.h freebsd32_systrace_args.c : \
 	    ${.CURDIR}/../../kern/makesyscalls.sh ${.CURDIR}/syscalls.master ${.CURDIR}/syscalls.conf ${.CURDIR}/../../kern/capabilities.conf
-	sh ${.CURDIR}/../../kern/makesyscalls.sh ${.CURDIR}/syscalls.master ${.CURDIR}/syscalls.conf
+	sh ${.CURDIR}/../../kern/makesyscalls.sh \
+	    -s ${.CURDIR}/syscalls.conf \
+	    -c ${.CURDIR}/../../kern/capabilities.conf \
+	    ${.CURDIR}/syscalls.master
 
 clean:
 	rm -f freebsd32_sysent.c freebsd32_syscalls.c freebsd32_syscall.h freebsd32_proto.h
