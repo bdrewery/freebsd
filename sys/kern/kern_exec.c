@@ -42,6 +42,9 @@ __FBSDID("$FreeBSD$");
 #include <sys/exec.h>
 #include <sys/fcntl.h>
 #include <sys/filedesc.h>
+#ifdef FILEMON_HOOKS
+#include <sys/filemon.h>
+#endif
 #include <sys/imgact.h>
 #include <sys/imgact_elf.h>
 #include <sys/kernel.h>
@@ -1063,6 +1066,10 @@ exec_new_vmspace(struct image_params *imgp, struct sysentvec *sv)
 
 	/* May be called with Giant held */
 	EVENTHANDLER_DIRECT_INVOKE(process_exec, p, imgp);
+#ifdef FILEMON_HOOKS
+	if (FILEMON_ENABLED(p))
+		filemon_hook_exec(p, imgp);
+#endif
 
 	/*
 	 * Blow away entire process VM, if address space not shared,

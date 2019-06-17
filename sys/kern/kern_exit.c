@@ -54,6 +54,9 @@ __FBSDID("$FreeBSD$");
 #include <sys/proc.h>
 #include <sys/procdesc.h>
 #include <sys/pioctl.h>
+#ifdef FILEMON_HOOKS
+#include <sys/filemon.h>
+#endif
 #include <sys/jail.h>
 #include <sys/tty.h>
 #include <sys/wait.h>
@@ -386,6 +389,10 @@ exit1(struct thread *td, int rval, int signo)
 	if (nlminfo_release_p != NULL && p->p_nlminfo != NULL)
 		(*nlminfo_release_p)(p);
 
+#ifdef FILEMON_HOOKS
+	if (FILEMON_ENABLED(p))
+		filemon_hook_exit(p);
+#endif
 	/*
 	 * Close open files and release open-file table.
 	 * This may block!

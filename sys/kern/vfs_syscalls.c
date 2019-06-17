@@ -59,6 +59,9 @@ __FBSDID("$FreeBSD$");
 #include <sys/fcntl.h>
 #include <sys/file.h>
 #include <sys/filio.h>
+#ifdef FILEMON_HOOKS
+#include <sys/filemon.h>
+#endif
 #include <sys/limits.h>
 #include <sys/linker.h>
 #include <sys/rwlock.h>
@@ -901,6 +904,10 @@ kern_chdir(struct thread *td, const char *path, enum uio_seg pathseg)
 	VOP_UNLOCK(nd.ni_vp, 0);
 	NDFREE(&nd, NDF_ONLY_PNBUF);
 	pwd_chdir(td, nd.ni_vp);
+#ifdef FILEMON_HOOKS
+	if (FILEMON_ENABLED(td->td_proc))
+		filemon_hook_chdir(td->td_proc, path, pathseg);
+#endif
 	return (0);
 }
 
@@ -1171,6 +1178,11 @@ success:
 	 */
 	fdrop(fp, td);
 	td->td_retval[0] = indx;
+#ifdef FILEMON_HOOKS
+	if (FILEMON_ENABLED(td->td_proc))
+		filemon_hook_openat(td->td_proc, fd, path, pathseg,
+		    OFLAGS(flags));
+#endif
 	return (0);
 bad:
 	KASSERT(indx == -1, ("indx=%d, should be -1", indx));
@@ -1514,6 +1526,11 @@ kern_linkat(struct thread *td, int fd1, int fd2, const char *path1,
 		NDFREE(&nd, NDF_ONLY_PNBUF);
 		error = kern_linkat_vp(td, nd.ni_vp, fd2, path2, segflag);
 	} while (error ==  EAGAIN);
+#ifdef FILEMON_HOOKS
+	if (FILEMON_ENABLED(td->td_proc) && error != 0)
+		filemon_hook_linkat(td->td_proc, fd1, path1, fd2, path2,
+		    segflag, follow);
+#endif
 	return (error);
 }
 
@@ -1689,6 +1706,10 @@ out2:
 out:
 	if (segflg != UIO_SYSSPACE)
 		uma_zfree(namei_zone, tmppath);
+#ifdef FILEMON_HOOKS
+	if (FILEMON_ENABLED(td->td_proc) && error != 0)
+		filemon_hook_symlinkat(td->td_proc, path1, fd, path2, segflg);
+#endif
 	return (error);
 }
 
@@ -1885,6 +1906,11 @@ out:
 fdout:
 	if (fp != NULL)
 		fdrop(fp, td);
+#ifdef FILEMON_HOOKS
+	if (FILEMON_ENABLED(td->td_proc) && error != 0)
+		filemon_hook_unlinkat(td->td_proc, dfd, path, fd, flag,
+		    pathseg);
+#endif
 	return (error);
 }
 
@@ -3634,6 +3660,11 @@ out:
 out1:
 	if (fromnd.ni_startdir)
 		vrele(fromnd.ni_startdir);
+#ifdef FILEMON_HOOKS
+	if (FILEMON_ENABLED(td->td_proc) && (error == 0 || error == -1))
+		filemon_hook_renameat(td->td_proc, oldfd, old, newfd, new,
+		    pathseg);
+#endif
 	if (error == -1)
 		return (0);
 	return (error);

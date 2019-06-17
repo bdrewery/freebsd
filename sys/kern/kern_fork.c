@@ -49,6 +49,9 @@ __FBSDID("$FreeBSD$");
 #include <sys/eventhandler.h>
 #include <sys/fcntl.h>
 #include <sys/filedesc.h>
+#ifdef FILEMON_HOOKS
+#include <sys/filemon.h>
+#endif
 #include <sys/jail.h>
 #include <sys/kernel.h>
 #include <sys/kthread.h>
@@ -657,6 +660,10 @@ do_fork(struct thread *td, struct fork_req *fr, struct proc *p2, struct thread *
 	 * to adjust anything.
 	 */
 	EVENTHANDLER_DIRECT_INVOKE(process_fork, p1, p2, fr->fr_flags);
+#ifdef FILEMON_HOOKS
+	if (FILEMON_ENABLED(p1))
+		filemon_hook_fork(p1, p2);
+#endif
 
 	/*
 	 * Set the child start time and mark the process as being complete.
