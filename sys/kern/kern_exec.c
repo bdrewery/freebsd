@@ -1066,6 +1066,7 @@ exec_new_vmspace(struct image_params *imgp, struct sysentvec *sv)
 
 	/* May be called with Giant held */
 	EVENTHANDLER_DIRECT_INVOKE(process_exec, p, imgp);
+	/* XXX: Maybe bad place? */
 #ifdef FILEMON_HOOKS
 	if (FILEMON_ENABLED(p))
 		filemon_hook_exec(p, imgp);

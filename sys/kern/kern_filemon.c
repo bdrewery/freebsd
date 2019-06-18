@@ -46,6 +46,8 @@ __FBSDID("$FreeBSD$");
 
 #include <machine/stdarg.h>
 
+/* XXX: convert to sbuf */
+
 MALLOC_DEFINE(M_FILEMON, "filemon", "File access monitor");
 static void		filemon_output_event(struct filemon *filemon,
     const char *fmt, ...) __printflike(2, 3);
@@ -320,6 +322,7 @@ filemon_hook_chdir(struct proc *p, const char *path, enum uio_seg pathseg)
 
 	if ((filemon = filemon_proc_get(p)) == NULL)
 		return;
+	/* XXX: Duplicate pattern is annoying */
 	if (pathseg == UIO_SYSSPACE)
 		error = copystr(path, filemon->fname1,
 		    sizeof(filemon->fname1), NULL);
@@ -348,6 +351,7 @@ filemon_hook_renameat(struct proc *p, int oldfd, const char *old, int newfd,
 		return;
 	if ((filemon = filemon_proc_get(p)) == NULL)
 		return;
+	/* XXX: Duplicate pattern is annoying */
 	if (pathseg == UIO_SYSSPACE)
 		error = copystr(old, filemon->fname1,
 		    sizeof(filemon->fname1), NULL);
@@ -387,6 +391,7 @@ filemon_hook_linkat(struct proc *p, int fd1, const char *path1, int fd2,
 		return;
 	if ((filemon = filemon_proc_get(p)) == NULL)
 		return;
+	/* XXX: Duplicate pattern is annoying */
 	if (pathseg == UIO_SYSSPACE)
 		error = copystr(path1, filemon->fname1,
 		    sizeof(filemon->fname1), NULL);
@@ -435,6 +440,7 @@ filemon_hook_unlinkat(struct proc *p, int dfd, const char *path, int fd,
 		return;
 	if ((filemon = filemon_proc_get(p)) == NULL)
 		return;
+	/* XXX: Duplicate pattern is annoying */
 	if (pathseg == UIO_SYSSPACE)
 		error = copystr(path, filemon->fname1,
 		    sizeof(filemon->fname1), NULL);
@@ -469,6 +475,7 @@ filemon_hook_openat(struct proc *p, int fd, const char *path,
 	freepath = NULL;
 	fp = NULL;
 
+	/* XXX: Duplicate pattern is annoying */
 	if (pathseg == UIO_SYSSPACE)
 		error = copystr(path, filemon->fname1,
 		    sizeof(filemon->fname1), NULL);
