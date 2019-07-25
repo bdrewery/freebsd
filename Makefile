@@ -155,20 +155,6 @@ BITGTS=	files includes
 BITGTS:=${BITGTS} ${BITGTS:S/^/build/} ${BITGTS:S/^/install/}
 TGTS+=	${BITGTS}
 
-# Only some targets are allowed to use meta mode.  Others get it
-# disabled.  In some cases, such as 'install', meta mode can be dangerous
-# as a cookie may be used to prevent redundant installations (such as
-# for WORLDTMP staging).  For DESTDIR=/ we always want to install though.
-# For other cases, such as delete-old-libs, meta mode may break
-# the interactive tty prompt.  The safest route is to just whitelist
-# the ones that benefit from it.
-META_TGT_WHITELIST+= \
-	_* build32 buildfiles buildincludes buildkernel buildsoft \
-	buildworld everything kernel-toolchain kernel-toolchains kernel \
-	kernels libraries native-xtools showconfig test-system-compiler \
-	test-system-linker tinderbox toolchain \
-	toolchains universe universe-toolchain world worlds xdev xdev-build
-
 .ORDER: buildworld installworld
 .ORDER: buildworld distrib-dirs
 .ORDER: buildworld distribution
@@ -238,32 +224,12 @@ _MAKE=	PATH=${PATH} MAKE_CMD="${MAKE}" ${SUB_MAKE} -f Makefile.inc1 \
 	TARGET=${_TARGET} TARGET_ARCH=${_TARGET_ARCH} ${_MAKEARGS}
 
 .if defined(MK_META_MODE) && ${MK_META_MODE} == "yes"
-# Only allow meta mode for the whitelisted targets.  See META_TGT_WHITELIST
-# above.  If overridden as a make argument then don't bother trying to
-# disable it.
-.if empty(.MAKEOVERRIDES:MMK_META_MODE)
-.for _tgt in ${META_TGT_WHITELIST}
-.if make(${_tgt})
-_CAN_USE_META_MODE?= yes
-.endif
-.endfor
-.if !defined(_CAN_USE_META_MODE)
-_MAKE+=	MK_META_MODE=no
-MK_META_MODE= no
-.if defined(.PARSEDIR)
-.unexport META_MODE
-.endif
-.endif	# !defined(_CAN_USE_META_MODE)
-.endif	# empty(.MAKEOVERRIDES:MMK_META_MODE)
-
-.if ${MK_META_MODE} == "yes"
 .if !exists(/dev/filemon) && !defined(NO_FILEMON) && !make(showconfig)
 # Require filemon be loaded to provide a working incremental build
 .error ${.newline}ERROR: The filemon module (/dev/filemon) is not loaded. \
     ${.newline}ERROR: WITH_META_MODE is enabled but requires filemon for an incremental build. \
     ${.newline}ERROR: 'kldload filemon' or pass -DNO_FILEMON to suppress this error.
 .endif	# !exists(/dev/filemon) && !defined(NO_FILEMON)
-.endif	# ${MK_META_MODE} == yes
 .endif	# defined(MK_META_MODE) && ${MK_META_MODE} == yes
 
 # Guess target architecture from target type, and vice versa, based on
