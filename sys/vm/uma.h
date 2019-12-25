@@ -232,7 +232,7 @@ uma_zone_t uma_zcache_create(char *name, int size, uma_ctor ctor, uma_dtor dtor,
  * Definitions for uma_zcreate flags
  *
  * These flags share space with UMA_ZFLAGs in uma_int.h.  Be careful not to
- * overlap when adding new features.  0xff000000 is in use by uma_int.h.
+ * overlap when adding new features.
  */
 #define UMA_ZONE_ZINIT		0x0002	/* Initialize with zeros */
 #define UMA_ZONE_OFFPAGE	0x0008	/* Force the slab structure allocation
@@ -244,20 +244,16 @@ uma_zone_t uma_zcache_create(char *name, int size, uma_ctor ctor, uma_dtor dtor,
 					 * Used for internal vm datastructures
 					 * only.
 					 */
-#define	UMA_ZONE_HASH		0x0100	/*
-					 * Use a hash table instead of caching
-					 * information in the vm_page.
-					 */
 #define	UMA_ZONE_SECONDARY	0x0200	/* Zone is a Secondary Zone */
 #define	UMA_ZONE_NOBUCKET	0x0400	/* Do not use buckets. */
 #define	UMA_ZONE_MAXBUCKET	0x0800	/* Use largest buckets. */
-#define	UMA_ZONE_CACHESPREAD	0x1000	/*
+#define	UMA_ZONE_MINBUCKET	0x1000	/* Use smallest buckets. */
+#define	UMA_ZONE_CACHESPREAD	0x2000	/*
 					 * Spread memory start locations across
 					 * all possible cache lines.  May
 					 * require many virtually contiguous
 					 * backend pages and can fail early.
 					 */
-#define	UMA_ZONE_VTOSLAB	0x2000	/* Zone uses vtoslab for lookup. */
 #define	UMA_ZONE_NODUMP		0x4000	/*
 					 * Zone's pages will not be included in
 					 * mini-dumps.
@@ -265,9 +261,9 @@ uma_zone_t uma_zcache_create(char *name, int size, uma_ctor ctor, uma_dtor dtor,
 #define	UMA_ZONE_PCPU		0x8000	/*
 					 * Allocates mp_maxid + 1 slabs of PAGE_SIZE
 					 */
-#define	UMA_ZONE_MINBUCKET	0x10000	/* Use smallest buckets. */
-#define	UMA_ZONE_FIRSTTOUCH	0x20000	/* First touch NUMA policy */
-#define	UMA_ZONE_ROUNDROBIN	0x40000	/* Round-robin NUMA policy. */
+#define	UMA_ZONE_FIRSTTOUCH	0x10000	/* First touch NUMA policy */
+#define	UMA_ZONE_ROUNDROBIN	0x20000	/* Round-robin NUMA policy. */
+/* In use by UMA_ZFLAGs:	0xffe00000 */
 
 /*
  * These flags are shared between the keg and zone.  In zones wishing to add
@@ -276,8 +272,7 @@ uma_zone_t uma_zcache_create(char *name, int size, uma_ctor ctor, uma_dtor dtor,
  */
 #define	UMA_ZONE_INHERIT						\
     (UMA_ZONE_OFFPAGE | UMA_ZONE_MALLOC | UMA_ZONE_NOFREE |		\
-    UMA_ZONE_HASH | UMA_ZONE_VTOSLAB | UMA_ZONE_PCPU |			\
-    UMA_ZONE_FIRSTTOUCH | UMA_ZONE_ROUNDROBIN)
+     UMA_ZONE_PCPU | UMA_ZONE_FIRSTTOUCH | UMA_ZONE_ROUNDROBIN)
 
 /* Definitions for align */
 #define UMA_ALIGN_PTR	(sizeof(void *) - 1)	/* Alignment fit for ptr */

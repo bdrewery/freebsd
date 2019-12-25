@@ -476,6 +476,15 @@ struct uma_zone {
 /*
  * These flags must not overlap with the UMA_ZONE flags specified in uma.h.
  */
+#define	UMA_ZFLAG_HASH		0x00400000	/*
+						 * Use a hash table instead of
+						 * caching information in the
+						 * vm_page.
+						 */
+#define	UMA_ZFLAG_VTOSLAB	0x00800000	/*
+						 * Zone uses vtoslab for
+						 * lookup.
+						 */
 #define	UMA_ZFLAG_CTORDTOR	0x01000000	/* Zone has ctor/dtor set. */
 #define	UMA_ZFLAG_LIMIT		0x02000000	/* Zone has limit set. */
 #define	UMA_ZFLAG_CACHE		0x04000000	/* uma_zcache_create()d it */
@@ -486,7 +495,8 @@ struct uma_zone {
 #define UMA_ZFLAG_CACHEONLY	0x80000000	/* Don't ask VM for buckets. */
 
 #define	UMA_ZFLAG_INHERIT						\
-    (UMA_ZFLAG_INTERNAL | UMA_ZFLAG_CACHEONLY | UMA_ZFLAG_BUCKET)
+    (UMA_ZFLAG_HASH | UMA_ZFLAG_VTOSLAB | UMA_ZFLAG_BUCKET |		\
+     UMA_ZFLAG_INTERNAL | UMA_ZFLAG_CACHEONLY)
 
 #define	PRINT_UMA_ZFLAGS	"\20"	\
     "\40CACHEONLY"			\
@@ -497,17 +507,17 @@ struct uma_zone {
     "\33CACHE"				\
     "\32LIMIT"				\
     "\31CTORDTOR"			\
-    "\23ROUNDROBIN"			\
-    "\22FIRSTTOUCH"			\
-    "\21MINBUCKET"			\
+    "\30VTOSLAB"			\
+    "\27HASH"				\
+    "\22ROUNDROBIN"			\
+    "\21FIRSTTOUCH"			\
     "\20PCPU"				\
     "\17NODUMP"				\
-    "\16VTOSLAB"			\
-    "\15CACHESPREAD"			\
+    "\16CACHESPREAD"			\
+    "\15MINBUCKET"			\
     "\14MAXBUCKET"			\
     "\13NOBUCKET"			\
     "\12SECONDARY"			\
-    "\11HASH"				\
     "\10VM"				\
     "\7MTXCLASS"			\
     "\6NOFREE"				\
