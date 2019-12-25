@@ -234,10 +234,7 @@ uma_zone_t uma_zcache_create(char *name, int size, uma_ctor ctor, uma_dtor dtor,
  * These flags share space with UMA_ZFLAGs in uma_int.h.  Be careful not to
  * overlap when adding new features.  0xff000000 is in use by uma_int.h.
  */
-#define UMA_ZONE_PAGEABLE	0x0001	/* Return items not fully backed by
-					   physical memory XXX Not yet */
 #define UMA_ZONE_ZINIT		0x0002	/* Initialize with zeros */
-#define UMA_ZONE_STATIC		0x0004	/* Statically sized zone */
 #define UMA_ZONE_OFFPAGE	0x0008	/* Force the slab structure allocation
 					   off of the real memory */
 #define UMA_ZONE_MALLOC		0x0010	/* For use by malloc(9) only! */

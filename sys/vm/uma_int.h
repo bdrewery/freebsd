@@ -513,9 +513,7 @@ struct uma_zone {
     "\6NOFREE"				\
     "\5MALLOC"				\
     "\4OFFPAGE"				\
-    "\3STATIC"				\
-    "\2ZINIT"				\
-    "\1PAGEABLE"
+    "\2ZINIT"
 
 /*
  * Macros for interpreting the uz_items field.  20 bits of sleeper count
