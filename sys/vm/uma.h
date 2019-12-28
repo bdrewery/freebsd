@@ -235,8 +235,7 @@ uma_zone_t uma_zcache_create(char *name, int size, uma_ctor ctor, uma_dtor dtor,
  * overlap when adding new features.
  */
 #define UMA_ZONE_ZINIT		0x0002	/* Initialize with zeros */
-#define UMA_ZONE_OFFPAGE	0x0008	/* Force the slab structure allocation
-					   off of the real memory */
+#define UMA_ZONE_NOTOUCH	0x0008	/* UMA may not access the memory */
 #define UMA_ZONE_MALLOC		0x0010	/* For use by malloc(9) only! */
 #define UMA_ZONE_NOFREE		0x0020	/* Do not free slabs of this type! */
 #define UMA_ZONE_MTXCLASS	0x0040	/* Create a new lock class */
@@ -272,7 +271,7 @@ uma_zone_t uma_zcache_create(char *name, int size, uma_ctor ctor, uma_dtor dtor,
  * physical parameters of the request and may not be provided by the consumer.
  */
 #define	UMA_ZONE_INHERIT						\
-    (UMA_ZONE_OFFPAGE | UMA_ZONE_MALLOC | UMA_ZONE_NOFREE |		\
+    (UMA_ZONE_NOTOUCH | UMA_ZONE_MALLOC | UMA_ZONE_NOFREE |		\
      UMA_ZONE_NOTPAGE | UMA_ZONE_PCPU | UMA_ZONE_FIRSTTOUCH |		\
      UMA_ZONE_ROUNDROBIN)
 
