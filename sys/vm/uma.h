@@ -244,6 +244,7 @@ uma_zone_t uma_zcache_create(char *name, int size, uma_ctor ctor, uma_dtor dtor,
 					 * Used for internal vm datastructures
 					 * only.
 					 */
+#define	UMA_ZONE_NOTPAGE	0x0100	/* Mem allocs are not vm pages */
 #define	UMA_ZONE_SECONDARY	0x0200	/* Zone is a Secondary Zone */
 #define	UMA_ZONE_NOBUCKET	0x0400	/* Do not use buckets. */
 #define	UMA_ZONE_MAXBUCKET	0x0800	/* Use largest buckets. */
@@ -272,7 +273,8 @@ uma_zone_t uma_zcache_create(char *name, int size, uma_ctor ctor, uma_dtor dtor,
  */
 #define	UMA_ZONE_INHERIT						\
     (UMA_ZONE_OFFPAGE | UMA_ZONE_MALLOC | UMA_ZONE_NOFREE |		\
-     UMA_ZONE_PCPU | UMA_ZONE_FIRSTTOUCH | UMA_ZONE_ROUNDROBIN)
+     UMA_ZONE_NOTPAGE | UMA_ZONE_PCPU | UMA_ZONE_FIRSTTOUCH |		\
+     UMA_ZONE_ROUNDROBIN)
 
 /* Definitions for align */
 #define UMA_ALIGN_PTR	(sizeof(void *) - 1)	/* Alignment fit for ptr */

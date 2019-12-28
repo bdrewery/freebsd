@@ -518,6 +518,7 @@ struct uma_zone {
     "\14MAXBUCKET"			\
     "\13NOBUCKET"			\
     "\12SECONDARY"			\
+    "\11NOTPAGE"			\
     "\10VM"				\
     "\7MTXCLASS"			\
     "\6NOFREE"				\
