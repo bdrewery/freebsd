@@ -140,8 +140,10 @@ _SUBDIR_SH=	\
 # SUBDIR_TARGETS will create a target for each directory.
 _SUBDIR: .USEBEFORE
 .if defined(SUBDIR) && !empty(SUBDIR) && !defined(NO_SUBDIR)
-	@${_+_}target=${.TARGET:realinstall=install}; \
-	    for dir in ${SUBDIR:N.WAIT}; do ( ${_SUBDIR_SH} ); done
+	@${_+_}if [ -z "${SUBDIR_TARGETS:M${.TARGET:realinstall=install}}" ]; then \
+	    target=${.TARGET:realinstall=install}; \
+	    for dir in ${SUBDIR:N.WAIT}; do ( ${_SUBDIR_SH} ); done; \
+	fi
 .endif
 
 # Create 'make subdir' targets to run the real 'all' target.
