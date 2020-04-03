@@ -106,6 +106,16 @@ ${__target}:	build${__target} install${__target}
 .endif
 .endfor
 
+# These targets have special before<tgt>/<tgt>/after<tgt> handling and
+# are connected to only by before<tgt>/real<tgt>/after<tgt>. The main
+# <tgt> only recurses.
+SUBDIR_REAL_TARGETS+= \
+		install \
+
+.for __target in ${SUBDIR_REAL_TARGETS}
+REAL_TARGET_FILTER+=	real${__target}=${__target}
+.endfor
+
 # Make 'install' supports a before and after target.  Actual install
 # hooks are placed in 'realinstall'.
 .if !target(install)
@@ -140,8 +150,8 @@ _SUBDIR_SH=	\
 # SUBDIR_TARGETS will create a target for each directory.
 _SUBDIR: .USEBEFORE
 .if defined(SUBDIR) && !empty(SUBDIR) && !defined(NO_SUBDIR)
-	@${_+_}if [ -z "${SUBDIR_TARGETS:M${.TARGET:realinstall=install}}" ]; then \
-	    target=${.TARGET:realinstall=install}; \
+	@${_+_}if [ -z "${SUBDIR_TARGETS:M${.TARGET:${REAL_TARGET_FILTER:ts:}}}" ]; then \
+	    target=${.TARGET:${REAL_TARGET_FILTER:ts:}}; \
 	    for dir in ${SUBDIR:N.WAIT}; do ( ${_SUBDIR_SH} ); done; \
 	fi
 .endif
@@ -178,7 +188,7 @@ __deps:= ${__subdir_targets}
 .endif	# defined(SUBDIR_PARALLEL)
 .endif	# ${_is_standalone_target} == 0
 ${__target}_subdir_${DIRPRFX}${__dir}: .PHONY .MAKE .SILENT ${__deps}
-	@${_+_}target=${__target:realinstall=install}; \
+	@${_+_}target=${__target:${REAL_TARGET_FILTER:ts:}}; \
 	    dir=${__dir}; \
 	    ${_SUBDIR_SH};
 __subdir_targets+= ${__target}_subdir_${DIRPRFX}${__dir}
