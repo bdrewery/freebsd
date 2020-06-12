@@ -679,6 +679,9 @@ lagg_port_create(struct lagg_softc *sc, struct ifnet *ifp)
 		return (EINVAL);
 	}
 
+	if (sc->sc_destroying == 1)
+		return (ENXIO);
+
 	/* Limit the maximal number of lagg ports */
 	if (sc->sc_count >= LAGG_MAX_PORTS)
 		return (ENOSPC);
