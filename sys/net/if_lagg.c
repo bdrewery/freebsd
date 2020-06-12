@@ -578,6 +578,10 @@ lagg_clone_destroy(struct ifnet *ifp)
 {
 	struct lagg_softc *sc = (struct lagg_softc *)ifp->if_softc;
 	struct lagg_port *lp;
+	struct ifnet *port_ifps[LAGG_MAX_PORTS];
+	int port_count, i;
+
+	port_count = 0;
 
 	LAGG_XLOCK(sc);
 	sc->sc_destroying = 1;
@@ -588,8 +592,18 @@ lagg_clone_destroy(struct ifnet *ifp)
 	EVENTHANDLER_DEREGISTER(vlan_unconfig, sc->vlan_detach);
 
 	/* Shutdown and remove lagg ports */
-	while ((lp = CK_SLIST_FIRST(&sc->sc_ports)) != NULL)
+	while ((lp = CK_SLIST_FIRST(&sc->sc_ports)) != NULL) {
+		/*
+		 * Save the port ifp to drain its link state taskqueue
+		 * without the lock after clearing its if_lagg to our
+		 * ifp.
+		 */
+		MPASS(port_count < LAGG_MAX_PORTS);
+		if_ref(lp->lp_ifp);
+		port_ifps[port_count++] = lp->lp_ifp;
+
 		lagg_port_destroy(lp, 1);
+	}
 
 	/* Unhook the aggregation protocol */
 	lagg_proto_detach(sc);
@@ -598,6 +612,11 @@ lagg_clone_destroy(struct ifnet *ifp)
 	ifmedia_removeall(&sc->sc_media);
 	ether_ifdetach(ifp);
 	if_free(ifp);
+
+	for (i = 0; i < port_count; i++) {
+		taskqueue_drain(taskqueue_swi, &port_ifps[i]->if_linktask);
+		if_rele(port_ifps[i]);
+	}
 
 	LAGG_LIST_LOCK();
 	SLIST_REMOVE(&V_lagg_list, sc, lagg_softc, sc_entries);
@@ -678,6 +697,9 @@ lagg_port_create(struct lagg_softc *sc, struct ifnet *ifp)
 		    "cannot add a lagg to itself as a port\n");
 		return (EINVAL);
 	}
+
+	if (sc->sc_destroying == 1)
+		return (ENXIO);
 
 	/* Limit the maximal number of lagg ports */
 	if (sc->sc_count >= LAGG_MAX_PORTS)
@@ -1996,7 +2018,7 @@ lagg_port_state(struct ifnet *ifp, int state)
 
 	if (lp != NULL)
 		sc = lp->lp_softc;
-	if (sc == NULL)
+	if (sc == NULL || sc->sc_destroying == 1)
 		return;
 
 	LAGG_XLOCK(sc);

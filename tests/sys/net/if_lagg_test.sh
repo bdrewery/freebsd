@@ -139,8 +139,6 @@ create_destroy_stress_body()
 {
 	local TAP0 TAP1 LAGG MAC
 
-	atf_skip "Skipping this test because it easily panics the machine"
-
 	TAP0=`get_tap`
 	TAP1=`get_tap`
 	TAP2=`get_tap`
@@ -193,10 +191,6 @@ lacp_linkstate_destroy_stress_head()
 }
 lacp_linkstate_destroy_stress_body()
 {
-	if [ "$(atf_config_get ci false)" = "true" ]; then
-		atf_skip "https://bugs.freebsd.org/244168"
-	fi
-
 	local TAP0 TAP1 LAGG MAC SRCDIR
 
 	# Configure the lagg interface to use an RFC5737 nonrouteable addresses
@@ -257,8 +251,6 @@ up_destroy_stress_head()
 up_destroy_stress_body()
 {
 	local TAP0 TAP1 LAGG MAC SRCDIR
-
-	atf_skip "Skipping this test because it panics the machine fairly often"
 
 	# Configure the lagg interface to use an RFC5737 nonrouteable addresses
 	ADDR="192.0.2.2"
