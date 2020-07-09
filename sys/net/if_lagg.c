@@ -95,6 +95,9 @@ extern void	nd6_setmtu(struct ifnet *);
 #define	LAGG_SXLOCK_ASSERT(_sc)	sx_assert(&(_sc)->sc_sx, SA_LOCKED)
 #define	LAGG_XLOCK_ASSERT(_sc)	sx_assert(&(_sc)->sc_sx, SA_XLOCKED)
 
+static struct sx lagg_ioctl_sx;
+SX_SYSINIT(lagg_ioctl_sx, &lagg_ioctl_sx, "lagg_ioctl");
+
 /* Special flags we should propagate to the lagg ports. */
 static struct {
 	int flag;
@@ -597,6 +600,9 @@ lagg_clone_destroy(struct ifnet *ifp)
 
 	ifmedia_removeall(&sc->sc_media);
 	ether_ifdetach(ifp);
+	sx_xlock(&lagg_ioctl_sx);
+	ifp->if_softc = NULL;
+	sx_xunlock(&lagg_ioctl_sx);
 	if_free(ifp);
 
 	LAGG_LIST_LOCK();
@@ -1180,7 +1186,7 @@ lagg_stop(struct lagg_softc *sc)
 static int
 lagg_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 {
-	struct lagg_softc *sc = (struct lagg_softc *)ifp->if_softc;
+	struct lagg_softc *sc;
 	struct lagg_reqall *ra = (struct lagg_reqall *)data;
 	struct lagg_reqopts *ro = (struct lagg_reqopts *)data;
 	struct lagg_reqport *rp = (struct lagg_reqport *)data, rpbuf;
@@ -1193,6 +1199,13 @@ lagg_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 	int count, buflen, len, error = 0, oldmtu;
 
 	bzero(&rpbuf, sizeof(rpbuf));
+
+	sx_slock(&lagg_ioctl_sx);
+	sc = (struct lagg_softc *)ifp->if_softc;
+	if (sc == NULL) {
+		error = ENXIO;
+		goto out;
+	}
 
 	switch (cmd) {
 	case SIOCGLAGG:
@@ -1593,6 +1606,8 @@ lagg_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		error = ether_ioctl(ifp, cmd, data);
 		break;
 	}
+out:
+	sx_sunlock(&lagg_ioctl_sx);
 	return (error);
 }
 
