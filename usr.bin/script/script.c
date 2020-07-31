@@ -30,6 +30,11 @@
  * SUCH DAMAGE.
  */
 
+/*
+ * 2020-07-31 Soumendra Ganguly <soumendraganguly@gmail.com>
+ * - fixed playback of curses sessions
+ */
+
 #include <sys/param.h>
 __FBSDID("$FreeBSD$");
 #ifndef lint
@@ -400,19 +405,51 @@ record(FILE *fp, char *buf, size_t cc, int direction)
 }
 
 static void
+termset()
+{
+	struct termios tattr;
+
+	ttyflg = isatty(STDOUT_FILENO);
+	if (!ttyflg)
+		return;
+
+	if (tcgetattr(STDOUT_FILENO, &tt) != 0)
+		err(1, "tcgetattr");
+
+	tattr = tt;
+	cfmakeraw(&tattr);
+	tattr.c_lflag |= ISIG;
+	if (tcsetattr(STDOUT_FILENO, TCSANOW, &tattr) != 0)
+		err(1, "tcsetattr");
+}
+
+static void
+termreset()
+{
+	if (ttyflg)
+		tcsetattr(STDOUT_FILENO, TCSADRAIN, &tt);
+
+	ttyflg = 0;
+}
+
+static void
 consume(FILE *fp, off_t len, char *buf, int reg)
 {
 	size_t l;
 
 	if (reg) {
-		if (fseeko(fp, len, SEEK_CUR) == -1)
+		if (fseeko(fp, len, SEEK_CUR) == -1) {
+			termreset();
 			err(1, NULL);
+		}
 	}
 	else {
 		while (len > 0) {
 			l = MIN(DEF_BUF, len);
-			if (fread(buf, sizeof(char), l, fp) != l)
+			if (fread(buf, sizeof(char), l, fp) != l) {
+				termreset();
 				err(1, "cannot read buffer");
+			}
 			len -= l;
 		}
 	}
@@ -439,6 +476,8 @@ playback(FILE *fp)
 	time_t tclock;
 	int reg;
 
+	ttyflg = 0;
+
 	if (fstat(fileno(fp), &pst) == -1)
 		err(1, "fstat failed");
 
@@ -446,17 +485,20 @@ playback(FILE *fp)
 
 	for (nread = 0; !reg || nread < pst.st_size; nread += save_len) {
 		if (fread(&stamp, sizeof(stamp), 1, fp) != 1) {
-			if (reg)
+			if (reg) {
+				termreset();
 				err(1, "reading playback header");
-			else
-				break;
+			}
+			break;
 		}
 		swapstamp(stamp);
 		save_len = sizeof(stamp);
 
 		if (reg && stamp.scr_len >
-		    (uint64_t)(pst.st_size - save_len) - nread)
+		    (uint64_t)(pst.st_size - save_len) - nread) {
+			termreset();
 			errx(1, "invalid stamp");
+		}
 
 		save_len += stamp.scr_len;
 		tclock = stamp.scr_sec;
@@ -470,8 +512,10 @@ playback(FILE *fp)
 				ctime(&tclock));
 			tsi = tso;
 			(void)consume(fp, stamp.scr_len, buf, reg);
+			termset();
 			break;
 		case 'e':
+			termreset();
 			if (!qflg)
 				(void)printf("\nScript done on %s",
 				    ctime(&tclock));
@@ -493,17 +537,21 @@ playback(FILE *fp)
 			tsi = tso;
 			while (stamp.scr_len > 0) {
 				l = MIN(DEF_BUF, stamp.scr_len);
-				if (fread(buf, sizeof(char), l, fp) != l)
+				if (fread(buf, sizeof(char), l, fp) != l) {
+					termreset();
 					err(1, "cannot read buffer");
+				}
 
 				(void)write(STDOUT_FILENO, buf, l);
 				stamp.scr_len -= l;
 			}
 			break;
 		default:
+			termreset();
 			errx(1, "invalid direction");
 		}
 	}
+	termreset();
 	(void)fclose(fp);
 	exit(0);
 }
