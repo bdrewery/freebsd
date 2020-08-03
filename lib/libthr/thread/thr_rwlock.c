@@ -2,6 +2,8 @@
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
  *
  * Copyright (c) 1998 Alex Nash
+ * Copyright (c) 2020 Dell
+ *
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -37,6 +39,8 @@ __FBSDID("$FreeBSD$");
 #include <pthread.h>
 #include "un-namespace.h"
 #include "thr_private.h"
+
+#include "plockstat.h"
 
 _Static_assert(sizeof(struct pthread_rwlock) <= PAGE_SIZE,
     "pthread_rwlock is too large for off-page");
@@ -171,6 +175,7 @@ rwlock_rdlock_common(pthread_rwlock_t *rwlock, const struct timespec *abstime)
 	pthread_rwlock_t prwlock;
 	int flags;
 	int ret;
+	int block_fired = 0;
 
 	ret = check_and_init_rwlock(rwlock, &prwlock);
 	if (ret != 0)
@@ -201,6 +206,7 @@ rwlock_rdlock_common(pthread_rwlock_t *rwlock, const struct timespec *abstime)
 	ret = _thr_rwlock_tryrdlock(&prwlock->lock, flags);
 	if (ret == 0) {
 		curthread->rdlock_count++;
+		PLOCKSTAT_RWLOCK_ACQUIRE(prwlock, 0);
 		return (ret);
 	}
 
@@ -209,6 +215,12 @@ rwlock_rdlock_common(pthread_rwlock_t *rwlock, const struct timespec *abstime)
 		return (EINVAL);
 
 	for (;;) {
+		if (!block_fired) {
+			/* Try-lock was unsuccessful, assume we are going to block */
+			PLOCKSTAT_RWLOCK_BLOCK(prwlock, 0);
+			block_fired = 1;
+		}
+
 		/* goto kernel and lock it */
 		ret = __thr_rwlock_rdlock(&prwlock->lock, flags, abstime);
 		if (ret != EINTR)
@@ -220,8 +232,10 @@ rwlock_rdlock_common(pthread_rwlock_t *rwlock, const struct timespec *abstime)
 			break;
 		}
 	}
-	if (ret == 0)
+	if (ret == 0) {
 		curthread->rdlock_count++;
+		PLOCKSTAT_RWLOCK_ACQUIRE(prwlock, 0);
+	}
 	return (ret);
 }
 
@@ -269,8 +283,10 @@ _Tthr_rwlock_tryrdlock(pthread_rwlock_t *rwlock)
 	}
 
 	ret = _thr_rwlock_tryrdlock(&prwlock->lock, flags);
-	if (ret == 0)
+	if (ret == 0) {
 		curthread->rdlock_count++;
+		PLOCKSTAT_RWLOCK_ACQUIRE(prwlock, 0);
+	}
 	return (ret);
 }
 
@@ -286,8 +302,10 @@ _Tthr_rwlock_trywrlock(pthread_rwlock_t *rwlock)
 		return (ret);
 
 	ret = _thr_rwlock_trywrlock(&prwlock->lock);
-	if (ret == 0)
+	if (ret == 0) {
 		prwlock->owner = TID(curthread);
+		PLOCKSTAT_RWLOCK_ACQUIRE(prwlock, 1);
+	}
 	return (ret);
 }
 
@@ -297,6 +315,7 @@ rwlock_wrlock_common(pthread_rwlock_t *rwlock, const struct timespec *abstime)
 	struct pthread *curthread = _get_curthread();
 	pthread_rwlock_t prwlock;
 	int ret;
+	int block_fired = 0;
 
 	ret = check_and_init_rwlock(rwlock, &prwlock);
 	if (ret != 0)
@@ -309,6 +328,7 @@ rwlock_wrlock_common(pthread_rwlock_t *rwlock, const struct timespec *abstime)
 	ret = _thr_rwlock_trywrlock(&prwlock->lock);
 	if (ret == 0) {
 		prwlock->owner = TID(curthread);
+		PLOCKSTAT_RWLOCK_ACQUIRE(prwlock, 1);
 		return (ret);
 	}
 
@@ -317,6 +337,11 @@ rwlock_wrlock_common(pthread_rwlock_t *rwlock, const struct timespec *abstime)
 		return (EINVAL);
 
 	for (;;) {
+		if (!block_fired) {
+			/* Try-lock was unsuccessful, assume we are going to block */
+			PLOCKSTAT_RWLOCK_BLOCK(prwlock, 1);
+			block_fired = 1;
+		}
 		/* goto kernel and lock it */
 		ret = __thr_rwlock_wrlock(&prwlock->lock, abstime);
 		if (ret == 0) {
@@ -333,6 +358,9 @@ rwlock_wrlock_common(pthread_rwlock_t *rwlock, const struct timespec *abstime)
 			prwlock->owner = TID(curthread);
 			break;
 		}
+	}
+	if (ret == 0) {
+		PLOCKSTAT_RWLOCK_ACQUIRE(prwlock, 1);
 	}
 	return (ret);
 }
@@ -380,5 +408,7 @@ _Tthr_rwlock_unlock(pthread_rwlock_t *rwlock)
 	if (ret == 0 && (state & URWLOCK_WRITE_OWNER) == 0)
 		curthread->rdlock_count--;
 
+	if (ret == 0)
+		PLOCKSTAT_RWLOCK_RELEASE(prwlock, (state & URWLOCK_WRITE_OWNER) != 0);
 	return (ret);
 }

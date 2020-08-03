@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2010 The FreeBSD Foundation 
+ * Copyright (c) 2020 Dell
  * All rights reserved. 
  * 
  * This software was developed by Rui Paulo under sponsorship from the
@@ -28,19 +29,111 @@
  *
  * $FreeBSD$
  */
+#include <sys/_pthreadtypes.h>
 
 provider plockstat {
-	probe mutex__acquire(void *mutex, int rec, int spincount);
-	probe mutex__release(void *mutex, int rec);
-	probe mutex__block(void *mutex);
-	probe mutex__spin(void *mutex);
-	probe mutex__spun(void *mutex, int success, int spincount);
-	probe mutex__blocked(void *mutex, int success);
-	probe mutex__error(void *mutex, int err);
+	/**
+	 * Hold event probe.
+	 * Fires immediately after a mutex is acquired
+	 *
+	 * is_recursive: a boolean value indicating if the acquisition
+	 *     was recursive on a recursive mutex
+	 * cntspin: number of spin iterations that the acquiring
+	 *     thread spent on this mutex
+	 * cntyield: number of yield iterations that the acquiring
+	 *     thread spent on this mutex
+	 */
+	probe mutex__acquire(pthread_mutex_t mutex, int is_recursive, int cntspin, int cntyield);
 
-	probe rw__acquire(void *lock, int wr);
-	probe rw__release(void *lock, int wr);
-	probe rw__block(void *lock, int wr);
-	probe rw__blocked(void *lock, int wr, int success);
-	probe rw__error(void *lock, int wr, int err);
+	/**
+	 * Contention event probe.
+	 * Fires before a thread blocks on a held mutex.  Both
+	 * mutex-block, mutex-spin, mutex-yield might fire for
+	 * a single lock acquisition.
+	 */
+	probe mutex__block(pthread_mutex_t mutex);
+
+	/**
+	 * Contention event probe.
+	 * Fires before a thread begins spinning on a held mutex.  Both
+	 * mutex-block, mutex-spin, mutex-yield might fire for
+	 * a single lock acquisition.
+	 */
+	probe mutex__spin(pthread_mutex_t mutex);
+
+	/**
+	 * Contention event probe.
+	 * Fires before a thread begins yield on a held mutex.  Both
+	 * mutex-block, mutex-spin, mutex-yield might fire for
+	 * a single lock acquisition.
+	 */
+	probe mutex__yield(pthread_mutex_t mutex);
+
+	/**
+	 * Hold event probe.
+	 * Fires immediately after a mutex is released.
+	 *
+	 * is_recursive: a boolean value indicating if the event
+	 *     corresponds to a recursive release on a
+	 *     recursive mutex.
+	 */
+	probe mutex__release(pthread_mutex_t mutex, int is_recursive);
+
+	/**
+	 * Mutex handler mapping probe.
+	 * Collect mapping from internal to external pointer.
+	 */
+	probe mutex__map(pthread_mutex_t mtx_int, void* mtx_ext);
+
+	/**
+	 * Hold event probe.
+	 * Fires immediately after an rwlock is acquired.
+	 */
+	probe rwlock__acquire(pthread_rwlock_t rwlock, int is_writer);
+
+	/**
+	 * Contention event probe.
+	 * Fires before a thread blocks while attempting to acquire a
+	 * lock.
+	 */
+	probe rwlock__block(pthread_rwlock_t rwlock, int is_writer);
+
+	/**
+	 * Hold event probe.
+	 * Fires immediately after a lock is released.
+	 */
+	probe rwlock__release(pthread_rwlock_t rwlock, int is_writer);
+
+	/**
+	 * rwlock handler mapping probe.
+	 * Collect mapping from internal to external pointer.
+	 */
+	probe rwlock__map(pthread_rwlock_t rwl_int, void* rwl_ext);
+
+	/**
+	 * Hold event probe.
+	 * Fires immediately after a spinlock is acquired
+	 * cntspin - number of spins after last yield
+	 * cntyield - number of yields, thread is yielding every 100000 spins
+	 * so total number of spins before acquire is 100000 * cntyield + cntspin
+	 */
+	probe spinlock__acquire(pthread_spinlock_t spinlock, int cntspin, int cntyield);
+
+	/**
+	 * Contention event probe.
+	 * Fires before a thread blocks in a spin loop
+	 */
+	probe spinlock__block(pthread_spinlock_t spinlock);
+
+	/**
+	 * Hold event probe.
+	 * Fires immediately after a spinlock is released
+	 */
+	probe spinlock__release(pthread_spinlock_t spinlock);
+
+	/**
+	 * spinlock handler mapping probe.
+	 * Collect mapping from internal to external pointer.
+	 */
+	probe spinlock__map(pthread_spinlock_t sl_int, void* sl_ext);
 };

@@ -69,7 +69,7 @@ static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #endif /* not lint */
 
 #include <sys/cdefs.h>
-__FBSDID("$FreeBSD$");
+__FBSDID("$FreeBSD: head/usr.sbin/syslogd/syslogd.c 360441 2020-04-28 16:07:15Z bdrewery $");
 
 /*
  *  syslogd -- log system messages
@@ -711,7 +711,7 @@ main(int argc, char *argv[])
 		usage();
 
 	/* Pipe to catch a signal during select(). */
-	s = pipe2(sigpipe, O_CLOEXEC);
+	s = pipe2(sigpipe, O_CLOEXEC | O_NONBLOCK);
 	if (s < 0) {
 		err(1, "cannot open a pipe for signals");
 	} else {
@@ -719,6 +719,7 @@ main(int argc, char *argv[])
 		    .sl_socket = sigpipe[0],
 		    .sl_recv = socklist_recv_signal
 		});
+		dprintf("!! pipe fd %d\n", sigpipe[0]);
 	}
 
 	/* Listen by default: /dev/klog. */
@@ -730,6 +731,7 @@ main(int argc, char *argv[])
 			.sl_socket = s,
 			.sl_recv = socklist_recv_file,
 		});
+		dprintf("!! /dev/klog fd %d\n", s);
 	}
 	/* Listen by default: *:514 if no -b flag. */
 	if (bflag == 0)
@@ -819,6 +821,7 @@ main(int argc, char *argv[])
 			if (sl->sl_socket != -1 && sl->sl_recv != NULL)
 				FD_SET(sl->sl_socket, fdsr);
 		}
+		/* XXX: pselect() and can nuke sigpipe */
 		i = select(fdsrmax + 1, fdsr, NULL, NULL,
 		    needdofsync ? &tv : tvp);
 		switch (i) {
@@ -1832,6 +1835,7 @@ iovlist_truncate(struct iovlist *il, size_t size)
 static void
 fprintlog_write(struct filed *f, struct iovlist *il, int flags)
 {
+	static int recursed;
 	struct msghdr msghdr;
 	struct addrinfo *r;
 	struct socklist *sl;
@@ -1871,10 +1875,22 @@ fprintlog_write(struct filed *f, struct iovlist *il, int flags)
 			STAILQ_FOREACH(sl, &shead, next) {
 				if (sl->sl_socket < 0)
 					continue;
+#if 0
+				if (1 &&
+				    sl->sl_sa != NULL &&
+				    (sl->sl_family == AF_UNSPEC || sl->sl_family == AF_LOCAL)) {
+#else
 				if (sl->sl_sa == NULL ||
 				    sl->sl_family == AF_UNSPEC ||
 				    sl->sl_family == AF_LOCAL) {
+#endif
+				dprintf("sendmsg SKIP sock %d type %d peer %s\n",
+				    sl->sl_socket, sl->sl_family,
+				    sl->sl_peer ? sl->sl_peer->pe_name : NULL);
 					continue;
+				}
+				dprintf("sendmsg sock %d type %d\n",
+				    sl->sl_socket, sl->sl_family);
 				lsent = sendmsg(sl->sl_socket, &msghdr, 0);
 				if (lsent == (ssize_t)il->totalsize)
 					break;
@@ -1953,20 +1969,30 @@ fprintlog_write(struct filed *f, struct iovlist *il, int flags)
 		break;
 
 	case F_CONSOLE:
+		if (recursed)
+			break;
+		recursed++;
 		if (flags & IGN_CONS) {
 			dprintf(" (ignored)\n");
+			recursed--;
 			break;
 		}
 		/* FALLTHROUGH */
+		recursed--;
 
 	case F_TTY:
+		if (recursed)
+			break;
+		recursed++;
 		dprintf(" %s%s\n", _PATH_DEV, f->fu_fname);
 		iovlist_append(il, "\r\n");
+	dprintf("fprintlog %d\n", recursed);
 		errno = 0;	/* ttymsg() only sometimes returns an errno */
 		if ((msgret = ttymsg(il->iov, il->iovcnt, f->fu_fname, 10))) {
 			f->f_type = F_UNUSED;
 			logerror(msgret);
 		}
+		recursed--;
 		break;
 
 	case F_USERS:
@@ -2193,6 +2219,7 @@ wallmsg(struct filed *f, struct iovec *iov, const int iovlen)
 		return;
 	setutxent();
 	/* NOSTRICT */
+	dprintf("wallmsg\n");
 	while ((ut = getutxent()) != NULL) {
 		if (ut->ut_type != USER_PROCESS)
 			continue;
@@ -3925,12 +3952,14 @@ socksetup(struct peer *pe)
 		} else
 #endif
 			dprintf("listening on socket\n");
-		dprintf("sending on socket\n");
+		dprintf("sending on socket %d\n", s);
 		addsock(res, &(struct socklist){
 			.sl_socket = s,
 			.sl_peer = pe,
 			.sl_recv = sl_recv
 		});
+		dprintf("!! listen fd %d %s type %d\n", s, pe->pe_name,
+		    res->ai_family);
 	}
 	freeaddrinfo(res0);
 

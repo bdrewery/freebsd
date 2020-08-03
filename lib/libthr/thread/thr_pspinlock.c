@@ -3,6 +3,8 @@
  *
  * Copyright (c) 2003 David Xu <davidxu@freebsd.org>
  * Copyright (c) 2016 The FreeBSD Foundation
+ * Copyright (c) 2020 Dell
+ *
  * All rights reserved.
  *
  * Portions of this software were developed by Konstantin Belousov
@@ -43,6 +45,8 @@ __FBSDID("$FreeBSD$");
 
 _Static_assert(sizeof(struct pthread_spinlock) <= PAGE_SIZE,
     "pthread_spinlock is too large for off-page");
+
+#include "plockstat.h"
 
 #define SPIN_COUNT 100000
 
@@ -101,13 +105,20 @@ int
 _pthread_spin_trylock(pthread_spinlock_t *lock)
 {
 	struct pthread_spinlock	*lck;
+	int ret;
 
 	if (lock == NULL || *lock == NULL)
 		return (EINVAL);
 	lck = *lock == THR_PSHARED_PTR ? __thr_pshared_offpage(lock, 0) : *lock;
 	if (lck == NULL)
 		return (EINVAL);
+	ret = THR_UMUTEX_TRYLOCK(_get_curthread(), &lck->s_lock);
+	if (ret == 0)
+		PLOCKSTAT_SPINLOCK_ACQUIRE(lck, 0, 0);
+	return ret;
+#if 0
 	return (THR_UMUTEX_TRYLOCK(_get_curthread(), &lck->s_lock));
+#endif
 }
 
 int
@@ -116,6 +127,8 @@ _pthread_spin_lock(pthread_spinlock_t *lock)
 	struct pthread *curthread;
 	struct pthread_spinlock	*lck;
 	int count;
+	int cntyield = 0;
+	int block_fired = 0;
 
 	if (lock == NULL)
 		return (EINVAL);
@@ -126,18 +139,25 @@ _pthread_spin_lock(pthread_spinlock_t *lock)
 	curthread = _get_curthread();
 	count = SPIN_COUNT;
 	while (THR_UMUTEX_TRYLOCK(curthread, &lck->s_lock) != 0) {
+		if (!block_fired) {
+			PLOCKSTAT_SPINLOCK_BLOCK(lck);
+			block_fired = 1;
+		}
 		while (lck->s_lock.m_owner) {
 			if (!_thr_is_smp) {
+				cntyield++;
 				_pthread_yield();
 			} else {
 				CPU_SPINWAIT;
 				if (--count <= 0) {
 					count = SPIN_COUNT;
+					cntyield++;
 					_pthread_yield();
 				}
 			}
 		}
 	}
+	PLOCKSTAT_SPINLOCK_ACQUIRE(lck, SPIN_COUNT - count, cntyield);
 	return (0);
 }
 
@@ -145,11 +165,18 @@ int
 _pthread_spin_unlock(pthread_spinlock_t *lock)
 {
 	struct pthread_spinlock	*lck;
+	int ret;
 
 	if (lock == NULL)
 		return (EINVAL);
 	lck = *lock == THR_PSHARED_PTR ? __thr_pshared_offpage(lock, 0) : *lock;
 	if (lck == NULL)
 		return (EINVAL);
+	ret = THR_UMUTEX_UNLOCK(_get_curthread(), &lck->s_lock);
+	if (ret == 0)
+		PLOCKSTAT_SPINLOCK_RELEASE(lck);
+	return ret;
+#if 0
 	return (THR_UMUTEX_UNLOCK(_get_curthread(), &lck->s_lock));
+#endif
 }

@@ -35,7 +35,9 @@ CFLAGS.thr_symbols.c+=	-Wno-missing-variable-declarations
 CFLAGS+=-fexceptions
 CFLAGS+=-D_PTHREAD_FORCED_UNWIND
 .endif
-
+SRCS+=plockstat.d
+# Needed in some case but may be fixed by newer linker
+#LDFLAGS+=-Wl,-znotext
 LDFLAGS+=-Wl,-znodelete
 
 VERSION_DEF=${SRCTOP}/lib/libc/Versions.def
