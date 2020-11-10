@@ -130,8 +130,11 @@ cwalk(FILE *fp)
 	if ((t = fts_open(argv, ftsoptions, dcmp)) == NULL)
 		mtree_err("fts_open: %s", strerror(errno));
 	while ((p = fts_read(t)) != NULL) {
-		if (jflag)
-			indent = p->fts_level * 4;
+		if (p->fts_info == FTS_ERR) {
+			mtree_err("%s: %s",
+			    p->fts_path, strerror(p->fts_errno));
+			break;
+		}
 		if (check_excludes(p->fts_name, p->fts_path)) {
 			fts_set(t, p, FTS_SKIP);
 			continue;
@@ -140,6 +143,8 @@ cwalk(FILE *fp)
 			fts_set(t, p, FTS_SKIP);
 			continue;
 		}
+		if (jflag)
+			indent = p->fts_level * 4;
 		switch(p->fts_info) {
 		case FTS_D:
 			if (!bflag)
