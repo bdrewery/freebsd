@@ -155,6 +155,9 @@ OBJS_DEPEND_GUESS.${_YC:R}.o+=	${_YC}
 .endfor
 
 # DTrace probe definitions
+.if defined(SYSROOT)
+DTRACEFLAGS+=	-x syslibdir=${SYSROOT}/usr/lib/dtrace
+.endif
 .if ${SRCS:M*.d}
 CFLAGS+=	-I${.OBJDIR}
 .endif
