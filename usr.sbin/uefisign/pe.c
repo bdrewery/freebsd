@@ -232,7 +232,7 @@ parse_section_table(struct executable *x, off_t off, int number_of_sections)
 	range_check(x, off, sizeof(*psh) * number_of_sections,
 	    "section table");
 
-	if (x->x_headers_len <= off + sizeof(*psh) * number_of_sections)
+	if (x->x_headers_len < off + sizeof(*psh) * number_of_sections)
 		errx(1, "section table outside of headers");
 
 	psh = (const struct pe_section_header *)(x->x_buf + off);
@@ -244,11 +244,13 @@ parse_section_table(struct executable *x, off_t off, int number_of_sections)
 	x->x_nsections = number_of_sections;
 
 	for (i = 0; i < number_of_sections; i++) {
-		if (psh->psh_pointer_to_raw_data < x->x_headers_len)
-			errx(1, "section points inside the headers");
+		if (psh->psh_size_of_raw_data) {
+			if (psh->psh_pointer_to_raw_data < x->x_headers_len)
+				errx(1, "section points inside the headers");
 
-		range_check(x, psh->psh_pointer_to_raw_data,
-		    psh->psh_size_of_raw_data, "section");
+			range_check(x, psh->psh_pointer_to_raw_data,
+			    psh->psh_size_of_raw_data, "section");
+		}
 #if 0
 		printf("section %d: start %d, size %d\n",
 		    i, psh->psh_pointer_to_raw_data, psh->psh_size_of_raw_data);
